@@ -1,0 +1,70 @@
+#pragma once
+
+#include "macro.h"
+#include <format>
+#include <string>
+#include <iostream>
+
+AMAZING_NAMESPACE_BEGIN
+
+class Logger
+{
+public:
+	enum class Level
+	{
+		e_info,
+		e_warning,
+		e_error
+	};
+
+	template<typename... Args>
+	static void log(const Level& level, const char* loc, const std::string& message, Args&&... args);
+};
+
+template<typename... Args>
+void Logger::log(const Level& level, const char* loc, const std::string& message, Args&&... args)
+{
+	if constexpr (sizeof...(Args) != 0)
+		message = std::format(message, std::forward<Args>(args)...);
+	switch (level)
+	{
+	case Level::e_info:
+		std::cout << "[" << loc << ", Info]: " << message << std::endl;
+		break;
+	case Level::e_warning:
+		std::cerr << "[" << loc << ", Warning]: " << message << std::endl;
+		break;
+	case Level::e_error:
+        std::string msg = std::format("[{}, Error]: ", loc) + message;
+		throw std::runtime_error(msg);
+	}
+}
+
+#if defined(_DEBUG) || defined(DEBUG)
+#define LOG_INFO(loc, ...)		Logger::log(Logger::Level::e_info, loc __VA_OPT__(,) __VA_ARGS__)
+#define LOG_WARNING(loc, ...)	Logger::log(Logger::Level::e_warning, loc __VA_OPT__(,) __VA_ARGS__)
+#define LOG_ERROR(loc, ...)		Logger::log(Logger::Level::e_error, loc __VA_OPT__(,) __VA_ARGS__)
+
+#define ASSERT(expr, loc, ...)  if (!(expr)) LOG_ERROR(loc, __VA_ARGS__);
+#else
+#define LOG_INFO(loc, message)
+#define LOG_WARNING(loc, message)
+#define LOG_ERROR(loc, message)
+
+#define ASSERT(expr, loc, ...)
+#endif
+
+#define CONTAINER_LOG_INFO(...)		LOG_INFO("Container", __VA_ARGS__)
+#define CONTAINER_LOG_WARNING(...)	LOG_WARNING("Container", __VA_ARGS__)
+#define CONTAINER_LOG_ERROR(...)	LOG_ERROR("Container", __VA_ARGS__)
+#define CONTAINER_ASSERT(expr, ...)	ASSERT(expr, "Container", __VA_ARGS__)
+
+
+#define RENDERING_LOG_INFO(...)		LOG_INFO("Rendering", __VA_ARGS__)
+#define RENDERING_LOG_WARNING(...)	LOG_WARNING("Rendering", __VA_ARGS__)
+#define RENDERING_LOG_ERROR(...)	LOG_ERROR("Rendering", __VA_ARGS__)
+#define RENDERING_ASSERT(expr, ...)	ASSERT(expr, "Rendering", __VA_ARGS__)
+
+
+
+AMAZING_NAMESPACE_END
