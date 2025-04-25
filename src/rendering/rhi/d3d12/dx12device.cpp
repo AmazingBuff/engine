@@ -4,17 +4,19 @@
 
 #include "dx12device.h"
 #include "dx12adapter.h"
+#include "resources/dx12memory_pool.h"
 #include "internal/dx12descriptor_heap.h"
 #include "utils/dx_macro.h"
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12Device::DX12Device() : m_device(nullptr), m_allocator(nullptr), m_descriptor_heap(nullptr), m_pipeline_library(nullptr) {}
+DX12Device::DX12Device() : m_device(nullptr), m_allocator(nullptr), m_descriptor_heap(nullptr), m_pipeline_library(nullptr), m_memory_pool(nullptr) {}
 
 DX12Device::~DX12Device()
 {
 	DX_FREE(m_pipeline_library);
 
+	Allocator<DX12MemoryPool>::deallocate(m_memory_pool);
 	Allocator<DX12DescriptorHeap>::deallocate(m_descriptor_heap);
 
 	for (size_t i = 0; i < GPU_Queue_Type_Count; ++i)
@@ -29,6 +31,7 @@ AResult DX12Device::initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo co
 {
 	DX12Adapter const* dx12_adapter = static_cast<DX12Adapter const*>(adapter);
 	DX_CHECK_RESULT(D3D12CreateDevice(dx12_adapter->m_adapter, dx12_adapter->m_feature_level, IID_PPV_ARGS(&m_device)));
+	m_ref_adapter = adapter;
 
 	// queues
 	for (uint32_t i = 0; i < info.queue_groups.size(); i++)
@@ -75,6 +78,19 @@ AResult DX12Device::initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo co
 	};
 
 	DX_CHECK_RESULT(D3D12MA::CreateAllocator(&allocator_desc, &m_allocator));
+
+	// tiled memory pool
+	GPUMemoryPoolCreateInfo memory_pool_create_info{
+		.type = GPUMemoryPoolType::e_tiled,
+		.usage = GPUMemoryUsage::e_gpu_only,
+		.block_size = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT * 256,
+		.min_block_count = 32,
+		.max_block_count = 256,
+		.min_allocation_alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
+	};
+
+	m_memory_pool = Allocator<DX12MemoryPool>::allocate(1);
+	m_memory_pool->initialize(this, memory_pool_create_info);
 
 	// descriptor heap
 	m_descriptor_heap = Allocator<DX12DescriptorHeap>::allocate(1);

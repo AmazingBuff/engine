@@ -5,7 +5,6 @@
 #ifndef DX12QUERY_POOL_H
 #define DX12QUERY_POOL_H
 
-#include "rendering/rhi/common/device.h"
 #include "rendering/rhi/common/query_pool.h"
 
 AMAZING_NAMESPACE_BEGIN

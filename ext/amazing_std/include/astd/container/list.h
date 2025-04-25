@@ -24,6 +24,47 @@ class List
 {
     using allocator = Alloc<Internal::ListNode<Tp>>;
 public:
+    class Iterator
+    {
+    public:
+        Iterator() : m_ptr(nullptr) {}
+        explicit Iterator(Internal::ListNode<Tp>* ptr) : m_ptr(ptr) {}
+
+        Iterator& operator++()
+        {
+            m_ptr = m_ptr->next;
+            return *this;
+        }
+
+        Iterator& operator--()
+        {
+            m_ptr = m_ptr->prev;
+            return *this;
+        }
+
+        Tp* operator->()
+        {
+           return &m_ptr->val;
+        }
+
+        Tp& operator*()
+        {
+            return m_ptr->val;
+        }
+
+        NODISCARD bool operator==(const Iterator& other)
+        {
+            return m_ptr == other.m_ptr;
+        }
+
+        NODISCARD bool operator!=(const Iterator& other)
+        {
+            return m_ptr != other.m_ptr;
+        }
+    private:
+        Internal::ListNode<Tp>* m_ptr;
+    };
+public:
     List() : m_size(0)
     {
         m_head = allocator::allocate(1);
@@ -40,7 +81,45 @@ public:
         m_head = nullptr;
     }
 
-    void push_back(Tp&& value)
+    void insert(size_t index, const Tp& value)
+    {
+        Internal::ListNode<Tp>* node = allocator::allocate(1);
+        node->val = value;
+
+        Internal::ListNode<Tp>* p = m_head;
+        if (index <= m_size / 2)
+        {
+            while (index != 0)
+            {
+                p = p->next;
+                index--;
+            }
+        }
+        else
+        {
+            index = m_size - index;
+            while (index != 0)
+            {
+                p = p->prev;
+                index--;
+            }
+        }
+
+        if (p->next != nullptr)
+        {
+            p->next->prev = node;
+            node->next = p->next;
+        }
+        else
+            m_head->prev = node;
+
+        node->next = p->next;
+        node->prev = p;
+
+        m_size++;
+    }
+
+    void emplace_back(Tp&& value)
     {
         Internal::ListNode<Tp>* node = allocator::allocate(1);
         node->val = value;
@@ -61,7 +140,49 @@ public:
         m_size++;
     }
 
-    void push_front(Tp&& value)
+    void push_back(const Tp& value)
+    {
+        Internal::ListNode<Tp>* node = allocator::allocate(1);
+        node->val = value;
+        node->next = nullptr;
+
+        if (!empty())
+        {
+            m_head->prev->next = node;
+            node->prev = m_head->prev;
+        }
+        else
+        {
+            m_head->next = node;
+            node->prev = m_head;
+        }
+
+        m_head->prev = node;
+        m_size++;
+    }
+
+    void emplace_front(Tp&& value)
+    {
+        Internal::ListNode<Tp>* node = allocator::allocate(1);
+        node->val = value;
+        node->prev = m_head;
+
+        if (!empty())
+        {
+            m_head->next->front = node;
+            node->next = m_head->next;
+        }
+        else
+        {
+            m_head->next = node;
+            node->next = nullptr;
+        }
+
+        m_head->next = node;
+        m_size++;
+    }
+
+    void push_front(const Tp& value)
     {
         Internal::ListNode<Tp>* node = allocator::allocate(1);
         node->val = value;
@@ -158,6 +279,17 @@ public:
 
         m_size = 0;
     }
+
+    Iterator begin()
+    {
+        return Iterator(m_head);
+    }
+
+    Iterator end()
+    {
+        return Iterator(nullptr);
+    }
+
 
 private:
     Internal::ListNode<Tp>* m_head;

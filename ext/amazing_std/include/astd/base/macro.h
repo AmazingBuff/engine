@@ -10,5 +10,3 @@
 #define INTERNAL_NAMESPACE_END  NAMESPACE_END(Internal)
 
 #define NODISCARD [[nodiscard]]
-
-#define ARRAY_SIZE(array) (sizeof(array)/sizeof(array[0]))

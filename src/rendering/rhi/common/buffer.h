@@ -12,10 +12,22 @@ AMAZING_NAMESPACE_BEGIN
 class GPUBuffer
 {
 public:
-    GPUBuffer() = default;
+    GPUBuffer() : m_ref_device(nullptr), m_info(nullptr) {}
     virtual ~GPUBuffer() = 0;
 
-    virtual AResult initialize() = 0;
+    virtual AResult initialize(GPUDevice const* device, GPUBufferCreateInfo const& info) = 0;
+    virtual void map(size_t offset, size_t size) = 0;
+    virtual void unmap() = 0;
+protected:
+    struct GPUBufferInfo
+    {
+        size_t size;
+        void* mapped_data;
+        GPUResourceType type;
+    };
+
+    GPUDevice const* m_ref_device;
+    GPUBufferInfo* m_info;
 };
 
 AMAZING_NAMESPACE_END

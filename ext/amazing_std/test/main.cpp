@@ -1,4 +1,4 @@
-#include <astd.h>
+#include <astd/astd.h>
 #include <iostream>
 #include <thread>
 #include <optional>
@@ -28,11 +28,11 @@ void consume()
 
 int main()
 {
-    std::thread producer(&produce);
-    std::thread consumer(&consume);
-
-    producer.join();
-    consumer.join();
+    // std::thread producer(&produce);
+    // std::thread consumer(&consume);
+    //
+    // producer.join();
+    // consumer.join();
 
 
     Amazing::String s("chr");
@@ -75,6 +75,7 @@ int main()
     Amazing::Map<int64_t, uint32_t> m;
     m.emplace(1, 2);
     m.emplace(Amazing::Pair<int64_t, uint32_t>(34, 1));
+    auto it = m.find(1);
     //m.insert(Amazing::Pair<int64_t, uint32_t>(32, 12));
     //m.insert(Amazing::Pair<int64_t, uint32_t>(2, 12));
     //m.insert(Amazing::Pair<int64_t, uint32_t>(2, 11));

@@ -27,7 +27,7 @@ target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
     include/
-    PRIVATE
+#    PRIVATE
     src/
 )
 
@@ -61,6 +61,14 @@ target_compile_definitions(
     SOURCES_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
+if (WIN32)
+    target_compile_definitions(
+        ${PROJECT_NAME}
+        PUBLIC
+        NOMINMAX
+    )
+endif ()
+
 if (MSVC)
     target_compile_options(
         ${PROJECT_NAME}
@@ -73,3 +81,5 @@ if (MSVC)
         /utf-8
     )
 endif ()
+
+add_subdirectory(sample)

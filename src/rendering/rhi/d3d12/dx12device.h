@@ -11,6 +11,7 @@
 AMAZING_NAMESPACE_BEGIN
 
 class DX12DescriptorHeap;
+class DX12MemoryPool;
 
 class DX12Device final : public GPUDevice
 {
@@ -26,6 +27,7 @@ private:
     Vector<ID3D12CommandQueue*>     m_command_queues[GPU_Queue_Type_Count];
     DX12DescriptorHeap*             m_descriptor_heap;
     ID3D12PipelineLibrary*          m_pipeline_library;
+    DX12MemoryPool*                 m_memory_pool;
 
     friend class DX12SwapChain;
     friend class DX12Fence;
@@ -34,6 +36,15 @@ private:
     friend class DX12CommandPool;
     friend class DX12CommandBuffer;
     friend class DX12QueryPool;
+    friend class DX12RootSignature;
+    friend class DX12DescriptorSet;
+    friend class DX12GraphicsPipeline;
+
+    friend class DX12MemoryPool;
+    friend class DX12Buffer;
+    friend class DX12Texture;
+    friend class DX12TextureView;
+    friend class DX12Sampler;
 };
 
 AMAZING_NAMESPACE_END

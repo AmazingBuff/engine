@@ -6,23 +6,9 @@
 #include "dx12device.h"
 #include "rendering/api.h"
 #include "utils/dx_macro.h"
+#include "utils/dx_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
-
-static constexpr D3D12_QUERY_TYPE Query_Type_Map[GPU_Query_Type_Count] =
-{
-    D3D12_QUERY_TYPE_OCCLUSION,
-    D3D12_QUERY_TYPE_TIMESTAMP,
-    D3D12_QUERY_TYPE_PIPELINE_STATISTICS
-};
-
-static constexpr D3D12_QUERY_HEAP_TYPE Query_Heap_Type_Map[GPU_Query_Type_Count] =
-{
-    D3D12_QUERY_HEAP_TYPE_OCCLUSION,
-    D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
-    D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS
-};
-
 
 DX12QueryPool::DX12QueryPool() : m_query_heap(nullptr), m_type(D3D12_QUERY_TYPE_TIMESTAMP) {}
 

@@ -12,10 +12,12 @@ AMAZING_NAMESPACE_BEGIN
 class GPUDevice
 {
 public:
-    GPUDevice() = default;
+    GPUDevice() : m_ref_adapter(nullptr) {}
     virtual ~GPUDevice() = 0;
 
     virtual AResult initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info) = 0;
+protected:
+    GPUAdapter const* m_ref_adapter;
 };
 
 AMAZING_NAMESPACE_END

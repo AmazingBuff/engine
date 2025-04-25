@@ -13,19 +13,22 @@ class DX12Adapter final : public GPUAdapter
 {
 public:
     ~DX12Adapter() override;
+    void query_memory_usage(uint64_t* total, uint64_t* used) override;
+
+public:
+    struct D3D12AdapterDetail
+    {
+        uint32_t support_enhanced_barriers : 1;
+        D3D12_TILED_RESOURCES_TIER tiled_resource_tier;
+    };
+    D3D12AdapterDetail      m_d3d12_detail;
 private:
     DX12Adapter();
     void record_adapter_detail();
 
 private:
-    struct D3D12AdapterDetail
-    {
-        bool support_enhanced_barriers : 1;
-    };
-
     IDXGIAdapter4*          m_adapter;
     D3D_FEATURE_LEVEL       m_feature_level;
-    D3D12AdapterDetail      m_d3d12_detail;
 
     friend class DX12Instance;
     friend class DX12Device;

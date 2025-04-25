@@ -12,10 +12,53 @@ class Vector
 {
     using allocator = Alloc<Tp>;
 public:
+    class Iterator
+    {
+    public:
+        Iterator() : m_ptr(nullptr) {}
+        explicit Iterator(Tp* ptr) : m_ptr(ptr) {}
+
+        Iterator& operator++()
+        {
+            ++m_ptr;
+            return *this;
+        }
+
+        Iterator& operator--()
+        {
+            --m_ptr;
+            return *this;
+        }
+
+        Tp operator*()
+        {
+            return *m_ptr;
+        }
+
+        Tp* operator->()
+        {
+            return m_ptr;
+        }
+
+        NODISCARD bool operator==(const Iterator& other) const
+        {
+            return m_ptr == other.m_ptr;
+        }
+
+        NODISCARD bool operator!=(const Iterator& other) const
+        {
+            return m_ptr != other.m_ptr;
+        }
+
+    private:
+        Tp* m_ptr;
+    };
+public:
     Vector() : m_data(nullptr), m_size(0), m_capacity(0) {}
     explicit Vector(const size_t size) : m_data(nullptr), m_size(0), m_capacity(0)
     {
         reserve(size);
+        m_size = size;
     }
 
     template <typename OtherT>
@@ -41,7 +84,16 @@ public:
         m_capacity = 0;
     }
 
-    void push_back(Tp&& value)
+    void emplace_back(Tp&& value)
+    {
+        if (m_size >= m_capacity)
+            reserve(m_capacity == 0 ? 4 : (m_capacity * 3 / 2));
+
+        m_data[m_size] = value;
+        m_size++;
+    }
+
+    void push_back(const Tp& value)
     {
         if (m_size >= m_capacity)
             reserve(m_capacity == 0 ? 4 : (m_capacity * 3 / 2));
@@ -137,6 +189,26 @@ public:
     {
         CONTAINER_ASSERT(index < m_size, "index out of range");
         return m_data[index];
+    }
+
+    Iterator begin()
+    {
+        return Iterator(m_data);
+    }
+
+    Iterator const begin() const
+    {
+        return Iterator(m_data);
+    }
+
+    Iterator end()
+    {
+        return Iterator(m_data + m_size);
+    }
+
+    Iterator const end() const
+    {
+        return Iterator(m_data + m_size);
     }
 
 protected:

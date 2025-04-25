@@ -29,7 +29,7 @@ struct Equal
 template <typename Tp>
 struct Less
 {
-    bool operator()(const Tp& lhs, const Tp& rhs) const noexcept
+    NODISCARD bool operator()(const Tp& lhs, const Tp& rhs) const noexcept
     {
         return lhs < rhs;
     }

@@ -126,6 +126,78 @@ class RBTree
 
     static constexpr bool is_set = std::is_same_v<key_type, value_type>;
 public:
+    class Iterator
+    {
+    public:
+        Iterator() : m_node(nullptr) {}
+        explicit Iterator(node_type* node) : m_node(node) {}
+
+        Iterator& operator++()
+        {
+            if (m_node->right)
+            {
+                // find the left-most node
+                m_node = m_node->right;
+                while (m_node->left)
+                    m_node = m_node->left;
+            }
+            else if (m_node->parent)
+            {
+                node_type* parent = m_node->parent;
+                if (parent->left == m_node)
+                    m_node = parent;
+                else
+                    m_node = nullptr;
+            }
+
+            return *this;
+        }
+
+        Iterator& operator--()
+        {
+            if (m_node->left)
+            {
+                m_node = m_node->left;
+                // find the right-most node
+                while (m_node->right)
+                    m_node = m_node->right;
+            }
+            else if (m_node->parent)
+            {
+                node_type* parent = m_node->parent;
+                if (parent->right == m_node)
+                    m_node = parent;
+                else
+                    m_node = nullptr;
+            }
+
+            return *this;
+        }
+
+        value_type& operator*()
+        {
+            return m_node->val;
+        }
+
+        value_type* operator->()
+        {
+            return &m_node->val;
+        }
+
+        NODISCARD bool operator==(const Iterator& other) const
+        {
+            return m_node == other.m_node;
+        }
+
+        NODISCARD bool operator!=(const Iterator& other) const
+        {
+            return m_node != other.m_node;
+        }
+    private:
+        node_type* m_node;
+    };
+
+public:
     RBTree() : m_root(nullptr), m_size(0) {}
     ~RBTree()
     {
@@ -243,8 +315,25 @@ public:
         m_size = 0;
     }
 
+    Iterator begin()
+    {
+        // left most
+        node_type* node = m_root;
+        if (node)
+        {
+            while (node->left)
+                node = node->left;
+        }
+        return Iterator(node);
+    }
+
+    Iterator end()
+    {
+        return Iterator();
+    }
+
 protected:
-    node_type* find_node(const key_type& key)
+    node_type* find_node(const key_type& key) const
     {
         node_type* node = m_root;
         while (node)

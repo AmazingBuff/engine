@@ -9,7 +9,94 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DXGI_FORMAT transfer_format(GPUFormat format);
+static constexpr D3D12_QUERY_TYPE Query_Type_Map[] =
+{
+    D3D12_QUERY_TYPE_OCCLUSION,
+    D3D12_QUERY_TYPE_TIMESTAMP,
+    D3D12_QUERY_TYPE_PIPELINE_STATISTICS
+};
+
+static constexpr D3D12_QUERY_HEAP_TYPE Query_Heap_Type_Map[] =
+{
+    D3D12_QUERY_HEAP_TYPE_OCCLUSION,
+    D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
+    D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS
+};
+
+static constexpr D3D12_COMPARISON_FUNC Compare_Mode_Map[] =
+{
+    D3D12_COMPARISON_FUNC_NEVER,
+    D3D12_COMPARISON_FUNC_LESS,
+    D3D12_COMPARISON_FUNC_EQUAL,
+    D3D12_COMPARISON_FUNC_LESS_EQUAL,
+    D3D12_COMPARISON_FUNC_GREATER,
+    D3D12_COMPARISON_FUNC_NOT_EQUAL,
+    D3D12_COMPARISON_FUNC_GREATER_EQUAL,
+    D3D12_COMPARISON_FUNC_ALWAYS,
+};
+
+static constexpr D3D12_BLEND Blend_Constant_Map[] =
+{
+    D3D12_BLEND_ZERO,
+    D3D12_BLEND_ONE,
+    D3D12_BLEND_SRC_COLOR,
+    D3D12_BLEND_INV_SRC_COLOR,
+    D3D12_BLEND_DEST_COLOR,
+    D3D12_BLEND_INV_DEST_COLOR,
+    D3D12_BLEND_SRC_ALPHA,
+    D3D12_BLEND_INV_SRC_ALPHA,
+    D3D12_BLEND_DEST_ALPHA,
+    D3D12_BLEND_INV_DEST_ALPHA,
+    D3D12_BLEND_SRC_ALPHA_SAT,
+    D3D12_BLEND_BLEND_FACTOR,
+    D3D12_BLEND_INV_BLEND_FACTOR,
+};
+
+static constexpr D3D12_BLEND_OP Blend_Op_Map[] =
+{
+    D3D12_BLEND_OP_ADD,
+    D3D12_BLEND_OP_SUBTRACT,
+    D3D12_BLEND_OP_REV_SUBTRACT,
+    D3D12_BLEND_OP_MIN,
+    D3D12_BLEND_OP_MAX,
+};
+
+static constexpr D3D12_STENCIL_OP Stencil_Op_Map[] =
+{
+    D3D12_STENCIL_OP_KEEP,
+    D3D12_STENCIL_OP_ZERO,
+    D3D12_STENCIL_OP_REPLACE,
+    D3D12_STENCIL_OP_INVERT,
+    D3D12_STENCIL_OP_INCR,
+    D3D12_STENCIL_OP_DECR,
+    D3D12_STENCIL_OP_INCR_SAT,
+    D3D12_STENCIL_OP_DECR_SAT,
+};
+
+static constexpr D3D12_CULL_MODE Cull_Mode_Map[] =
+{
+    D3D12_CULL_MODE_NONE,
+    D3D12_CULL_MODE_BACK,
+    D3D12_CULL_MODE_FRONT,
+};
+
+static constexpr D3D12_FILL_MODE Fill_Mode_Map[] =
+{
+    D3D12_FILL_MODE_SOLID,
+    D3D12_FILL_MODE_WIREFRAME,
+};
+
+DXGI_FORMAT transfer_format(GPUFormat format, bool shader = false);
+D3D12_RESOURCE_STATES transfer_resource_state(GPUResourceState state);
+D3D12_HEAP_TYPE transfer_heap_type(GPUMemoryUsage usage);
+D3D12_FILTER transfer_filter(GPUFilterType min, GPUFilterType mag, GPUMipMapMode mipmap, bool anisotropy, bool compare);
+D3D12_TEXTURE_ADDRESS_MODE transfer_address_mode(GPUAddressMode mode);
+D3D12_DESCRIPTOR_RANGE_TYPE transfer_resource_type(GPUResourceType type);
+D3D12_SHADER_VISIBILITY transfer_shader_stage(GPUShaderStage stage);
+D3D12_PRIMITIVE_TOPOLOGY_TYPE transfer_primitive_topology(GPUPrimitiveTopology primitive);
+
+DXGI_FORMAT format_typeless(DXGI_FORMAT format);
+uint32_t format_bit_size(GPUFormat format);
 
 AMAZING_NAMESPACE_END
 

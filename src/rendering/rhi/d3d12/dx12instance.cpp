@@ -59,8 +59,7 @@ AResult DX12Instance::initialize(GPUInstanceCreateInfo const& info)
                     if (SUCCEEDED(adapter->QueryInterface(IID_PPV_ARGS(&dx12_adapter.m_adapter))))
                     {
                         dx12_adapter.m_feature_level = D3D12_Feature_Level;
-
-                        // todo: add more caps
+                        dx12_adapter.record_adapter_detail();
 
                         m_adapters.push_back(std::move(dx12_adapter));
                         break;

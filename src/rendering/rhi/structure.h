@@ -9,6 +9,9 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+static constexpr uint32_t GPU_Max_Render_Target = 8;
+
+
 class GPUSurface;
 class GPUInstance;
 class GPUAdapter;
@@ -20,9 +23,18 @@ class GPUQueue;
 class GPUCommandPool;
 class GPUCommandBuffer;
 class GPUQueryPool;
+class GPURootSignature;
+class GPURootSignaturePool;
+class GPUDescriptorSet;
+class GPUGraphicsPipeline;
 
+class GPUMemoryPool;
 class GPUBuffer;
 class GPUTexture;
+class GPUTextureView;
+class GPUSampler;
+class GPUShaderLibrary;
+
 
 struct GPUQueueGroup
 {
@@ -36,12 +48,159 @@ struct GPUQueryInfo
     uint32_t        index;
 };
 
-struct GPUBufferInfo
+struct GPUClearColor
 {
-    size_t size;
-
+    union
+    {
+        struct
+        {
+            float r;
+            float g;
+            float b;
+            float a;
+        } color;
+        struct
+        {
+            float depth;
+            uint32_t stencil;
+        } depth_stencil;
+    };
 };
 
+struct GPUShaderResource
+{
+    String name;
+    GPUResourceType resource_type;
+    GPUTextureType texture_type;
+    GPUShaderStage stage;
+    uint64_t name_hash;
+    uint32_t set;
+    uint32_t binding;
+    uint32_t size;
+    uint32_t offset;
+};
+
+struct GPUVertexInput
+{
+    String name;
+    String semantics;
+    GPUFormat format;
+};
+
+struct GPUShaderReflection
+{
+    String entry_name;
+    GPUShaderStage stage;
+    Vector<GPUVertexInput> vertex_inputs;
+    Vector<GPUShaderResource> shader_resources;
+    uint32_t thread_group_sizes[3];
+};
+
+struct GPUConstantSpecialization
+{
+    uint32_t constant_id;
+    union
+    {
+        uint64_t    u;
+        int64_t     i;
+        double      d;
+    };
+};
+
+struct GPUShaderEntry
+{
+    GPUShaderLibrary* library;
+    String entry;
+    GPUShaderStage stage;
+    Vector<GPUConstantSpecialization> constants;
+};
+
+struct GPUParameterTable
+{
+    Vector<GPUShaderResource> resources;
+    uint32_t set_index;
+};
+
+struct GPUStaticSampler
+{
+    String name;
+    GPUSampler* sampler;
+};
+
+struct GPUDescriptorData
+{
+    // via resource name
+    String name;
+    // via set and binding
+    GPUResourceType resource_type;
+    uint32_t binding;
+
+
+    // resource
+    union
+    {
+        GPUSampler const* const* samplers;
+        GPUTextureView const* const* textures;
+        GPUBuffer const* const* buffers;
+    };
+
+    uint32_t array_count;
+};
+
+struct GPUVertexAttribute
+{
+    String semantic_name;
+    uint32_t array_size;
+    GPUFormat format;
+    uint32_t binding;
+    uint32_t offset;
+    uint32_t stride;
+    GPUVertexInputRate rate;
+};
+
+struct GPUBlendState
+{
+    GPUBlendConstant src_factors[GPU_Max_Render_Target];
+    GPUBlendConstant dst_factors[GPU_Max_Render_Target];
+    GPUBlendMode blend_modes[GPU_Max_Render_Target];
+    GPUBlendConstant alpha_src_factors[GPU_Max_Render_Target];
+    GPUBlendConstant alpha_dst_factors[GPU_Max_Render_Target];
+    GPUBlendMode alpha_blend_modes[GPU_Max_Render_Target];
+    uint8_t write_masks[GPU_Max_Render_Target];
+
+    bool alpha_to_coverage;
+    bool independent_blend;
+};
+
+struct GPUDepthStencilState
+{
+    bool depth_test;
+    bool depth_write;
+    GPUCompareMode depth_compare;
+    bool stencil_test;
+    uint8_t stencil_read_mask;
+    uint8_t stencil_write_mask;
+    GPUCompareMode stencil_front_compare;
+    GPUStencilOp stencil_front_fail;
+    GPUStencilOp stencil_front_pass;
+    GPUStencilOp depth_front_fail;
+    GPUCompareMode stencil_back_compare;
+    GPUStencilOp stencil_back_fail;
+    GPUStencilOp stencil_back_pass;
+    GPUStencilOp depth_back_fail;
+};
+
+struct GPURasterizerState
+{
+    GPUCullMode cull_mode;
+    int32_t depth_bias;
+    float slope_scaled_depth_bias;
+    GPUFillMode fill_mode;
+    GPUFrontFace front_face;
+    bool enable_multisample;
+    bool enable_scissor;
+    bool enable_depth_clamp;
+};
 
 AMAZING_NAMESPACE_END
 

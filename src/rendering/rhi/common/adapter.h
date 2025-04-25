@@ -15,7 +15,8 @@ class GPUAdapter
 public:
     GPUAdapter() = default;
     virtual ~GPUAdapter() = 0;
-protected:
+    virtual void query_memory_usage(uint64_t* total, uint64_t* used) = 0;
+public:
     struct GPUAdapterVendor
     {
         uint32_t device_id;

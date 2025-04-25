@@ -17,7 +17,10 @@ DX12DescriptorHeap::D3D12DescriptorHeap* DX12DescriptorHeap::create_descriptor_h
 
     heap->start_handle.cpu = heap->descriptor_heap->GetCPUDescriptorHandleForHeapStart();
     if (desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+    {
         heap->start_handle.gpu = heap->descriptor_heap->GetGPUDescriptorHandleForHeapStart();
+
+    }
     else
         heap->start_handle.gpu = {};
 
@@ -39,6 +42,24 @@ DX12DescriptorHeap::D3D12DescriptorHandle DX12DescriptorHeap::consume_descriptor
 
     size_t offset = heap->used_descriptor_count * heap->descriptor_size;
     return {{heap->start_handle.cpu.ptr + offset}, {heap->start_handle.gpu.ptr + offset}};
+}
+
+void DX12DescriptorHeap::return_descriptor_handle(D3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t descriptor_count)
+{
+    for (uint32_t i = 0; i < descriptor_count; i++)
+    {
+        D3D12DescriptorHandle free_handle{
+            .cpu = {handle.ptr + i * heap->descriptor_size},
+            .gpu = {0}
+        };
+
+        heap->free_list.push_back(free_handle);
+    }
+}
+
+void DX12DescriptorHeap::copy_descriptor_handle(D3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE const& src_handle, uint64_t const& dst_handle, uint32_t index)
+{
+
 }
 
 
@@ -74,7 +95,7 @@ DX12DescriptorHeap::~DX12DescriptorHeap()
 AResult DX12DescriptorHeap::initialize(ID3D12Device* device)
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS options;
-    device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options, sizeof(options));
+    DX_CHECK_RESULT(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options, sizeof(options)));
 
     for (uint32_t i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
     {

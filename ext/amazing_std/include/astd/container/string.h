@@ -8,6 +8,26 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+template <typename Tp>
+    requires(std::is_same_v<char, Tp> || std::is_same_v<wchar_t, Tp>)
+size_t str_length(const Tp* str)
+{
+    if constexpr (std::is_same_v<char, Tp>)
+        return std::strlen(str);
+    else
+        return std::wcslen(str);
+}
+
+template <typename Tp>
+    requires(std::is_same_v<char, Tp> || std::is_same_v<wchar_t, Tp>)
+int str_compare(const Tp* str1, const Tp* str2, size_t length)
+{
+    if constexpr (std::is_same_v<char, Tp>)
+        return std::strncmp(str1, str2, length);
+    else
+        return std::wcsncmp(str1, str2, length);
+}
+
 INTERNAL_NAMESPACE_BEGIN
 
 template <typename Tp, template <typename> typename Alloc = Allocator>
@@ -17,18 +37,24 @@ class StringT : public Vector<Tp, Alloc>
     using allocator = Alloc<Tp>;
     using allocator_next = Alloc<size_t>;
 public:
-    StringT() = default;
-    StringT(const Tp* str)
+    StringT() : m_c_str(nullptr) {}
+    StringT(const Tp* str) : m_c_str(nullptr)
     {
-        Str::m_size = strlen(str);
+        Str::m_size = str_length(str);
         Str::m_capacity = Str::m_size;
         Str::m_data = allocator::allocate(Str::m_capacity);
         std::memcpy(Str::m_data, str, Str::m_size * sizeof(Tp));
     }
 
+    ~StringT()
+    {
+        if (m_c_str != nullptr)
+            allocator::deallocate(m_c_str);
+    }
+
     NODISCARD size_t find(const Tp* str) const
     {
-        size_t size = std::strlen(str);
+        size_t size = str_length(str);
         return find(str, size);
     }
 
@@ -39,7 +65,10 @@ public:
 
     NODISCARD const Tp* c_str() const
     {
-        return Str::m_data;
+        m_c_str = allocator::allocate(Str::m_size + 1);
+        memcpy(m_c_str, Str::m_data, sizeof(Tp) * Str::m_size);
+        m_c_str[Str::m_size] = '\0';
+        return m_c_str;
     }
 
     NODISCARD StringT substr(size_t pos, size_t count) const
@@ -65,6 +94,17 @@ public:
         return str;
     }
 
+    NODISCARD StringT operator+(const Tp* other) const
+    {
+        size_t size = str_length(other);
+
+        StringT str;
+        str.resize(Str::m_size + size);
+        std::memcpy(str.m_data, Str::m_data, Str::m_size * sizeof(Tp));
+        std::memcpy(str.m_data + Str::m_size, other, size * sizeof(Tp));
+        return str;
+    }
+
     StringT& operator+=(const StringT& other)
     {
         if (Str::m_size + other.m_size > Str::m_capacity)
@@ -74,13 +114,44 @@ public:
         return *this;
     }
 
+    StringT& operator+=(const Tp* other)
+    {
+        size_t size = str_length(other);
+        if (Str::m_size + size > Str::m_capacity)
+            Str::reserve(Str::m_size + size);
+
+        std::memcpy(Str::m_data + Str::m_size, other, size * sizeof(Tp));
+        Str::m_size += size;
+        return *this;
+    }
+
+    NODISCARD bool operator<(const StringT& other) const
+    {
+        size_t min_size = std::min(Str::m_size, other.m_size);
+        int ret = str_compare(Str::m_data, other.m_data, min_size);
+        if (ret < 0 || (ret == 0 && Str::m_size < other.m_size))
+            return true;
+
+        return false;
+    }
+
+    NODISCARD bool operator>(const StringT& other) const
+    {
+        size_t min_size = std::min(Str::m_size, other.m_size);
+        int ret = str_compare(Str::m_data, other.m_data, min_size);
+        if (ret > 0 || (ret == 0 && Str::m_size > other.m_size))
+            return true;
+
+        return false;
+    }
+
     NODISCARD bool operator==(const StringT& other) const
     {
         if (Str::m_size != other.m_size)
             return false;
         for (size_t i = 0; i < Str::m_size; i++)
         {
-            if (Str::m_data[i] != Str::m_data[i])
+            if (Str::m_data[i] != other.m_data[i])
                 return false;
         }
         return true;
@@ -90,6 +161,8 @@ public:
     {
         return !(*this == other);
     }
+
+    friend StringT operator+(const Tp* lhs, const StringT& rhs);
 
 public:
     static constexpr size_t end = std::numeric_limits<size_t>::max();
@@ -147,11 +220,71 @@ private:
 
         return j == size ? i - j : end;
     }
+
+private:
+    mutable Tp* m_c_str;
 };
+
+template <typename Tp, template <typename> typename Alloc>
+StringT<Tp, Alloc> operator+(const Tp* lhs, const StringT<Tp, Alloc>& rhs)
+{
+    size_t size = str_length(lhs);
+    StringT<Tp, Alloc> str;
+
+    str.resize(size + rhs.m_size);
+    std::memcpy(str.m_data, lhs, size * sizeof(Tp));
+    std::memcpy(str.m_data + size, rhs.m_data, rhs.m_size * sizeof(Tp));
+    return str;
+}
+
+
+template <typename Char, typename Tp>
+StringT<Char> to_str(const Tp& value)
+{
+    if constexpr (std::is_integral_v<Tp>)
+    {
+        Char buf[21];
+        Char* end = std::end(buf);
+        *end = '\0';
+
+        using Up = std::make_signed_t<Tp>;
+        const Up up = static_cast<Up>(value);
+
+        Up val = up;
+        if (value < 0)
+            val = -up;
+
+        do
+        {
+            *--end = static_cast<Char>('0' + val % 10);
+            val /= 10;
+        } while (val != 0);
+
+        if (value < 0)
+            *--end = static_cast<Char>('-');
+
+        return end;
+    }
+
+    return {};
+}
+
 
 INTERNAL_NAMESPACE_END
 
 using String = Internal::StringT<char>;
 using WString = Internal::StringT<wchar_t>;
+
+template <typename Tp>
+String to_str(const Tp& value)
+{
+    return Internal::to_str<char>(value);
+}
+
+template <typename Tp>
+WString to_wstr(const Tp& value)
+{
+    return Internal::to_str<wchar_t>(value);
+}
 
 AMAZING_NAMESPACE_END

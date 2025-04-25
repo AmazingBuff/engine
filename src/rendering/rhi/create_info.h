@@ -47,9 +47,131 @@ struct GPUQueryPoolCreateInfo
     uint32_t query_count;
 };
 
+struct GPURootSignaturePoolCreateInfo
+{
+    String name;
+};
+
+struct GPURootSignatureCreateInfo
+{
+    Vector<GPUShaderEntry> shaders;
+    Vector<GPUStaticSampler> static_samplers;
+    Vector<String> push_constant_names;
+    GPURootSignaturePool* pool;
+};
+
+struct GPUDescriptorSetCreateInfo
+{
+    GPURootSignature* root_signature;
+    uint32_t set_index;
+};
+
+struct GPUGraphicsPipelineCreateInfo
+{
+    GPURootSignature* root_signature;
+    GPUShaderEntry const* vertex_shader;
+    GPUShaderEntry const* tessellation_control_shader;
+    GPUShaderEntry const* tessellation_evaluation_shader;
+    GPUShaderEntry const* geometry_shader;
+    GPUShaderEntry const* fragment_shader;
+    Vector<GPUVertexAttribute> const vertex_input;
+
+    GPUBlendState const* blend_state;
+    GPUDepthStencilState const* depth_stencil_state;
+    GPURasterizerState const* rasterizer_state;
+
+    GPUFormat const* color_format;
+    GPUFormat depth_stencil_format;
+
+    uint32_t render_target_count;
+    GPUSampleCount sample_count;
+    uint32_t sample_quality;
+
+    GPUPrimitiveTopology primitive_topology;
+};
+
+
+
+// resources
+struct GPUMemoryPoolCreateInfo
+{
+    GPUMemoryPoolType type;
+    GPUMemoryUsage usage;
+    uint64_t block_size;
+    uint32_t min_block_count;
+    uint32_t max_block_count;
+    uint64_t min_allocation_alignment;
+};
+
+struct GPUBufferCreateInfo
+{
+    String name;
+    size_t size;
+    struct
+    {
+        size_t first_element;
+        uint32_t element_count;
+        uint32_t element_stride;
+    } data_array;
+    GPUBuffer* counter_buffer;
+    GPUMemoryUsage usage;
+    GPUFormat format;
+    GPUResourceState state;
+    GPUResourceType type;
+    GPUBufferFlags flags;
+};
+
 struct GPUTextureCreateInfo
 {
+    String name;
+    uint32_t width;
+    uint32_t height;
+    uint32_t depth;
+    uint32_t array_layers;
+    uint32_t mip_levels;
+    uint32_t sample_quality;
+    GPUSampleCount sample_count;
+    GPUFormat format;
+    GPUResourceState state;
+    GPUResourceType type;
+    GPUTextureFlags flags;
+    GPUClearColor clear_color;
+};
 
+struct GPUTextureViewCreateInfo
+{
+    String name;
+    GPUTexture* texture;
+    GPUFormat format;
+    GPUTextureViewUsage usage;
+    GPUTextureViewAspect aspect;
+    GPUTextureType type;
+    uint32_t base_array_layer;
+    uint32_t array_layers;
+    uint32_t base_mip_level;
+    uint32_t mip_levels;
+};
+
+struct GPUSamplerCreateInfo
+{
+    GPUFilterType min_filter;
+    GPUFilterType mag_filter;
+    GPUMipMapMode mipmap_mode;
+    GPUAddressMode address_u;
+    GPUAddressMode address_v;
+    GPUAddressMode address_w;
+    GPUCompareMode compare_mode;
+    float mip_lod_bias;
+    float max_anisotropy;
+};
+
+struct GPUShaderLibraryCreateInfo
+{
+    String name;
+    const uint32_t* code;
+    uint32_t code_size;
+    GPUShaderStage stage;
+    bool reflection;
 };
 
 

@@ -7,7 +7,7 @@ project(
 )
 
 option(BUILD_SHARED_LIBS "build shared library" OFF)
-option(BUILD_TEST "build test example" OFF)
+option(BUILD_TEST "build test example" ON)
 
 file(GLOB_RECURSE HEADER_FILES include/*.h)
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp)

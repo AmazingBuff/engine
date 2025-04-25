@@ -8,11 +8,19 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12Adapter::DX12Adapter() : m_adapter(nullptr), m_feature_level(D3D_FEATURE_LEVEL_12_0), m_d3d12_detail{} {}
+DX12Adapter::DX12Adapter() : m_d3d12_detail{}, m_adapter(nullptr), m_feature_level(D3D_FEATURE_LEVEL_12_0) {}
 
 DX12Adapter::~DX12Adapter()
 {
     DX_FREE(m_adapter);
+}
+
+void DX12Adapter::query_memory_usage(uint64_t* total, uint64_t* used)
+{
+    DXGI_QUERY_VIDEO_MEMORY_INFO info;
+    DX_CHECK_RESULT(m_adapter->QueryVideoMemoryInfo(GPU_Node_Index, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info));
+    *total = info.Budget;
+    *used = info.CurrentUsage;
 }
 
 void DX12Adapter::record_adapter_detail()
@@ -44,6 +52,7 @@ void DX12Adapter::record_adapter_detail()
     D3D12_FEATURE_DATA_D3D12_OPTIONS options;
     if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options, sizeof(options))))
     {
+        m_d3d12_detail.tiled_resource_tier = options.TiledResourcesTier;
         m_adapter_detail.support_tiled_volume = (options.TiledResourcesTier >= D3D12_TILED_RESOURCES_TIER_3);
         m_adapter_detail.support_tiled_texture = (options.TiledResourcesTier >= D3D12_TILED_RESOURCES_TIER_1);
         m_adapter_detail.support_tiled_buffer = (options.TiledResourcesTier >= D3D12_TILED_RESOURCES_TIER_1);

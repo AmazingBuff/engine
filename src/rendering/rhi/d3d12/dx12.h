@@ -16,6 +16,7 @@ static constexpr uint32_t DX12_Cpu_Descriptor_Heap_Count[D3D12_DESCRIPTOR_HEAP_T
 static constexpr uint32_t DX12_Gpu_CbvSrvUav_Descriptor_Heap_Count = 1 << 16;
 static constexpr uint32_t DX12_Gpu_Sampler_Descriptor_Heap_Count = 2048;
 
+static constexpr uint32_t DX12_Pipeline_State_Object_Name_Max_Length = 256;
 
 static constexpr D3D_FEATURE_LEVEL D3D12_Feature_Levels[] =
 {

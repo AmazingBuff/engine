@@ -19,11 +19,11 @@ public:
 protected:
     struct GPUTextureInfo
     {
-        uint64_t width;
-        uint64_t height;
-        uint64_t depth;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
         uint32_t mip_levels;
-        uint32_t array_size_minus_one;
+        uint32_t array_layers;
         uint64_t size_in_bytes;
         GPUFormat format;
         GPUSampleCount sample_count;
@@ -40,6 +40,30 @@ protected:
         uint8_t can_alias;
         uint8_t can_export;
     };
+
+    struct GPUTiledTextureInfo
+    {
+        uint64_t tile_size;
+        uint64_t tile_count;
+
+        uint32_t tile_width_in_texels;
+        uint32_t tile_height_in_texels;
+        uint32_t tile_depth_in_texels;
+
+        uint32_t packed_mip_standard;
+        uint32_t packed_mip_count;
+    };
+
+    struct GPUTiledSubresourceInfo
+    {
+        uint32_t layers;
+        uint32_t mip_levels;
+        uint32_t width_in_tiles;
+        uint32_t height_in_tiles;
+        uint32_t depth_in_tiles;
+    };
+
+
     GPUTextureInfo* m_info;
 };
 

@@ -77,7 +77,7 @@ AResult DX12SwapChain::initialize(GPUInstance const* instance, GPUDevice const* 
     {
         m_swap_chain_buffer[i].resource = buffers[i];
         m_swap_chain_buffer[i].tex_info.is_cube              = false;
-        m_swap_chain_buffer[i].tex_info.array_size_minus_one = 0;
+        m_swap_chain_buffer[i].tex_info.array_layers         = 1;
         m_swap_chain_buffer[i].tex_info.sample_count         = GPUSampleCount::e_1; // TODO: ?
         m_swap_chain_buffer[i].tex_info.format               = info.format;
         m_swap_chain_buffer[i].tex_info.aspect_mask          = 1;
