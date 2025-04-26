@@ -13,7 +13,7 @@ class GPUDescriptorSet
 {
 public:
     GPUDescriptorSet() : m_ref_device(nullptr), m_ref_root_signature(nullptr), m_set_index(0) {}
-    virtual ~GPUDescriptorSet() = 0;
+    virtual ~GPUDescriptorSet() = default;
 
     virtual AResult initialize(GPUDevice const* device, GPUDescriptorSetCreateInfo const& info) = 0;
     virtual void update(Vector<GPUDescriptorData> const& descriptor_data) = 0;

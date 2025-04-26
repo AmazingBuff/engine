@@ -12,8 +12,8 @@ AMAZING_NAMESPACE_BEGIN
 class GPUGraphicsPipeline
 {
 public:
-    GPUGraphicsPipeline();
-    virtual ~GPUGraphicsPipeline() = 0;
+    GPUGraphicsPipeline() : m_ref_device(nullptr), m_ref_root_signature(nullptr) {}
+    virtual ~GPUGraphicsPipeline() = default;
 
     virtual AResult initialize(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info) = 0;
 protected:

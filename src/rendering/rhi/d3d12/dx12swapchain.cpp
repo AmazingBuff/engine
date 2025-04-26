@@ -53,14 +53,11 @@ AResult DX12SwapChain::initialize(GPUInstance const* instance, GPUDevice const* 
     IDXGISwapChain1* swap_chain;
     HWND hwnd = reinterpret_cast<HWND>(info.surface);
 
-    DX12Queue* queue = nullptr;
+    DX12Queue const* queue = nullptr;
     if (info.present_queues.empty())
-    {
-        queue = Allocator<DX12Queue>::allocate(1);
-        queue->initialize(dx12_device, GPUQueueType::e_graphics, 0);
-    }
+        queue = static_cast<DX12Queue const*>(dx12_device->get_queue(GPUQueueType::e_graphics, 0));
     else
-        queue = static_cast<DX12Queue*>(info.present_queues[0]);
+        queue = static_cast<DX12Queue const*>(info.present_queues[0]);
 
     DX_CHECK_RESULT(dx12_instance->m_dxgi_factory->CreateSwapChainForHwnd(queue->m_queue, hwnd, &swap_chain_desc, nullptr, nullptr, &swap_chain));
     DX_CHECK_RESULT(dx12_instance->m_dxgi_factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
@@ -76,17 +73,17 @@ AResult DX12SwapChain::initialize(GPUInstance const* instance, GPUDevice const* 
     for (uint32_t i = 0; i < info.frame_count; i++)
     {
         m_swap_chain_buffer[i].resource = buffers[i];
-        m_swap_chain_buffer[i].tex_info.is_cube              = false;
-        m_swap_chain_buffer[i].tex_info.array_layers         = 1;
-        m_swap_chain_buffer[i].tex_info.sample_count         = GPUSampleCount::e_1; // TODO: ?
-        m_swap_chain_buffer[i].tex_info.format               = info.format;
-        m_swap_chain_buffer[i].tex_info.aspect_mask          = 1;
-        m_swap_chain_buffer[i].tex_info.depth                = 1;
-        m_swap_chain_buffer[i].tex_info.width                = info.width;
-        m_swap_chain_buffer[i].tex_info.height               = info.height;
-        m_swap_chain_buffer[i].tex_info.mip_levels           = 1;
-        m_swap_chain_buffer[i].tex_info.node_index           = GPU_Node_Count;
-        m_swap_chain_buffer[i].tex_info.owns_image           = false;
+        m_swap_chain_buffer[i].tex_info.is_cube = false;
+        m_swap_chain_buffer[i].tex_info.array_layers = 1;
+        m_swap_chain_buffer[i].tex_info.sample_count = GPUSampleCount::e_1; // TODO: ?
+        m_swap_chain_buffer[i].tex_info.format = info.format;
+        m_swap_chain_buffer[i].tex_info.aspect_mask = 1;
+        m_swap_chain_buffer[i].tex_info.depth = 1;
+        m_swap_chain_buffer[i].tex_info.width = info.width;
+        m_swap_chain_buffer[i].tex_info.height = info.height;
+        m_swap_chain_buffer[i].tex_info.mip_levels = 1;
+        m_swap_chain_buffer[i].tex_info.node_index = GPU_Node_Index;
+        m_swap_chain_buffer[i].tex_info.owns_image = false;
     }
 
     return AResult::e_succeed;

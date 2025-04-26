@@ -38,7 +38,9 @@ void DX12Adapter::record_adapter_detail()
     ID3D12Device* device = nullptr;
     DX_CHECK_RESULT(D3D12CreateDevice(m_adapter, m_feature_level, IID_PPV_ARGS(&device)));
 
-    D3D12_FEATURE_DATA_ARCHITECTURE1 architecture;
+    D3D12_FEATURE_DATA_ARCHITECTURE1 architecture{
+        .NodeIndex = GPU_Node_Index
+    };
     DX_CHECK_RESULT(device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE1, &architecture, sizeof(D3D12_FEATURE_DATA_ARCHITECTURE1)));
     m_adapter_detail.is_uma = architecture.UMA;
     m_adapter_detail.is_cpu = (desc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE) ? true : false;

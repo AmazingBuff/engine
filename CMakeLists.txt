@@ -7,12 +7,14 @@ project(
 
 add_subdirectory(ext/eigen)
 add_subdirectory(ext/assimp)
+add_subdirectory(ext/sdl)
 add_subdirectory(ext/amazing_std)
+add_subdirectory(3rd)
 
 file(GLOB_RECURSE HEADER_FILES src/*.h)
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
 
-add_library(
+add_executable(
     ${PROJECT_NAME}
 )
 
@@ -26,6 +28,7 @@ target_sources(
 target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
+    ${THIRD_PARTY_INCLUDE_DIRS}
     include/
 #    PRIVATE
     src/
@@ -40,13 +43,14 @@ target_precompile_headers(
 target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC
-    d3dcompiler
+    ${THIRD_PARTY_LIBS}
     d3d12
     dxgi
+    amazing_std
     PRIVATE
+    SDL3::SDL3
     Eigen3::Eigen
     assimp::assimp
-    amazing_std
 )
 
 target_compile_features(

@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "base/trait.h"
-#include "base/util.h"
-#include "memory/allocator.h"
+#include "astd/base/trait.h"
+#include "astd/base/util.h"
+#include "astd/memory/allocator.h"
 #include <atomic>
 
 AMAZING_NAMESPACE_BEGIN
@@ -63,7 +63,7 @@ public:
     }
 
 private:
-    Tp*                     m_data;
+    Tp* m_data;
     size_t                  m_size;
     std::atomic<size_t>     m_read;
     std::atomic<size_t>     m_write;

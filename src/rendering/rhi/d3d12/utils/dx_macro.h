@@ -12,8 +12,8 @@
     if (FAILED(res))																			    \
     {																								\
         std::string format = std::format(															\
-        "[dx12, fatal, result]: HRESULT is \"{}\" in line: {}, function: {}, file: {}.",            \
-        res, __LINE__, __FUNCTION__, __FILE__);												        \
+        "[dx12, fatal, result]: HRESULT is \"{:x}\" in line: {}, function: {}, file: {}.",          \
+        *reinterpret_cast<uint32_t*>(&res), __LINE__, __FUNCTION__, __FILE__);						\
         std::cerr << format << std::endl;															\
         throw std::runtime_error(format);															\
     }																								\

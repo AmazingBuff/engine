@@ -9,7 +9,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-static constexpr size_t DX12_Hash = hash_combine(Rendering_Hash, hash_str("DX12"));
+static constexpr size_t DX12_Hash = hash_str("DX12", Rendering_Hash);
 static constexpr const char* DX12_Memory_Allocation_Name = "D3D12MA";
 
 static constexpr uint32_t DX12_Cpu_Descriptor_Heap_Count[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = { 1024 * 256, 2048, 1024 * 64, 1024 * 64 };

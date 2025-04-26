@@ -15,7 +15,7 @@ enum class GPUQueueType : uint8_t
 
     e_count
 };
-static constexpr uint8_t GPU_Queue_Type_Count = std::to_underlying(GPUQueueType::e_count);
+static constexpr uint8_t GPU_Queue_Type_Count = to_underlying(GPUQueueType::e_count);
 
 enum class GPUTextureType : uint8_t
 {
@@ -32,11 +32,18 @@ enum class GPUTextureType : uint8_t
     e_count,
     e_undefined
 };
-static constexpr uint8_t GPU_Texture_Type_Count = std::to_underlying(GPUTextureType::e_count);
+static constexpr uint8_t GPU_Texture_Type_Count = to_underlying(GPUTextureType::e_count);
 
 enum class GPUFormat : uint8_t
 {
     e_undefined,
+
+    e_r8g8b8a8_unorm,
+    e_r8g8b8a8_snorm,
+    e_r8g8b8a8_srgb,
+
+    e_b8g8r8a8_unorm,
+
 
     e_r32_uint,
     e_r32_sint,
@@ -63,16 +70,16 @@ enum class GPUFormat : uint8_t
 
     e_count
 };
-static constexpr uint8_t GPU_Format_Count = std::to_underlying(GPUFormat::e_count);
+static constexpr uint8_t GPU_Format_Count = to_underlying(GPUFormat::e_count);
 
 
 // mid
 enum class GPUSampleCount : uint8_t
 {
-    e_1  = 1,
-    e_2  = 2,
-    e_4  = 4,
-    e_8  = 8,
+    e_1 = 1,
+    e_2 = 2,
+    e_4 = 4,
+    e_8 = 8,
     e_16 = 16,
     e_32 = 32,
     e_64 = 64

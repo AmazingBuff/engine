@@ -13,9 +13,7 @@ class GPUQueue
 {
 public:
     GPUQueue() : m_type(GPUQueueType::e_graphics) {}
-    virtual ~GPUQueue() = 0;
-
-    virtual AResult initialize(GPUDevice const* device, GPUQueueType type, uint32_t index) = 0;
+    virtual ~GPUQueue() = default;
 protected:
     GPUQueueType m_type;
 };

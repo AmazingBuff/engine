@@ -7,7 +7,7 @@ AMAZING_NAMESPACE_BEGIN
 
 struct MemoryHeaderInfo
 {
-    size_t position;    
+    size_t position;
     size_t size;        // exclude header
     size_t offset;      // available memory offset
 
@@ -30,9 +30,9 @@ public:
     void* allocate(void* p, size_t size, void* data);
     void deallocate(void* p);
 private:
-    uint8_t*            m_data;
-    size_t              m_size;
-    MemoryHeaderInfo*   m_current_info;
+    uint8_t* m_data;
+    size_t m_size;
+    MemoryHeaderInfo* m_current_info;
 };
 
 IMemoryPool::IMemoryPool(size_t size) : m_current_info(nullptr)
@@ -40,6 +40,7 @@ IMemoryPool::IMemoryPool(size_t size) : m_current_info(nullptr)
     m_data = new uint8_t[size];
     if (!m_data)
         throw AStdException(AStdError::NO_ENOUGH_MEMORY);
+    memset(m_data, 0, size);
     m_size = size;
 }
 
@@ -55,7 +56,7 @@ void* IMemoryPool::allocate(size_t size, void* data)
     if (m_current_info)
     {
         MemoryHeaderInfo* iterator = m_current_info;
-        do 
+        do
         {
             if (iterator->offset + align_size + k_memory_header_size <= iterator->size)
             {
@@ -77,7 +78,7 @@ void* IMemoryPool::allocate(size_t size, void* data)
             }
             iterator = iterator->next;
         } while (iterator != m_current_info);
-        
+
         if (m_current_info == iterator)
             throw AStdException(AStdError::NO_APPLICABLE_POSITION);
     }
@@ -103,35 +104,22 @@ void* IMemoryPool::allocate(void* p, size_t size, void* data)
     if (p == nullptr)
         return allocate(size, data);
 
-    size_t offset = reinterpret_cast<uint8_t*>(p) - m_data;
-    MemoryHeaderInfo* iterator = m_current_info;
-    do
+    MemoryHeaderInfo* header = reinterpret_cast<MemoryHeaderInfo*>(reinterpret_cast<uint8_t*>(p) - k_memory_header_size);
+    if (size <= header->size)
     {
-        // input address must equal to pos
-        if (iterator->position + k_memory_header_size == offset)
-        {
-            if (size <= iterator->size)
-            {
-                iterator->offset = align_to(size, k_cache_alignment);
-                iterator->data = data;
-                return p;
-            }
-            else
-            {
-                // deallocate
-                MemoryHeaderInfo* prev = iterator->prev;
-                prev->size = prev->size + k_memory_header_size + iterator->size;
-                prev->next = iterator->next;
+        header->offset = align_to(size, k_cache_alignment);
+        header->data = data;
+        return p;
+    }
 
-                iterator->next->prev = prev;
-                
-                return allocate(size, data);
-            }
-        }
-        iterator = iterator->next;
-    } while (iterator != m_current_info);
+    // free and find appropriate position
+    MemoryHeaderInfo* prev = header->prev;
+    prev->size = prev->size + k_memory_header_size + header->size;
+    prev->next = header->next;
 
-    throw AStdException(AStdError::NO_VALID_PARAMETER);
+    header->next->prev = prev;
+
+    return allocate(size, data);
 }
 
 void IMemoryPool::deallocate(void* p)
@@ -139,25 +127,17 @@ void IMemoryPool::deallocate(void* p)
     if (p == nullptr)
         return;
 
-    size_t offset = reinterpret_cast<uint8_t*>(p) - m_data;
-    MemoryHeaderInfo* iterator = m_current_info;
-    do
+    MemoryHeaderInfo* header = reinterpret_cast<MemoryHeaderInfo*>(reinterpret_cast<uint8_t*>(p) - k_memory_header_size);
+    if (header->position != 0)
     {
-        if (iterator->position + k_memory_header_size == offset)
-        {
-            MemoryHeaderInfo* prev = iterator->prev;
-            prev->size = prev->size + k_memory_header_size + iterator->size;
-            prev->next = iterator->next;
+        MemoryHeaderInfo* prev = header->prev;
+        prev->size = prev->size + k_memory_header_size + header->size;
+        prev->next = header->next;
 
-            iterator->next->prev = prev;
-
-            m_current_info = prev;
-
-            break;
-        }
-
-        iterator = iterator->next;
-    } while (iterator != m_current_info);
+        header->next->prev = prev;
+    }
+    else
+        header->offset = 0;
 }
 
 

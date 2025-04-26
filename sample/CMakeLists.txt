@@ -7,7 +7,7 @@ function(add_sample sample_name)
 
     add_executable(${sample_name})
     target_sources(${sample_name} PRIVATE ${source_files})
-    target_link_libraries(${sample_name} PUBLIC ${PROJECT_NAME})
+    target_link_libraries(${sample_name} PUBLIC ${PROJECT_NAME} amazing_std)
 endfunction()
 
-add_sample(triangle)
+#add_sample(triangle)

@@ -14,7 +14,7 @@ class GPUQueryPool
 {
 public:
     GPUQueryPool() = default;
-    virtual ~GPUQueryPool() = 0;
+    virtual ~GPUQueryPool() = default;
 
     virtual AResult initialize(GPUDevice const* device, GPUQueryPoolCreateInfo const& info) = 0;
 };

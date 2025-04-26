@@ -5,6 +5,7 @@
 #include "dx12descriptor_set.h"
 #include "dx12device.h"
 #include "dx12root_signature.h"
+#include "dx12.h"
 #include "resources/dx12sampler.h"
 #include "resources/dx12texture_view.h"
 #include "resources/dx12buffer.h"
@@ -146,7 +147,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
         uint32_t heap_offset = 0;
         if (!data.name.empty())
         {
-            uint64_t name_hash = hash_str(data.name.c_str(), data.name.size());
+            uint64_t name_hash = hash_str(data.name.data(), data.name.size(), DX12_Hash);
             for (const GPUShaderResource& resource : dx12_root_signature->m_tables[m_set_index].resources)
             {
                 if (resource.name_hash == name_hash)
@@ -197,7 +198,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, {dx12_texture_view->m_srv_uva_handle.ptr + dx12_texture_view->m_uav_offset}, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, { dx12_texture_view->m_srv_uva_handle.ptr + dx12_texture_view->m_uav_offset }, m_cbv_srv_uav_handle, i + heap_offset);
             }
         }
         break;
@@ -216,7 +217,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, {dx12_buffer->m_handle.ptr + dx12_buffer->m_srv_offset}, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_srv_offset }, m_cbv_srv_uav_handle, i + heap_offset);
             }
         }
         break;
@@ -226,7 +227,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, {dx12_buffer->m_handle.ptr + dx12_buffer->m_uav_offset}, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_uav_offset }, m_cbv_srv_uav_handle, i + heap_offset);
             }
         }
         break;

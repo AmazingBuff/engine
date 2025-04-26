@@ -47,6 +47,9 @@ public:
 
     static void deallocate(Tp* p)
     {
+        if (p == nullptr)
+            return;
+
         if constexpr (std::is_destructible_v<Tp>)
             p->~Tp();
 

@@ -13,7 +13,7 @@ class GPUTexture
 {
 public:
     GPUTexture() : m_info(nullptr) {}
-    virtual ~GPUTexture() = 0;
+    virtual ~GPUTexture() = default;
 
     virtual AResult initialize(GPUDevice const* device, GPUTextureCreateInfo const& info) = 0;
 protected:

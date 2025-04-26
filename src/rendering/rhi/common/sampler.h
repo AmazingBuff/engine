@@ -13,7 +13,7 @@ class GPUSampler
 {
 public:
     GPUSampler() : m_ref_device(nullptr) {}
-    virtual ~GPUSampler() = 0;
+    virtual ~GPUSampler() = default;
 
     virtual AResult initialize(GPUDevice const* device, GPUSamplerCreateInfo const& info) = 0;
 protected:

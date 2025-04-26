@@ -3,6 +3,7 @@
 //
 
 #include "dx12shader_library.h"
+#include "rendering/rhi/d3d12/dx12.h"
 #include "rendering/rhi/d3d12/dx12device.h"
 #include "rendering/rhi/d3d12/utils/dx_macro.h"
 
@@ -104,7 +105,7 @@ AResult DX12ShaderLibrary::initialize(GPUShaderLibraryCreateInfo const& info)
 
         GPUShaderResource& shader_resource = shader_reflection.shader_resources[i];
         shader_resource.name = input_bind_desc.Name;
-        shader_resource.name_hash = hash_str(input_bind_desc.Name, strlen(input_bind_desc.Name));
+        shader_resource.name_hash = hash_str(input_bind_desc.Name, strlen(input_bind_desc.Name), DX12_Hash);
         shader_resource.resource_type = Resource_Type_Flag_Map[input_bind_desc.Type];
         shader_resource.set = input_bind_desc.Space;
         shader_resource.binding = input_bind_desc.BindPoint;

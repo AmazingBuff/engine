@@ -1,9 +1,9 @@
 #pragma once
 
-#include "base/define.h"
-#include "base/trait.h"
-#include "base/logger.h"
-#include "memory/allocator.h"
+#include "astd/base/define.h"
+#include "astd/base/trait.h"
+#include "astd/base/logger.h"
+#include "astd/memory/allocator.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -63,7 +63,25 @@ public:
 
     template <typename OtherT>
         requires(std::is_convertible_v<OtherT, Tp>)
-    explicit Vector(const Vector<OtherT>& other) : m_data(nullptr), m_size(other.m_size), m_capacity(other.m_capacity)
+    Vector(const std::initializer_list<OtherT>& list) : m_data(nullptr), m_size(list.size()), m_capacity(0)
+    {
+        reserve(m_size);
+        if constexpr (memcopyable<Tp, OtherT>)
+            std::memcpy(m_data, list.begin(), sizeof(Tp) * m_size);
+        else
+        {
+            size_t i = 0;
+            for (auto& item : list)
+            {
+                m_data[i] = item;
+                i++;
+            }
+        }
+    }
+
+    template <typename OtherT>
+        requires(std::is_convertible_v<OtherT, Tp>)
+    Vector(const Vector<OtherT>& other) : m_data(nullptr), m_size(other.m_size), m_capacity(other.m_capacity)
     {
         reserve(m_capacity);
         if constexpr (memcopyable<Tp, OtherT>)
@@ -84,7 +102,18 @@ public:
         m_capacity = 0;
     }
 
-    void emplace_back(Tp&& value)
+    template<typename... Args>
+        requires(std::is_constructible_v<Tp, Args...>)
+    void emplace_back(Args&&... args)
+    {
+        if (m_size >= m_capacity)
+            reserve(m_capacity == 0 ? 4 : (m_capacity * 3 / 2));
+
+        m_data[m_size] = Tp(std::forward<Args>(args)...);
+        m_size++;
+    }
+
+    void push_back(Tp&& value)
     {
         if (m_size >= m_capacity)
             reserve(m_capacity == 0 ? 4 : (m_capacity * 3 / 2));
@@ -170,8 +199,7 @@ public:
     {
         if (new_size > m_capacity)
             reserve(new_size);
-        else
-            m_size = new_size;
+        m_size = new_size;
     }
 
     void clear()
@@ -212,7 +240,7 @@ public:
     }
 
 protected:
-    Tp*         m_data;
+    Tp* m_data;
     size_t      m_size;
     size_t      m_capacity;
 };

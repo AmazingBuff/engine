@@ -13,7 +13,7 @@ DX12MemoryPool::DX12MemoryPool() : m_pool(nullptr) {}
 
 DX12MemoryPool::~DX12MemoryPool()
 {
-
+    DX_FREE(m_pool);
 }
 
 AResult DX12MemoryPool::initialize(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info)

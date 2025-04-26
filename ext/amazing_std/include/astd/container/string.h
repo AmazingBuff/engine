@@ -162,7 +162,17 @@ public:
         return !(*this == other);
     }
 
-    friend StringT operator+(const Tp* lhs, const StringT& rhs);
+    friend StringT operator+(const Tp* lhs, const StringT& rhs)
+    {
+        size_t size = str_length(lhs);
+        StringT<Tp, Alloc> str;
+
+        str.resize(size + rhs.m_size);
+        std::memcpy(str.m_data, lhs, size * sizeof(Tp));
+        std::memcpy(str.m_data + size, rhs.m_data, rhs.m_size * sizeof(Tp));
+        return str;
+    }
+
 
 public:
     static constexpr size_t end = std::numeric_limits<size_t>::max();
@@ -225,25 +235,13 @@ private:
     mutable Tp* m_c_str;
 };
 
-template <typename Tp, template <typename> typename Alloc>
-StringT<Tp, Alloc> operator+(const Tp* lhs, const StringT<Tp, Alloc>& rhs)
-{
-    size_t size = str_length(lhs);
-    StringT<Tp, Alloc> str;
-
-    str.resize(size + rhs.m_size);
-    std::memcpy(str.m_data, lhs, size * sizeof(Tp));
-    std::memcpy(str.m_data + size, rhs.m_data, rhs.m_size * sizeof(Tp));
-    return str;
-}
-
 
 template <typename Char, typename Tp>
 StringT<Char> to_str(const Tp& value)
 {
     if constexpr (std::is_integral_v<Tp>)
     {
-        Char buf[21];
+        Char buf[21]{};
         Char* end = std::end(buf);
         *end = '\0';
 
@@ -272,8 +270,8 @@ StringT<Char> to_str(const Tp& value)
 
 INTERNAL_NAMESPACE_END
 
-using String = Internal::StringT<char>;
-using WString = Internal::StringT<wchar_t>;
+using String = Internal::StringT<char, Allocator>;
+using WString = Internal::StringT<wchar_t, Allocator>;
 
 template <typename Tp>
 String to_str(const Tp& value)

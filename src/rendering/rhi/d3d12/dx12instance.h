@@ -21,9 +21,9 @@ public:
 
     void enum_adapters(const GPUAdapter** const adapters, uint32_t* num_adapters) const override;
 private:
-    IDXGIFactory6*          m_dxgi_factory;
-    ID3D12Debug*            m_debug;
-    Vector<DX12Adapter>     m_adapters;
+    IDXGIFactory6* m_dxgi_factory;
+    ID3D12Debug* m_debug;
+    Vector<DX12Adapter> m_adapters;
 
     friend class DX12SwapChain;
 };

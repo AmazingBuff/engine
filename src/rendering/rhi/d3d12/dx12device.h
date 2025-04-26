@@ -12,6 +12,7 @@ AMAZING_NAMESPACE_BEGIN
 
 class DX12DescriptorHeap;
 class DX12MemoryPool;
+class DX12Queue;
 
 class DX12Device final : public GPUDevice
 {
@@ -20,19 +21,18 @@ public:
     ~DX12Device() override;
 
     AResult initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info) override;
-
+    GPUQueue const* get_queue(GPUQueueType type, uint32_t index) const override;
 private:
-    ID3D12Device*                   m_device;
-    D3D12MA::Allocator*             m_allocator;
-    Vector<ID3D12CommandQueue*>     m_command_queues[GPU_Queue_Type_Count];
-    DX12DescriptorHeap*             m_descriptor_heap;
-    ID3D12PipelineLibrary*          m_pipeline_library;
-    DX12MemoryPool*                 m_memory_pool;
+    ID3D12Device* m_device;
+    D3D12MA::Allocator* m_allocator;
+    Vector<DX12Queue>  m_command_queues[GPU_Queue_Type_Count];
+    DX12DescriptorHeap* m_descriptor_heap;
+    ID3D12PipelineLibrary* m_pipeline_library;
+    DX12MemoryPool* m_memory_pool;
 
     friend class DX12SwapChain;
     friend class DX12Fence;
     friend class DX12Semaphore;
-    friend class DX12Queue;
     friend class DX12CommandPool;
     friend class DX12CommandBuffer;
     friend class DX12QueryPool;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "base/define.h"
-#include "base/trait.h"
-#include "memory/allocator.h"
+#include "astd/base/define.h"
+#include "astd/base/trait.h"
+#include "astd/memory/allocator.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -44,7 +44,7 @@ public:
 
         Tp* operator->()
         {
-           return &m_ptr->val;
+            return &m_ptr->val;
         }
 
         Tp& operator*()
@@ -217,7 +217,7 @@ public:
             m_head->prev = nullptr;
             m_head->next = nullptr;
         }
-        
+
         allocator::deallocate(node);
         node = nullptr;
 

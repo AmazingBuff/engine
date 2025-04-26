@@ -18,7 +18,6 @@ public:
 
 
     AResult initialize(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info) override;
-
 private:
     D3D12MA::Pool* m_pool;
 };

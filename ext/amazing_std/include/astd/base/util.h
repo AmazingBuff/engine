@@ -13,16 +13,16 @@ constexpr Tp align_to(const Tp value, const Tp alignment)
 }
 
 template<typename Tp, size_t N>
-constexpr size_t array_size(const Tp (&)[N])
+constexpr size_t array_size(const Tp(&)[N])
 {
     return N;
 }
 
 template<typename Tp, size_t N>
     requires(std::is_integral_v<Tp>)
-constexpr size_t hash_str(const Tp (&str)[N])
+constexpr size_t hash_str(const Tp(&str)[N], const size_t& seed)
 {
-    size_t hash = 2166136261ull;
+    size_t hash = seed;
     for (size_t i = 0; i < N - 1; ++i)
         hash = (hash ^ static_cast<size_t>(str[i])) * 16777619ull;
 
@@ -31,9 +31,9 @@ constexpr size_t hash_str(const Tp (&str)[N])
 
 template<typename Tp>
     requires(std::is_integral_v<Tp>)
-constexpr size_t hash_str(const Tp* str, const size_t len)
+constexpr size_t hash_str(const Tp* str, const size_t len, const size_t& seed)
 {
-    size_t hash = 2166136261ull;
+    size_t hash = seed;
     for (size_t i = 0; i < len; ++i)
         hash = (hash ^ static_cast<size_t>(str[i])) * 16777619ull;
 
@@ -74,18 +74,18 @@ template<typename Tp>
     requires(std::is_integral_v<Tp>)
 constexpr size_t count_bits(const Tp value)
 {
-    static constexpr size_t m1  = 0x5555555555555555; //binary: 0101...
-    static constexpr size_t m2  = 0x3333333333333333; //binary: 00110011..
-    static constexpr size_t m4  = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
-    static constexpr size_t m8  = 0x00ff00ff00ff00ff; //binary:  8 zeros,  8 ones ...
+    static constexpr size_t m1 = 0x5555555555555555; //binary: 0101...
+    static constexpr size_t m2 = 0x3333333333333333; //binary: 00110011..
+    static constexpr size_t m4 = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
+    static constexpr size_t m8 = 0x00ff00ff00ff00ff; //binary:  8 zeros,  8 ones ...
     static constexpr size_t m16 = 0x0000ffff0000ffff; //binary: 16 zeros, 16 ones ...
     static constexpr size_t m32 = 0x00000000ffffffff; //binary: 32 zeros, 32 ones ...
 
     size_t val = static_cast<size_t>(value);
-    val = (val & m1 ) + ((val >>  1) & m1 ); //put count of each  2 bits into those  2 bits
-    val = (val & m2 ) + ((val >>  2) & m2 ); //put count of each  4 bits into those  4 bits
-    val = (val & m4 ) + ((val >>  4) & m4 ); //put count of each  8 bits into those  8 bits
-    val = (val & m8 ) + ((val >>  8) & m8 ); //put count of each 16 bits into those 16 bits
+    val = (val & m1) + ((val >> 1) & m1); //put count of each  2 bits into those  2 bits
+    val = (val & m2) + ((val >> 2) & m2); //put count of each  4 bits into those  4 bits
+    val = (val & m4) + ((val >> 4) & m4); //put count of each  8 bits into those  8 bits
+    val = (val & m8) + ((val >> 8) & m8); //put count of each 16 bits into those 16 bits
     val = (val & m16) + ((val >> 16) & m16); //put count of each 32 bits into those 32 bits
     val = (val & m32) + ((val >> 32) & m32); //put count of each 64 bits into those 64 bits
     return val;

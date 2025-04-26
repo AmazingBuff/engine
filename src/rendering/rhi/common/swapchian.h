@@ -13,7 +13,7 @@ class GPUSwapChain
 {
 public:
     GPUSwapChain() = default;
-    virtual ~GPUSwapChain() = 0;
+    virtual ~GPUSwapChain() = default;
 
     virtual AResult initialize(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info) = 0;
     virtual uint32_t acquire_next_frame(GPUSemaphore const* semaphore, GPUFence const* fence) = 0;

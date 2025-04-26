@@ -13,7 +13,7 @@ class GPUSemaphore
 {
 public:
     GPUSemaphore() = default;
-    virtual ~GPUSemaphore() = 0;
+    virtual ~GPUSemaphore() = default;
 
     virtual AResult initialize(GPUDevice const* device) = 0;
 };

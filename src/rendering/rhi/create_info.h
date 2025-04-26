@@ -9,7 +9,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-static constexpr size_t Rendering_Hash = hash_combine(Amazing_Hash, hash_str("Rendering"));
+static constexpr size_t Rendering_Hash = hash_str("Rendering", Amazing_Hash);
 
 
 struct GPUInstanceCreateInfo
@@ -33,7 +33,7 @@ struct GPUSwapChainCreateInfo
     GPUFormat format;
     bool enable_vsync;
     GPUSurface* surface;
-    Vector<GPUQueue*> present_queues;
+    Vector<GPUQueue const*> present_queues;
 };
 
 struct GPUCommandBufferCreateInfo

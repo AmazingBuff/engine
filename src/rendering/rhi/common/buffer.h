@@ -13,7 +13,7 @@ class GPUBuffer
 {
 public:
     GPUBuffer() : m_ref_device(nullptr), m_info(nullptr) {}
-    virtual ~GPUBuffer() = 0;
+    virtual ~GPUBuffer() = default;
 
     virtual AResult initialize(GPUDevice const* device, GPUBufferCreateInfo const& info) = 0;
     virtual void map(size_t offset, size_t size) = 0;

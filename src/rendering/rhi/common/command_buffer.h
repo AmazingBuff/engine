@@ -13,7 +13,7 @@ class GPUCommandBuffer
 {
 public:
     GPUCommandBuffer() : m_ref_pool(nullptr) {}
-    virtual ~GPUCommandBuffer() = 0;
+    virtual ~GPUCommandBuffer() = default;
 
     virtual AResult initialize(GPUDevice const* device, GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info) = 0;
     virtual void begin_command() = 0;

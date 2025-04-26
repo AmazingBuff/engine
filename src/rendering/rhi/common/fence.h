@@ -13,7 +13,7 @@ class GPUFence
 {
 public:
     GPUFence() = default;
-    virtual ~GPUFence() = 0;
+    virtual ~GPUFence() = default;
 
     virtual AResult initialize(GPUDevice const* device) = 0;
     virtual AResult wait() = 0;

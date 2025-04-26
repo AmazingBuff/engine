@@ -13,7 +13,7 @@ class GPUShaderLibrary
 {
 public:
     GPUShaderLibrary() = default;
-    virtual ~GPUShaderLibrary() = 0;
+    virtual ~GPUShaderLibrary() = default;
 
     virtual AResult initialize(GPUShaderLibraryCreateInfo const& info) = 0;
 protected:

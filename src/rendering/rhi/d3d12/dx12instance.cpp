@@ -41,36 +41,48 @@ AResult DX12Instance::initialize(GPUInstanceCreateInfo const& info)
 
     DX_CHECK_RESULT(CreateDXGIFactory2(flags, IID_PPV_ARGS(&m_dxgi_factory)));
 
+    struct AdapterInfo
+    {
+        IDXGIAdapter4* adapter;
+        D3D_FEATURE_LEVEL feature_level;
+    };
+
+    Vector<AdapterInfo> adapter_infos;
     IDXGIAdapter4* adapter = nullptr;
-    for (uint32_t index = 0; SUCCEEDED(m_dxgi_factory->EnumAdapterByGpuPreference(index, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter))); index++)
+    for (uint32_t index = 0; m_dxgi_factory->EnumAdapterByGpuPreference(index, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter)) != DXGI_ERROR_NOT_FOUND; index++)
     {
         DXGI_ADAPTER_DESC3 desc;
         DX_CHECK_RESULT(adapter->GetDesc3(&desc));
         if (!(desc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE))
         {
-            for (const D3D_FEATURE_LEVEL D3D12_Feature_Level : D3D12_Feature_Levels)
+            for (const D3D_FEATURE_LEVEL& feature_level : D3D12_Feature_Levels)
             {
                 ID3D12Device* device;
-                if (SUCCEEDED(D3D12CreateDevice(adapter, D3D12_Feature_Level, IID_PPV_ARGS(&device))))
+                if (SUCCEEDED(D3D12CreateDevice(adapter, feature_level, IID_PPV_ARGS(&device))))
                 {
                     DX_FREE(device);
 
-                    DX12Adapter dx12_adapter;
-                    if (SUCCEEDED(adapter->QueryInterface(IID_PPV_ARGS(&dx12_adapter.m_adapter))))
-                    {
-                        dx12_adapter.m_feature_level = D3D12_Feature_Level;
-                        dx12_adapter.record_adapter_detail();
-
-                        m_adapters.push_back(std::move(dx12_adapter));
-                        break;
-                    }
+                    adapter_infos.emplace_back(adapter, feature_level);
+                    break;
                 }
             }
         }
         else
-            RENDERING_LOG_ERROR("can't support software rendering!");
+        {
+            if (!adapter_infos.empty())
+                RENDERING_LOG_WARNING("software rendering will not be added to adapter list!");
+            else
+                RENDERING_LOG_ERROR("can't support software rendering!");
+            DX_FREE(adapter);
+        }
+    }
 
-        DX_FREE(adapter);
+    m_adapters.resize(adapter_infos.size());
+    for (uint32_t i = 0; i < adapter_infos.size(); i++)
+    {
+        m_adapters[i].m_adapter = adapter_infos[i].adapter;
+        m_adapters[i].m_feature_level = adapter_infos[i].feature_level;
+        m_adapters[i].record_adapter_detail();
     }
 
     return AResult::e_succeed;
@@ -78,7 +90,8 @@ AResult DX12Instance::initialize(GPUInstanceCreateInfo const& info)
 
 void DX12Instance::enum_adapters(const GPUAdapter** const adapters, uint32_t* num_adapters) const
 {
-    *adapters = m_adapters.data();
+    if (adapters)
+        *adapters = m_adapters.data();
     *num_adapters = m_adapters.size();
 }
 

@@ -18,7 +18,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-static constexpr size_t Amazing_Hash = hash_str("Amazing");
+static constexpr size_t Amazing_Hash = hash_str("Amazing", 0);
 
 AMAZING_NAMESPACE_END
 
@@ -27,6 +27,6 @@ struct std::hash<Amazing::String>
 {
     NODISCARD size_t operator()(const Amazing::String& str) const noexcept
     {
-        return Amazing::hash_str(str.data(), str.size());
+        return Amazing::hash_str(str.data(), str.size(), Amazing::Amazing_Hash);
     }
 };

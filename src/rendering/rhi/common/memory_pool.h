@@ -13,7 +13,7 @@ class GPUMemoryPool
 {
 public:
     GPUMemoryPool() : m_ref_device(nullptr), m_type(GPUMemoryPoolType::e_automatic) {}
-    virtual ~GPUMemoryPool() = 0;
+    virtual ~GPUMemoryPool() = default;
 
     virtual AResult initialize(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info) = 0;
 protected:

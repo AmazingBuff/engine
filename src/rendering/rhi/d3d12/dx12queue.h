@@ -14,14 +14,14 @@ class DX12Fence;
 class DX12Queue final : public GPUQueue
 {
 public:
-    DX12Queue();
     ~DX12Queue() override;
-
-    AResult initialize(GPUDevice const* device, GPUQueueType type, uint32_t index) override;
 private:
-    ID3D12CommandQueue* m_queue; // just a copy of device
+    DX12Queue();
+private:
+    ID3D12CommandQueue* m_queue;
     DX12Fence* m_fence;
 
+    friend class DX12Device;
     friend class DX12SwapChain;
     friend class DX12CommandPool;
 };
