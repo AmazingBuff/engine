@@ -109,7 +109,7 @@ GPURootSignature::~GPURootSignature()
 
 AResult GPURootSignature::initialize(GPUDevice const*, GPURootSignatureCreateInfo const& info)
 {
-    GPUShaderReflection* entry_reflection[32];
+    GPUShaderReflection* entry_reflection[32]{};
     // resources
     List<GPUShaderResource> resources;
     List<GPUShaderResource> push_constant_resources;
@@ -151,7 +151,7 @@ AResult GPURootSignature::initialize(GPUDevice const*, GPURootSignatureCreateInf
     for (auto& resource : resources)
         set_resource_map[resource.set].push_back(resource);
 
-    m_tables.reserve(set_resource_map.size());
+    m_tables.resize(set_resource_map.size());
     size_t index = 0;
     for (auto& [set, shader_resources] : set_resource_map)
     {
@@ -163,7 +163,7 @@ AResult GPURootSignature::initialize(GPUDevice const*, GPURootSignatureCreateInf
     }
 
     // push constants
-    m_push_constants.reserve(push_constant_resources.size());
+    m_push_constants.resize(push_constant_resources.size());
     index = 0;
     for (auto& push_constant_resource : push_constant_resources)
     {
@@ -172,7 +172,7 @@ AResult GPURootSignature::initialize(GPUDevice const*, GPURootSignatureCreateInf
     }
 
     // static samplers
-    m_static_samplers.reserve(static_sampler_resources.size());
+    m_static_samplers.resize(static_sampler_resources.size());
     index = 0;
     for (auto& static_sampler_resource : static_sampler_resources)
     {

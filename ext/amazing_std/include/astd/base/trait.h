@@ -57,8 +57,8 @@ class BitFlag : public Enum<T>
     using type = std::underlying_type_t<T>;
 public:
     BitFlag() = default;
-    explicit BitFlag(const type& value);
-    explicit BitFlag(const T& value);
+    BitFlag(const type& value);
+    BitFlag(const T& value);
     BitFlag(const BitFlag& other);
     BitFlag(BitFlag&& other) noexcept;
 

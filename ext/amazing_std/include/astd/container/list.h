@@ -282,7 +282,7 @@ public:
 
     Iterator begin()
     {
-        return Iterator(m_head);
+        return Iterator(m_head->next);
     }
 
     Iterator end()

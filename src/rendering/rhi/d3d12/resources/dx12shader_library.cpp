@@ -92,12 +92,12 @@ AResult DX12ShaderLibrary::initialize(GPUShaderLibraryCreateInfo const& info)
     DX_CHECK_RESULT(dx12_reflection->GetDesc(&shader_desc));
 
     // resources
-    m_shader_reflections.reserve(1);
+    m_shader_reflections.resize(1);
     GPUShaderReflection& shader_reflection = m_shader_reflections[0];
-    shader_reflection.entry_name = nullptr;
+    //shader_reflection.entry_name = info.name;
     shader_reflection.stage = info.stage;
 
-    shader_reflection.shader_resources.reserve(shader_desc.BoundResources);
+    shader_reflection.shader_resources.resize(shader_desc.BoundResources);
     for (uint32_t i = 0; i < shader_desc.BoundResources; i++)
     {
         D3D12_SHADER_INPUT_BIND_DESC input_bind_desc;
@@ -129,7 +129,7 @@ AResult DX12ShaderLibrary::initialize(GPUShaderLibraryCreateInfo const& info)
     // vertex inputs
     if (info.stage == GPUShaderStageFlag::e_vertex)
     {
-        shader_reflection.vertex_inputs.reserve(shader_desc.InputParameters);
+        shader_reflection.vertex_inputs.resize(shader_desc.InputParameters);
         for (uint32_t i = 0; i < shader_desc.InputParameters; i++)
         {
             D3D12_SIGNATURE_PARAMETER_DESC input_param_desc;
@@ -142,7 +142,7 @@ AResult DX12ShaderLibrary::initialize(GPUShaderLibraryCreateInfo const& info)
                 vertex_input.name = input_param_desc.SemanticName;
 
             uint32_t channels = count_bits(input_param_desc.Mask);
-            vertex_input.format = Format_Map[input_param_desc.ComponentType + 3 * channels];
+            vertex_input.format = Format_Map[input_param_desc.ComponentType + 3 * (channels - 1)];
         }
     }
     else if (info.stage == GPUShaderStageFlag::e_compute)

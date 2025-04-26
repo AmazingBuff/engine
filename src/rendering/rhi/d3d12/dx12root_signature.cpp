@@ -100,7 +100,7 @@ AResult DX12RootSignature::initialize(GPUDevice const* device, GPURootSignatureC
 
     // push constant
     // todo: add more push constant support
-    m_constant_parameters.reserve(m_push_constants.size());
+    m_constant_parameters.resize(m_push_constants.size());
     for (uint32_t i = 0; i < m_push_constants.size(); ++i)
     {
         m_constant_parameters[i].root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;

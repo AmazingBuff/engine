@@ -62,7 +62,7 @@ target_compile_features(
 target_compile_definitions(
     ${PROJECT_NAME}
     PRIVATE
-    SOURCES_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    RES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/"
 )
 
 if (WIN32)

@@ -116,12 +116,12 @@ void swap(RBTreeNode<Tp>* s1, RBTreeNode<Tp>* s2)
 template <typename Trait>
 class RBTree
 {
-    using key_type          =   typename Trait::key_type;
-    using value_type        =   typename Trait::value_type;
-    using key_compare       =   typename Trait::key_compare;
-    using value_compare     =   typename Trait::value_compare;
-    using node_type         =   typename Trait::node_type;
-    using allocator         =   typename Trait::allocator;
+    using key_type = typename Trait::key_type;
+    using value_type = typename Trait::value_type;
+    using key_compare = typename Trait::key_compare;
+    using value_compare = typename Trait::value_compare;
+    using node_type = typename Trait::node_type;
+    using allocator = typename Trait::allocator;
     //using node_type         =   RBTreeNode<value_type>;
 
     static constexpr bool is_set = std::is_same_v<key_type, value_type>;
@@ -149,6 +149,8 @@ public:
                 else
                     m_node = nullptr;
             }
+            else
+                m_node = nullptr; // no parent, end
 
             return *this;
         }
@@ -205,7 +207,7 @@ public:
     }
 
     template <typename... Args>
-    requires(std::is_constructible_v<value_type, Args...>)
+        requires(std::is_constructible_v<value_type, Args...>)
     void emplace(Args&&... args)
     {
         value_type val(std::forward<Args>(args)...);
@@ -222,28 +224,28 @@ public:
         {
             parent = node;
             if constexpr (!Trait::is_multi)
-            if (value_compare()(node->val, val))
-            {
-                node = node->right;
-                left_pos = false;
-            }
-            else if (value_compare()(val, node->val))
-            {
-                node = node->left;
-                left_pos = true;
-            }
-            else
-            {
-                // equal
-                if constexpr (!Trait::is_multi)
-                    return;
+                if (value_compare()(node->val, val))
+                {
+                    node = node->right;
+                    left_pos = false;
+                }
+                else if (value_compare()(val, node->val))
+                {
+                    node = node->left;
+                    left_pos = true;
+                }
                 else
                 {
-                    // insert to right subtree
+                    // equal
+                    if constexpr (!Trait::is_multi)
+                        return;
+                    else
+                    {
+                        // insert to right subtree
 
-                    ;
+                        ;
+                    }
                 }
-            }
         }
 
         node = allocator::allocate(1);
@@ -539,8 +541,8 @@ private:
             node_type* grand = parent->parent;
 
             // parent red while uncle black
-            if (grand->left == nullptr || grand->right == nullptr || 
-                grand->left->color == node_type::Color::Black || 
+            if (grand->left == nullptr || grand->right == nullptr ||
+                grand->left->color == node_type::Color::Black ||
                 grand->right->color == node_type::Color::Black)
             {
                 node_type* adjust = nullptr;
@@ -593,7 +595,7 @@ private:
     }
 
 private:
-    node_type*  m_root;
+    node_type* m_root;
     size_t      m_size;
 };
 

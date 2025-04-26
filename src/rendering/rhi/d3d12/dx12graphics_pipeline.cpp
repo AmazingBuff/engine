@@ -75,20 +75,20 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
     };
 
     // shader stages
-#define SHADER_STAGE(stage)                                                                                         \
-    D3D12_SHADER_BYTECODE stage{};                                                                                    \
-    if (info.stage)                                                                                                 \
-    {                                                                                                               \
-        DX12ShaderLibrary const* dx12_shader_library = static_cast<DX12ShaderLibrary const*>(info.stage->library);  \
-        (stage).BytecodeLength = dx12_shader_library->m_blob_encoding->GetBufferSize();                               \
-        (stage).pShaderBytecode = dx12_shader_library->m_blob_encoding->GetBufferPointer();                           \
+#define SHADER_STAGE(stage)                                                                                             \
+    D3D12_SHADER_BYTECODE stage{};                                                                                      \
+    if (info.stage)                                                                                                     \
+    {                                                                                                                   \
+        DX12ShaderLibrary const* dx12_shader_library = static_cast<DX12ShaderLibrary const*>(info.stage->library);      \
+        (stage).BytecodeLength = dx12_shader_library->m_blob_encoding->GetBufferSize();                                 \
+        (stage).pShaderBytecode = dx12_shader_library->m_blob_encoding->GetBufferPointer();                             \
     }
 
-    SHADER_STAGE(vertex_shader)
-    SHADER_STAGE(tessellation_control_shader)
-    SHADER_STAGE(tessellation_evaluation_shader)
-    SHADER_STAGE(geometry_shader)
-    SHADER_STAGE(fragment_shader)
+    SHADER_STAGE(vertex_shader);
+    SHADER_STAGE(tessellation_control_shader);
+    SHADER_STAGE(tessellation_evaluation_shader);
+    SHADER_STAGE(geometry_shader);
+    SHADER_STAGE(fragment_shader);
 #undef SHADER_STAGE
 
     // stream out
@@ -111,7 +111,11 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
     };
 
     // blend state
-    D3D12_BLEND_DESC blend_desc{};
+    D3D12_BLEND_DESC blend_desc{
+        .AlphaToCoverageEnable = 0,
+        .IndependentBlendEnable = TRUE,
+    };
+    blend_desc.RenderTarget[0].BlendEnable = 0;
     if (info.blend_state)
     {
         GPUBlendState const* blend_state = info.blend_state;
@@ -143,7 +147,19 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
     }
 
     // rasterizer state
-    D3D12_RASTERIZER_DESC rasterizer_desc{};
+    D3D12_RASTERIZER_DESC rasterizer_desc{
+        .FillMode = D3D12_FILL_MODE_SOLID,
+        .CullMode = D3D12_CULL_MODE_BACK,
+        .FrontCounterClockwise = 0,
+        .DepthBias = 0,
+        .DepthBiasClamp = 0.0f,
+        .SlopeScaledDepthBias = 0.0f,
+        .DepthClipEnable = 1,
+        .MultisampleEnable = 0,
+        .AntialiasedLineEnable = 0,
+        .ForcedSampleCount = 0,
+        .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
+    };
     if (info.rasterizer_state)
     {
         GPURasterizerState const* rasterizer_state = info.rasterizer_state;
@@ -161,7 +177,11 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
     }
 
     // depth stencil state
-    D3D12_DEPTH_STENCIL_DESC depth_stencil_desc{};
+    D3D12_DEPTH_STENCIL_DESC depth_stencil_desc{
+        .DepthEnable = 0,
+        .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
+        .StencilEnable = 0,
+    };
     if (info.depth_stencil_state)
     {
         GPUDepthStencilState const* depth_stencil_state = info.depth_stencil_state;
@@ -215,11 +235,11 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
     if (dx12_device->m_pipeline_library)
     {
 #define SHADER_HASH(shader) if ((shader).BytecodeLength) shader_hash = hash_combine(shader_hash, shader.pShaderBytecode, shader.BytecodeLength);
-        SHADER_HASH(vertex_shader)
-        SHADER_HASH(tessellation_control_shader)
-        SHADER_HASH(tessellation_evaluation_shader)
-        SHADER_HASH(geometry_shader)
-        SHADER_HASH(fragment_shader)
+        SHADER_HASH(vertex_shader);
+        SHADER_HASH(tessellation_control_shader);
+        SHADER_HASH(tessellation_evaluation_shader);
+        SHADER_HASH(geometry_shader);
+        SHADER_HASH(fragment_shader);
 #undef SHADER_HASH
 
         graphics_hash = hash_combine(graphics_hash, &m_pipeline_state_desc.BlendState, sizeof(D3D12_BLEND_DESC));

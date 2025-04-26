@@ -12,8 +12,10 @@ DXGI_FORMAT transfer_format(GPUFormat format, bool shader)
 {
     switch (format)
     {
+    case GPUFormat::e_r8g8b8a8_unorm:
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
     case GPUFormat::e_r8g8b8a8_srgb:
-        return shader ? DXGI_FORMAT_B8G8R8A8_UNORM_SRGB : DXGI_FORMAT_B8G8R8A8_UNORM;
+        return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     }
 
     return DXGI_FORMAT_UNKNOWN;
