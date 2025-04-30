@@ -1,4 +1,3 @@
-
 function(add_sample sample_name)
     file(GLOB_RECURSE source_files ${sample_name}/*.cpp)
 
@@ -7,7 +6,13 @@ function(add_sample sample_name)
 
     add_executable(${sample_name})
     target_sources(${sample_name} PRIVATE ${source_files})
-    target_link_libraries(${sample_name} PUBLIC ${PROJECT_NAME} amazing_std)
+    target_link_libraries(${sample_name} PUBLIC ${PROJECT_NAME})
 endfunction()
 
-#add_sample(triangle)
+function(add_samples sample_list)
+    foreach (sample ${sample_list})
+        add_sample(${sample})
+    endforeach ()
+endfunction()
+
+add_subdirectory(rendering)

@@ -5,6 +5,8 @@
 #ifndef ENUMERATION_H
 #define ENUMERATION_H
 
+#include <astd/astd.h>
+
 AMAZING_NAMESPACE_BEGIN
 
 enum class GPUQueueType : uint8_t

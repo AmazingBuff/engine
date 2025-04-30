@@ -14,7 +14,7 @@ add_subdirectory(3rd)
 file(GLOB_RECURSE HEADER_FILES src/*.h)
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
 
-add_executable(
+add_library(
     ${PROJECT_NAME}
 )
 
@@ -47,7 +47,6 @@ target_link_libraries(
     d3d12
     dxgi
     amazing_std
-    PRIVATE
     SDL3::SDL3
     Eigen3::Eigen
     assimp::assimp
@@ -61,7 +60,7 @@ target_compile_features(
 
 target_compile_definitions(
     ${PROJECT_NAME}
-    PRIVATE
+    PUBLIC
     RES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/"
 )
 

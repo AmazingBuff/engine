@@ -5,6 +5,8 @@
 #ifndef API_H
 #define API_H
 
+#include <astd/astd.h>
+
 AMAZING_NAMESPACE_BEGIN
 
 static constexpr uint32_t GPU_Node_Count = 1;

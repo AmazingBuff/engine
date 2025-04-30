@@ -1,8 +1,8 @@
 //
 // Created by AmazingBuff on 2025/4/23.
 //
-#include "root_signature_pool.h"
-#include "root_signature.h"
+#include "rendering/rhi/common/root_signature_pool.h"
+#include "rendering/rhi/common/root_signature.h"
 #include <ranges>
 
 AMAZING_NAMESPACE_BEGIN
@@ -166,7 +166,7 @@ GPURootSignature* GPURootSignaturePool::insert(GPURootSignature* root_signature,
         return iter->second;
     }
     m_characteristic_map[characteristic] = root_signature;
-    m_reverse_characteristic_map[root_signature] = {characteristic, 1};
+    m_reverse_characteristic_map[root_signature] = { characteristic, 1 };
     return root_signature;
 }
 
