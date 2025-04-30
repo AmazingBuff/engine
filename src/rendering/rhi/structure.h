@@ -27,6 +27,7 @@ class GPURootSignature;
 class GPURootSignaturePool;
 class GPUDescriptorSet;
 class GPUGraphicsPipeline;
+class GPUGraphicsPassEncoder;
 
 class GPUMemoryPool;
 class GPUBuffer;
@@ -109,7 +110,7 @@ struct GPUConstantSpecialization
 
 struct GPUShaderEntry
 {
-    GPUShaderLibrary* library;
+    GPUShaderLibrary const* library;
     String entry;
     GPUShaderStage stage;
     Vector<GPUConstantSpecialization> constants;
@@ -124,7 +125,7 @@ struct GPUParameterTable
 struct GPUStaticSampler
 {
     String name;
-    GPUSampler* sampler;
+    GPUSampler const* sampler;
 };
 
 struct GPUDescriptorData
@@ -200,6 +201,59 @@ struct GPURasterizerState
     bool enable_multisample;
     bool enable_scissor;
     bool enable_depth_clamp;
+};
+
+struct GPUBufferBarrier
+{
+    GPUBuffer const* buffer;
+    GPUResourceState src_state;
+    GPUResourceState dst_state;
+    uint8_t queue_acquire;
+    uint8_t queue_release;
+    GPUQueueType queue_type;
+};
+
+struct GPUTextureBarrier
+{
+    GPUTexture const* texture;
+    GPUResourceState src_state;
+    GPUResourceState dst_state;
+    uint8_t queue_acquire;
+    uint8_t queue_release;
+    GPUQueueType queue_type;
+
+    // make following parameters add to barrier
+    uint8_t subresource_barrier;
+    uint32_t mip_level;
+    uint32_t array_layer;
+};
+
+struct GPUColorAttachment
+{
+    GPUTextureView const* texture_view;
+    GPUTextureView const* resolve_view;
+    GPULoadAction load;
+    GPUStoreAction store;
+    GPUClearColor clear_color;
+};
+
+struct GPUDepthStencilAttachment
+{
+    GPUTextureView const* texture_view;
+    GPULoadAction depth_load;
+    GPUStoreAction depth_store;
+    GPULoadAction stencil_load;
+    GPUStoreAction stencil_store;
+    GPUClearColor clear_color;
+    uint8_t depth_write;
+    uint8_t stencil_write;
+};
+
+struct GPUBufferBinding
+{
+    GPUBuffer const* buffer;
+    uint32_t stride;
+    uint32_t offset;
 };
 
 AMAZING_NAMESPACE_END

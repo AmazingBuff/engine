@@ -2,10 +2,8 @@
 // Created by AmazingBuff on 2025/4/23.
 //
 #include "root_signature_pool.h"
-
-#include <ranges>
-
 #include "root_signature.h"
+#include <ranges>
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -36,7 +34,7 @@ struct GPUStaticSamplerInfo
 {
     uint32_t set;
     uint32_t binding;
-    GPUSampler* id;
+    GPUSampler const* id;
 
     explicit operator size_t() const
     {
@@ -67,7 +65,7 @@ struct GPUPushConstantInfo
 };
 
 
-GPURootSignaturePool::GPURootSignatureCharacteristic GPURootSignaturePool::transfer_characteristic(GPURootSignature const* tables, GPURootSignatureCreateInfo const& info)
+GPURootSignaturePool::GPURootSignatureCharacteristic GPURootSignaturePool::transfer_characteristic(GPURootSignature const* tables, GPURootSignatureCreateInfo const& info) const
 {
     GPURootSignatureCharacteristic characteristic{
         .table_count = static_cast<uint32_t>(tables->m_tables.size()),
@@ -170,15 +168,6 @@ GPURootSignature* GPURootSignaturePool::insert(GPURootSignature* root_signature,
     m_characteristic_map[characteristic] = root_signature;
     m_reverse_characteristic_map[root_signature] = {characteristic, 1};
     return root_signature;
-}
-
-
-GPURootSignaturePool::~GPURootSignaturePool() {}
-
-AResult GPURootSignaturePool::initialize(GPUDevice const* device, GPURootSignaturePoolCreateInfo const& info)
-{
-
-    return AResult::e_succeed;
 }
 
 AMAZING_NAMESPACE_END

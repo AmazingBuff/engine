@@ -10,31 +10,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12TextureView::DX12TextureView() : m_rtv_dsv_handle{}, m_srv_uva_handle{}, m_uav_offset(0) {}
-
-DX12TextureView::~DX12TextureView()
-{
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(m_ref_device);
-
-    if (m_rtv_dsv_handle.ptr != 0 && m_usage & GPUTextureViewUsageFlag::e_rtv_dsv)
-    {
-        DX12DescriptorHeap::D3D12DescriptorHeap* heap;
-        if (is_depth_stencil_format(m_format))
-            heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_DSV];
-        else
-            heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV];
-        DX12DescriptorHeap::return_descriptor_handle(heap, m_rtv_dsv_handle, 1);
-    }
-
-    if (m_srv_uva_handle.ptr != 0)
-    {
-        uint32_t handle_count = ((m_usage & GPUTextureViewUsageFlag::e_srv) ? 1 : 0) + ((m_usage & GPUTextureViewUsageFlag::e_uav) ? 1 : 0);
-        DX12DescriptorHeap::D3D12DescriptorHeap* heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
-        DX12DescriptorHeap::return_descriptor_handle(heap, m_srv_uva_handle, handle_count);
-    }
-}
-
-AResult DX12TextureView::initialize(GPUDevice const* device, GPUTextureViewCreateInfo const& info)
+DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateInfo const& info) : m_rtv_dsv_handle{}, m_srv_uva_handle{}, m_uav_offset(0)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12Texture* dx12_texture = static_cast<DX12Texture*>(info.texture);
@@ -318,10 +294,28 @@ AResult DX12TextureView::initialize(GPUDevice const* device, GPUTextureViewCreat
     m_ref_device = device;
     m_usage = info.usage;
     m_format = info.format;
-
-    return AResult::e_succeed;
 }
 
+DX12TextureView::~DX12TextureView()
+{
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(m_ref_device);
 
+    if (m_rtv_dsv_handle.ptr != 0 && m_usage & GPUTextureViewUsageFlag::e_rtv_dsv)
+    {
+        DX12DescriptorHeap::D3D12DescriptorHeap* heap;
+        if (is_depth_stencil_format(m_format))
+            heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_DSV];
+        else
+            heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV];
+        DX12DescriptorHeap::return_descriptor_handle(heap, m_rtv_dsv_handle, 1);
+    }
+
+    if (m_srv_uva_handle.ptr != 0)
+    {
+        uint32_t handle_count = ((m_usage & GPUTextureViewUsageFlag::e_srv) ? 1 : 0) + ((m_usage & GPUTextureViewUsageFlag::e_uav) ? 1 : 0);
+        DX12DescriptorHeap::D3D12DescriptorHeap* heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
+        DX12DescriptorHeap::return_descriptor_handle(heap, m_srv_uva_handle, handle_count);
+    }
+}
 
 AMAZING_NAMESPACE_END

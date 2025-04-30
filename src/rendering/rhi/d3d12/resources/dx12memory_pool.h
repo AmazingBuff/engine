@@ -13,11 +13,8 @@ AMAZING_NAMESPACE_BEGIN
 class DX12MemoryPool final : public GPUMemoryPool
 {
 public:
-    DX12MemoryPool();
+    DX12MemoryPool(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info);
     ~DX12MemoryPool() override;
-
-
-    AResult initialize(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info) override;
 private:
     D3D12MA::Pool* m_pool;
 };

@@ -12,10 +12,8 @@ AMAZING_NAMESPACE_BEGIN
 class DX12RootSignature final : public GPURootSignature
 {
 public:
-    DX12RootSignature();
+    DX12RootSignature(GPUDevice const* device, GPURootSignatureCreateInfo const& info);
     ~DX12RootSignature() override;
-
-    AResult initialize(GPUDevice const* device, GPURootSignatureCreateInfo const& info) override;
 private:
     ID3D12RootSignature* m_root_signature;
 
@@ -29,6 +27,7 @@ private:
 
     friend class DX12DescriptorSet;
     friend class DX12GraphicsPipeline;
+    friend class DX12GraphicsPassEncoder;
 };
 
 AMAZING_NAMESPACE_END

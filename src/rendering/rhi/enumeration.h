@@ -227,6 +227,19 @@ enum class GPUPrimitiveTopology : uint8_t
     e_patch_list,
 };
 
+enum class GPULoadAction : uint8_t
+{
+    e_dont_care,
+    e_load,
+    e_clear
+};
+
+enum class GPUStoreAction : uint8_t
+{
+    e_dont_care,
+    e_store,
+    e_discard
+};
 
 
 // flags

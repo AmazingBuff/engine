@@ -12,31 +12,21 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12RootSignature::DX12RootSignature() : m_root_signature(nullptr) {}
-
-DX12RootSignature::~DX12RootSignature()
-{
-    if (m_pool)
-        m_pool->remove(this);
-
-    DX_FREE(m_root_signature);
-}
-
-AResult DX12RootSignature::initialize(GPUDevice const* device, GPURootSignatureCreateInfo const& info)
+DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCreateInfo const& info) : m_root_signature(nullptr)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
 
-    GPURootSignature::initialize(device, info);
+    initialize(info);
     if (info.pool)
     {
-        DX12RootSignature* pool_root_signature = static_cast<DX12RootSignature*>(info.pool->find(this, info));
+        DX12RootSignature const* pool_root_signature = static_cast<DX12RootSignature const*>(info.pool->find(this, info));
         if (pool_root_signature)
         {
             m_root_signature = pool_root_signature->m_root_signature;
             m_constant_parameters = pool_root_signature->m_constant_parameters;
             m_pool = info.pool;
 
-            return AResult::e_succeed;
+            return;
         }
     }
 
@@ -114,7 +104,7 @@ AResult DX12RootSignature::initialize(GPUDevice const* device, GPURootSignatureC
     }
 
     // static samplers
-    D3D12_STATIC_SAMPLER_DESC* sampler_desc = static_cast<D3D12_STATIC_SAMPLER_DESC*>(alloca(m_static_samplers.size() * sizeof(D3D12_STATIC_SAMPLER_DESC)));
+    D3D12_STATIC_SAMPLER_DESC* sampler_desc = m_static_samplers.empty() ? nullptr : static_cast<D3D12_STATIC_SAMPLER_DESC*>(alloca(m_static_samplers.size() * sizeof(D3D12_STATIC_SAMPLER_DESC)));
     for (size_t i = 0; i < m_static_samplers.size(); ++i)
     {
         const GPUShaderResource& resource = m_static_samplers[i];
@@ -167,13 +157,16 @@ AResult DX12RootSignature::initialize(GPUDevice const* device, GPURootSignatureC
             m_root_signature = pool_root_signature->m_root_signature;
             m_constant_parameters = pool_root_signature->m_constant_parameters;
             m_pool = info.pool;
-
-            return AResult::e_succeed;
         }
     }
+}
 
+DX12RootSignature::~DX12RootSignature()
+{
+    if (m_pool)
+        m_pool->remove(this);
 
-    return AResult::e_succeed;
+    DX_FREE(m_root_signature);
 }
 
 AMAZING_NAMESPACE_END

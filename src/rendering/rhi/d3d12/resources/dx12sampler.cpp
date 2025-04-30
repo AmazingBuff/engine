@@ -9,17 +9,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12Sampler::DX12Sampler() : m_desc{}, m_handle{} {}
-
-DX12Sampler::~DX12Sampler()
-{
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(m_ref_device);
-
-    DX12DescriptorHeap::D3D12DescriptorHeap* heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER];
-    DX12DescriptorHeap::return_descriptor_handle(heap, m_handle, 1);
-}
-
-AResult DX12Sampler::initialize(GPUDevice const* device, GPUSamplerCreateInfo const& info)
+DX12Sampler::DX12Sampler(GPUDevice const* device, GPUSamplerCreateInfo const& info) : m_desc{}, m_handle{}
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
 
@@ -43,8 +33,14 @@ AResult DX12Sampler::initialize(GPUDevice const* device, GPUSamplerCreateInfo co
 
     m_ref_device = device;
     m_desc = sampler_desc;
+}
 
-    return AResult::e_succeed;
+DX12Sampler::~DX12Sampler()
+{
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(m_ref_device);
+
+    DX12DescriptorHeap::D3D12DescriptorHeap* heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER];
+    DX12DescriptorHeap::return_descriptor_handle(heap, m_handle, 1);
 }
 
 

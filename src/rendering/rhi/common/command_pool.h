@@ -15,7 +15,7 @@ public:
     GPUCommandPool() : m_type(GPUQueueType::e_graphics) {}
     virtual ~GPUCommandPool() = default;
 
-    virtual AResult initialize(GPUDevice const* device, GPUQueue const* queue) = 0;
+    virtual void reset() = 0;
 protected:
     GPUQueueType m_type;
 };

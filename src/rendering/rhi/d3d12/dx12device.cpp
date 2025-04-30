@@ -12,20 +12,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12Device::DX12Device() : m_device(nullptr), m_allocator(nullptr), m_descriptor_heap(nullptr), m_pipeline_library(nullptr), m_memory_pool(nullptr) {}
-
-DX12Device::~DX12Device()
-{
-    DX_FREE(m_pipeline_library);
-
-    Allocator<DX12MemoryPool>::deallocate(m_memory_pool);
-    Allocator<DX12DescriptorHeap>::deallocate(m_descriptor_heap);
-
-    DX_FREE(m_allocator);
-    DX_FREE(m_device);
-}
-
-AResult DX12Device::initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
+DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info) : m_device(nullptr), m_allocator(nullptr), m_descriptor_heap(nullptr), m_pipeline_library(nullptr), m_memory_pool(nullptr)
 {
     DX12Adapter const* dx12_adapter = static_cast<DX12Adapter const*>(adapter);
     DX_CHECK_RESULT(D3D12CreateDevice(dx12_adapter->m_adapter, dx12_adapter->m_feature_level, IID_PPV_ARGS(&m_device)));
@@ -41,7 +28,7 @@ AResult DX12Device::initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo co
 
         for (uint32_t j = 0; j < queue_group.queue_count; j++)
         {
-            DX12Queue& queue = m_command_queues[type][j];
+            DX12Queue* queue = PLACEMENT_NEW(DX12Queue, sizeof(DX12Queue), nullptr);
 
             D3D12_COMMAND_QUEUE_DESC queue_desc{};
             switch (queue_group.queue_type)
@@ -59,11 +46,12 @@ AResult DX12Device::initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo co
                 RENDERING_LOG_ERROR("no suitable queue type");
             }
             queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-            DX_CHECK_RESULT(m_device->CreateCommandQueue(&queue_desc, IID_PPV_ARGS(&queue.m_queue)));
+            DX_CHECK_RESULT(m_device->CreateCommandQueue(&queue_desc, IID_PPV_ARGS(&queue->m_queue)));
 
-            queue.m_type = queue_group.queue_type;
-            queue.m_fence = Allocator<DX12Fence>::allocate(1);
-            queue.m_fence->initialize(this);
+            queue->m_type = queue_group.queue_type;
+            queue->m_fence = PLACEMENT_NEW(DX12Fence, sizeof(DX12Fence), nullptr, this);
+
+            m_command_queues[type][j] = queue;
         }
     }
 
@@ -93,12 +81,10 @@ AResult DX12Device::initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo co
         .min_allocation_alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
     };
 
-    m_memory_pool = Allocator<DX12MemoryPool>::allocate(1);
-    m_memory_pool->initialize(this, memory_pool_create_info);
+    m_memory_pool = PLACEMENT_NEW(DX12MemoryPool, sizeof(DX12MemoryPool), nullptr, this, memory_pool_create_info);
 
     // descriptor heap
-    m_descriptor_heap = Allocator<DX12DescriptorHeap>::allocate(1);
-    m_descriptor_heap->initialize(m_device);
+    m_descriptor_heap = PLACEMENT_NEW(DX12DescriptorHeap, sizeof(DX12DescriptorHeap), nullptr, m_device);
 
     // pipeline cache
     if (!info.disable_pipeline_cache)
@@ -118,13 +104,32 @@ AResult DX12Device::initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo co
         if (FAILED(result))
             RENDERING_LOG_WARNING("enable pipeline cache, but not supported!");
     }
-
-    return AResult::e_succeed;
 }
 
-GPUQueue const* DX12Device::get_queue(GPUQueueType type, uint32_t index) const
+DX12Device::~DX12Device()
 {
-    return &m_command_queues[to_underlying(type)][index];
+    DX_FREE(m_pipeline_library);
+
+    PLACEMENT_DELETE(DX12MemoryPool, m_memory_pool);
+    PLACEMENT_DELETE(DX12DescriptorHeap, m_descriptor_heap);
+
+    DX_FREE(m_allocator);
+
+    for (uint8_t i = 0; i < GPU_Queue_Type_Count; i++)
+    {
+        for (size_t j = 0; j < m_command_queues[i].size(); j++)
+        {
+            PLACEMENT_DELETE(DX12Queue, m_command_queues[i][j]);
+            m_command_queues[i][j] = nullptr;
+        }
+    }
+
+    DX_FREE(m_device);
+}
+
+GPUQueue const* DX12Device::fetch_queue(GPUQueueType type, uint32_t index) const
+{
+    return m_command_queues[to_underlying(type)][index];
 }
 
 AMAZING_NAMESPACE_END

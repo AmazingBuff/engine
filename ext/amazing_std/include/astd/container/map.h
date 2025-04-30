@@ -1,6 +1,7 @@
 #pragma once
 
-#include "tree.h"
+#include "internal/tree.h"
+#include "internal/hash.h"
 
 AMAZING_NAMESPACE_BEGIN
 INTERNAL_NAMESPACE_BEGIN
@@ -32,6 +33,41 @@ public:
         return val.first;
     }
 };
+
+
+
+template <typename Key, typename Tp, typename Hash, template <typename> typename Alloc, bool Multi>
+class HashMapTrait
+{
+public:
+    using key_type      =   Key;
+    using value_type    =   Pair<Key, Tp>;
+    using key_hash      =   Hash;
+    using node_type     =   HashNode<value_type>;
+    using allocator     =   Alloc<node_type>;
+
+    class value_hash
+    {
+    public:
+        NODISCARD size_t operator()(const value_type& value) const
+        {
+            return key_hash()(value.first);
+        }
+    };
+
+    static constexpr bool is_multi = Multi;
+
+    static constexpr size_t max_bucket_size = 8;
+    static constexpr size_t max_load_factor_numerator = 7;
+    static constexpr size_t max_load_factor_denominator = 8;
+
+    // extract key from element value
+    static const key_type& key_func(const value_type& val)
+    {
+        return val.first;
+    }
+};
+
 
 INTERNAL_NAMESPACE_END
 
@@ -73,8 +109,70 @@ template <typename Key, typename Tp, typename Pred = Less<Key>, template <typena
 class MultiMap : public Internal::RBTree<Internal::MapTrait<Key, Tp, Pred, Alloc, true>>
 {
     using Tree = Internal::RBTree<Internal::MapTrait<Key, Tp, Pred, Alloc, true>>;
+    using Iterator = typename Tree::Iterator;
 public:
-    // todo: support multimap
+    Iterator find(const Key& key)
+    {
+        return Iterator(Tree::find_node(key));
+    }
+
+    Iterator const find(const Key& key) const
+    {
+        return Iterator(Tree::find_node(key));
+    }
+};
+
+
+// hash map
+template <typename Key, typename Tp, typename Hasher = std::hash<Key>, template <typename> typename Alloc = Allocator>
+class HashMap : public Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Alloc, false>>
+{
+    using Hash = Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Alloc, false>>;
+    using Iterator = typename Hash::Iterator;
+public:
+    Tp& operator[](const Key& key)
+    {
+        auto node = Hash::find_node(key);
+        if (node == nullptr)
+        {
+            Hash::emplace(key, Tp());
+            return Hash::find_node(key)->val.second;
+        }
+
+        return node->val.second;
+    }
+
+    const Tp& operator[](const Key& key) const
+    {
+        return Hash::find_node(key)->val.second;
+    }
+
+    Iterator find(const Key& key)
+    {
+        return Iterator(Hash::find_node(key));
+    }
+
+    Iterator const find(const Key& key) const
+    {
+        return Iterator(Hash::find_node(key));
+    }
+};
+
+template <typename Key, typename Tp, typename Hasher = std::hash<Key>, template <typename> typename Alloc = Allocator>
+class MultiHashMap : public Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Alloc, true>>
+{
+    using Hash = Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Alloc, true>>;
+    using Iterator = typename Hash::Iterator;
+public:
+    Iterator find(const Key& key)
+    {
+        return Iterator(Hash::find_node(key));
+    }
+
+    Iterator const find(const Key& key) const
+    {
+        return Iterator(Hash::find_node(key));
+    }
 };
 
 

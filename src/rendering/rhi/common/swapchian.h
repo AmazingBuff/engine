@@ -15,8 +15,17 @@ public:
     GPUSwapChain() = default;
     virtual ~GPUSwapChain() = default;
 
-    virtual AResult initialize(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info) = 0;
     virtual uint32_t acquire_next_frame(GPUSemaphore const* semaphore, GPUFence const* fence) = 0;
+    virtual GPUTexture const* fetch_back_texture(uint32_t index) const = 0;
+    virtual GPUTextureView const* fetch_back_texture_view(uint32_t index) const = 0;
+protected:
+    struct GPUSwapChainBackBuffer
+    {
+        GPUTexture* back_texture;
+        GPUTextureView* back_texture_view;
+    };
+
+    Vector<GPUSwapChainBackBuffer> m_back_textures;
 };
 
 AMAZING_NAMESPACE_END

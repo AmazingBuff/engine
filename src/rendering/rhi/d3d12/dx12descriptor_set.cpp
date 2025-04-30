@@ -26,14 +26,7 @@ static uint32_t descriptor_count_need(GPUShaderResource const& resource)
 }
 
 
-DX12DescriptorSet::DX12DescriptorSet() : m_cbv_srv_uav_handle(0), m_cbv_srv_uav_stride(0), m_sampler_handle(0), m_sampler_stride(0) {}
-
-DX12DescriptorSet::~DX12DescriptorSet()
-{
-
-}
-
-AResult DX12DescriptorSet::initialize(GPUDevice const* device, GPUDescriptorSetCreateInfo const& info)
+DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCreateInfo const& info) : m_cbv_srv_uav_handle(0), m_cbv_srv_uav_stride(0), m_sampler_handle(0), m_sampler_stride(0)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12RootSignature const* dx12_root_signature = static_cast<DX12RootSignature const*>(info.root_signature);
@@ -129,8 +122,11 @@ AResult DX12DescriptorSet::initialize(GPUDevice const* device, GPUDescriptorSetC
     m_ref_device = device;
     m_ref_root_signature = info.root_signature;
     m_set_index = info.set_index;
+}
 
-    return AResult::e_succeed;
+DX12DescriptorSet::~DX12DescriptorSet()
+{
+
 }
 
 void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)

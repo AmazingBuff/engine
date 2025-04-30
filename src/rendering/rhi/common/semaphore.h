@@ -14,8 +14,6 @@ class GPUSemaphore
 public:
     GPUSemaphore() = default;
     virtual ~GPUSemaphore() = default;
-
-    virtual AResult initialize(GPUDevice const* device) = 0;
 };
 
 AMAZING_NAMESPACE_END

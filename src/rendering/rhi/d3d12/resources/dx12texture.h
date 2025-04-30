@@ -14,10 +14,8 @@ class DX12Texture final : public GPUTexture
 {
 public:
     DX12Texture();
+    DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& info);
     ~DX12Texture();
-
-    AResult initialize(GPUDevice const* device, GPUTextureCreateInfo const& info) override;
-
 private:
     static D3D12_RESOURCE_DIMENSION transfer_resource_dimension(GPUTextureCreateInfo const& info);
     static D3D12_TEXTURE_LAYOUT transfer_resource_layout(GPUTextureCreateInfo const& info);
@@ -55,6 +53,7 @@ private:
 
     friend class DX12SwapChain;
     friend class DX12TextureView;
+    friend class DX12CommandBuffer;
 };
 
 AMAZING_NAMESPACE_END

@@ -13,10 +13,9 @@ AMAZING_NAMESPACE_BEGIN
 class DX12Buffer final : public GPUBuffer
 {
 public:
-    DX12Buffer();
+    DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info);
     ~DX12Buffer() override;
 
-    AResult initialize(GPUDevice const* device, GPUBufferCreateInfo const& info) override;
     void map(size_t offset, size_t size) override;
     void unmap() override;
 private:
@@ -31,6 +30,8 @@ private:
     uint32_t m_uav_offset;
 
     friend class DX12DescriptorSet;
+    friend class DX12CommandBuffer;
+    friend class DX12GraphicsPassEncoder;
 };
 
 AMAZING_NAMESPACE_END

@@ -62,7 +62,7 @@ struct GPURootSignatureCreateInfo
 
 struct GPUDescriptorSetCreateInfo
 {
-    GPURootSignature* root_signature;
+    GPURootSignature const* root_signature;
     uint32_t set_index;
 };
 
@@ -90,6 +90,13 @@ struct GPUGraphicsPipelineCreateInfo
     GPUPrimitiveTopology primitive_topology;
 };
 
+struct GPUGraphicsPassCreateInfo
+{
+    String name;
+    GPUSampleCount sample_count;
+    Vector<GPUColorAttachment> color_attachments;
+    GPUDepthStencilAttachment const* depth_stencil_attachment;
+};
 
 
 // resources
@@ -113,7 +120,7 @@ struct GPUBufferCreateInfo
         uint32_t element_count;
         uint32_t element_stride;
     } data_array;
-    GPUBuffer* counter_buffer;
+    GPUBuffer const* counter_buffer;
     GPUMemoryUsage usage;
     GPUFormat format;
     GPUResourceState state;
@@ -172,6 +179,29 @@ struct GPUShaderLibraryCreateInfo
     uint32_t code_size;
     GPUShaderStage stage;
     bool reflection;
+};
+
+
+// process
+struct GPUResourceBarrierInfo
+{
+    Vector<GPUBufferBarrier> buffer_barriers;
+    Vector<GPUTextureBarrier> texture_barriers;
+};
+
+struct GPUQueueSubmitInfo
+{
+    Vector<GPUCommandBuffer const*> command_buffers;
+    Vector<GPUSemaphore const*> wait_semaphores;
+    Vector<GPUSemaphore*> signal_semaphores;
+    GPUFence* signal_fence;
+};
+
+struct GPUQueuePresentInfo
+{
+    GPUSwapChain const* swap_chain;
+    Vector<GPUSemaphore const*> wait_semaphores;
+    uint8_t index;
 };
 
 

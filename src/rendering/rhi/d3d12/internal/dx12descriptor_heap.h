@@ -13,10 +13,9 @@ AMAZING_NAMESPACE_BEGIN
 class DX12DescriptorHeap
 {
 public:
-    DX12DescriptorHeap();
+    explicit DX12DescriptorHeap(ID3D12Device* device);
     ~DX12DescriptorHeap();
 
-    AResult initialize(ID3D12Device* device);
     void create_cbv(ID3D12Device* device, D3D12_CONSTANT_BUFFER_VIEW_DESC const& cbv_desc, D3D12_CPU_DESCRIPTOR_HANDLE& handle) const;
     void create_srv(ID3D12Device* device, ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC const& srv_desc, D3D12_CPU_DESCRIPTOR_HANDLE& handle) const;
     void create_uav(ID3D12Device* device, ID3D12Resource* resource, ID3D12Resource* counter_resource, D3D12_UNORDERED_ACCESS_VIEW_DESC const& uav_desc, D3D12_CPU_DESCRIPTOR_HANDLE& handle) const;

@@ -13,11 +13,12 @@ AMAZING_NAMESPACE_BEGIN
 class DX12SwapChain final : public GPUSwapChain
 {
 public:
-    DX12SwapChain();
+    DX12SwapChain(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info);
     ~DX12SwapChain() override;
 
-    AResult initialize(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info) override;
     uint32_t acquire_next_frame(GPUSemaphore const* semaphore, GPUFence const* fence) override;
+    GPUTexture const* fetch_back_texture(uint32_t index) const override;
+    GPUTextureView const* fetch_back_texture_view(uint32_t index) const override;
 private:
     struct D3D12SwapChainBuffer
     {
@@ -26,7 +27,11 @@ private:
     };
 
     IDXGISwapChain3* m_swap_chain;
-    Vector<D3D12SwapChainBuffer> m_swap_chain_buffer;
+    //Vector<D3D12SwapChainBuffer> m_swap_chain_buffer;
+    uint32_t m_present_sync_interval;
+    uint32_t m_present_flags;
+
+    friend class DX12Queue;
 };
 
 

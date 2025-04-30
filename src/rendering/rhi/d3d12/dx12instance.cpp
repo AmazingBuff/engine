@@ -9,16 +9,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12Instance::DX12Instance() : m_dxgi_factory(nullptr), m_debug(nullptr) {}
-
-DX12Instance::~DX12Instance()
-{
-    DX_FREE(m_dxgi_factory);
-    DX_FREE(m_debug);
-}
-
-
-AResult DX12Instance::initialize(GPUInstanceCreateInfo const& info)
+DX12Instance::DX12Instance(GPUInstanceCreateInfo const& info) : m_dxgi_factory(nullptr), m_debug(nullptr)
 {
     UINT flags = 0;
     if (info.enable_debug_layer)
@@ -80,19 +71,30 @@ AResult DX12Instance::initialize(GPUInstanceCreateInfo const& info)
     m_adapters.resize(adapter_infos.size());
     for (uint32_t i = 0; i < adapter_infos.size(); i++)
     {
-        m_adapters[i].m_adapter = adapter_infos[i].adapter;
-        m_adapters[i].m_feature_level = adapter_infos[i].feature_level;
-        m_adapters[i].record_adapter_detail();
+        DX12Adapter* dx12_adapter = PLACEMENT_NEW(DX12Adapter, sizeof(DX12Adapter), nullptr);
+        dx12_adapter->m_adapter = adapter_infos[i].adapter;
+        dx12_adapter->m_feature_level = adapter_infos[i].feature_level;
+        dx12_adapter->record_adapter_detail();
+        m_adapters[i] = dx12_adapter;
     }
-
-    return AResult::e_succeed;
 }
 
-void DX12Instance::enum_adapters(const GPUAdapter** const adapters, uint32_t* num_adapters) const
+DX12Instance::~DX12Instance()
 {
-    if (adapters)
-        *adapters = m_adapters.data();
-    *num_adapters = m_adapters.size();
+    for (size_t i = 0; i < m_adapters.size(); i++)
+    {
+        PLACEMENT_DELETE(DX12Adapter, m_adapters[i]);
+        m_adapters[i] = nullptr;
+    }
+
+    DX_FREE(m_dxgi_factory);
+    DX_FREE(m_debug);
+}
+
+void DX12Instance::enum_adapters(Vector<GPUAdapter*>& adapters) const
+{
+    adapters.resize(m_adapters.size());
+    memcpy(adapters.data(), m_adapters.data(), sizeof(GPUAdapter*) * m_adapters.size());
 }
 
 

@@ -91,6 +91,12 @@ constexpr size_t count_bits(const Tp value)
     return val;
 }
 
-
+template<typename Tp>
+void swap(Tp& l, Tp& r)
+{
+    Tp tmp = l;
+    l = r;
+    r = tmp;
+}
 
 AMAZING_NAMESPACE_END

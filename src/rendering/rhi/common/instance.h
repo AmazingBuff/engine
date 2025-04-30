@@ -15,8 +15,7 @@ public:
     GPUInstance() = default;
     virtual ~GPUInstance() = default;
 
-    virtual AResult initialize(GPUInstanceCreateInfo const& info) = 0;
-    virtual void enum_adapters(const GPUAdapter** const adapters, uint32_t* num_adapters) const = 0;
+    virtual void enum_adapters(Vector<GPUAdapter*>& adapters) const = 0;
 };
 
 AMAZING_NAMESPACE_END

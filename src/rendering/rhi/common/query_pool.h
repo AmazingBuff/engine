@@ -5,7 +5,6 @@
 #ifndef QUERY_POOL_H
 #define QUERY_POOL_H
 
-#include "device.h"
 #include "rendering/rhi/create_info.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -16,7 +15,6 @@ public:
     GPUQueryPool() = default;
     virtual ~GPUQueryPool() = default;
 
-    virtual AResult initialize(GPUDevice const* device, GPUQueryPoolCreateInfo const& info) = 0;
 };
 
 AMAZING_NAMESPACE_END

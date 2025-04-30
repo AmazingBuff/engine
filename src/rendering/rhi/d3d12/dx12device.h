@@ -17,15 +17,14 @@ class DX12Queue;
 class DX12Device final : public GPUDevice
 {
 public:
-    DX12Device();
+    DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info);
     ~DX12Device() override;
 
-    AResult initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info) override;
-    GPUQueue const* get_queue(GPUQueueType type, uint32_t index) const override;
+    GPUQueue const* fetch_queue(GPUQueueType type, uint32_t index) const override;
 private:
     ID3D12Device* m_device;
     D3D12MA::Allocator* m_allocator;
-    Vector<DX12Queue>  m_command_queues[GPU_Queue_Type_Count];
+    Vector<DX12Queue*>  m_command_queues[GPU_Queue_Type_Count];
     DX12DescriptorHeap* m_descriptor_heap;
     ID3D12PipelineLibrary* m_pipeline_library;
     DX12MemoryPool* m_memory_pool;

@@ -15,7 +15,6 @@ public:
     GPUGraphicsPipeline() : m_ref_device(nullptr), m_ref_root_signature(nullptr) {}
     virtual ~GPUGraphicsPipeline() = default;
 
-    virtual AResult initialize(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info) = 0;
 protected:
     GPUDevice const* m_ref_device;
     GPURootSignature const* m_ref_root_signature;

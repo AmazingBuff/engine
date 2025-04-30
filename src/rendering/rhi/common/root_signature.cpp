@@ -102,14 +102,9 @@ static void collect_resource(Vector<GPUShaderResource> const& input_resources, G
 }
 
 
-GPURootSignature::~GPURootSignature()
+void GPURootSignature::initialize(GPURootSignatureCreateInfo const& info)
 {
-
-}
-
-AResult GPURootSignature::initialize(GPUDevice const*, GPURootSignatureCreateInfo const& info)
-{
-    GPUShaderReflection* entry_reflection[32]{};
+    GPUShaderReflection const* entry_reflection[32]{};
     // resources
     List<GPUShaderResource> resources;
     List<GPUShaderResource> push_constant_resources;
@@ -120,7 +115,7 @@ AResult GPURootSignature::initialize(GPUDevice const*, GPURootSignatureCreateInf
         GPUShaderEntry const& shader = info.shaders[i];
         for (size_t j = 0; j < shader.library->m_shader_reflections.size(); j++)
         {
-            GPUShaderReflection& reflection = shader.library->m_shader_reflections[j];
+            GPUShaderReflection const& reflection = shader.library->m_shader_reflections[j];
             if (!reflection.entry_name.empty() && shader.entry == reflection.entry_name)
             {
                 entry_reflection[i] = &reflection;
@@ -130,13 +125,9 @@ AResult GPURootSignature::initialize(GPUDevice const*, GPURootSignatureCreateInf
 
         // collect resource
         if (entry_reflection[i] == nullptr)
-        {
             entry_reflection[i] = &shader.library->m_shader_reflections[0];
-            if (i == 0)
-                collect_resource(entry_reflection[i]->shader_resources, info, resources, push_constant_resources, static_sampler_resources);
-        }
-        else
-            collect_resource(entry_reflection[i]->shader_resources, info, resources, push_constant_resources, static_sampler_resources);
+
+        collect_resource(entry_reflection[i]->shader_resources, info, resources, push_constant_resources, static_sampler_resources);
 
         if (entry_reflection[i]->stage & GPUShaderStageFlag::e_compute)
             m_pipeline_type = GPUPipelineType::e_compute;
@@ -179,8 +170,6 @@ AResult GPURootSignature::initialize(GPUDevice const*, GPURootSignatureCreateInf
         m_static_samplers[index] = static_sampler_resource;
         index++;
     }
-
-    return AResult::e_succeed;
 }
 
 AMAZING_NAMESPACE_END

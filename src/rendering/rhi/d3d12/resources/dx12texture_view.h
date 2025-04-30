@@ -5,7 +5,6 @@
 #ifndef DX12TEXTURE_VIEW_H
 #define DX12TEXTURE_VIEW_H
 
-#include "rendering/rhi/common/device.h"
 #include "rendering/rhi/common/texture_view.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -13,10 +12,8 @@ AMAZING_NAMESPACE_BEGIN
 class DX12TextureView final : public GPUTextureView
 {
 public:
-    DX12TextureView();
+    DX12TextureView(GPUDevice const* device, GPUTextureViewCreateInfo const& info);
     ~DX12TextureView() override;
-
-    AResult initialize(GPUDevice const* device, GPUTextureViewCreateInfo const& info) override;
 private:
     D3D12_CPU_DESCRIPTOR_HANDLE m_rtv_dsv_handle;
     D3D12_CPU_DESCRIPTOR_HANDLE m_srv_uva_handle;
@@ -24,6 +21,7 @@ private:
     uint32_t m_uav_offset;
 
     friend class DX12DescriptorSet;
+    friend class DX12CommandBuffer;
 };
 
 AMAZING_NAMESPACE_END

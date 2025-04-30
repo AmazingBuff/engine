@@ -6,17 +6,15 @@
 #define DX12SHADER_LIBRARY_H
 
 #include "rendering/rhi/common/shader_library.h"
-#include <dxcapi.h>
+#include <dxc/dxcapi.h>
 
 AMAZING_NAMESPACE_BEGIN
 
 class DX12ShaderLibrary final : public GPUShaderLibrary
 {
 public:
-    DX12ShaderLibrary();
+    explicit DX12ShaderLibrary(GPUShaderLibraryCreateInfo const& info);
     ~DX12ShaderLibrary() override;
-
-    AResult initialize(GPUShaderLibraryCreateInfo const& info) override;
 private:
     IDxcBlobEncoding* m_blob_encoding;
 

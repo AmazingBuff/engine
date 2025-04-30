@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include <astd/astd.h>
-//#include <Eigen/Eigen>
+#include <Eigen/Eigen>
 
 #ifdef _WIN64
 #include <windows.h>

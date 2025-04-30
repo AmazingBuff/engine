@@ -15,7 +15,6 @@ public:
     GPUFence() = default;
     virtual ~GPUFence() = default;
 
-    virtual AResult initialize(GPUDevice const* device) = 0;
     virtual AResult wait() = 0;
 };
 

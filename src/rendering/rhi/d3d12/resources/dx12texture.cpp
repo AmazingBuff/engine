@@ -105,38 +105,24 @@ uint32_t DX12Texture::transfer_sampler_count(ID3D12Device* device, DXGI_FORMAT f
     return 1;
 }
 
-
 DX12Texture::DX12Texture() : m_resource(nullptr), m_allocation(nullptr) {}
 
-DX12Texture::~DX12Texture()
+DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& info) : m_resource(nullptr), m_allocation(nullptr)
 {
-    if (m_info->is_aliasing)
-        Allocator<D3D12AliasingTextureInfo>::deallocate(static_cast<D3D12AliasingTextureInfo*>(m_info));
-    else if (m_info->is_tiled)
-        Allocator<D3D12TiledTextureInfo>::deallocate(static_cast<D3D12TiledTextureInfo*>(m_info));
-    else
-        Allocator<GPUTextureInfo>::deallocate(m_info);
-
-    DX_FREE(m_resource);
-    DX_FREE(m_allocation);
-}
-
-AResult DX12Texture::initialize(GPUDevice const* device, GPUTextureCreateInfo const& info)
-{
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
+DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12Adapter const* dx12_adapter = static_cast<DX12Adapter const*>(dx12_device->m_ref_adapter);
 
     DXGI_FORMAT dxgi_format = transfer_format(info.format);
     D3D12_RESOURCE_DESC desc{
         .Dimension = transfer_resource_dimension(info),
-        .Alignment = std::to_underlying(info.sample_count) > 1 ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : 0ull,
+        .Alignment = to_underlying(info.sample_count) > 1 ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : 0ull,
         .Width = info.width,
         .Height = info.height,
         .DepthOrArraySize = static_cast<uint16_t>(info.array_layers > 1 ? info.array_layers : info.depth),
         .MipLevels = static_cast<uint16_t>(info.mip_levels),
         .Format = format_typeless(dxgi_format),
         .SampleDesc{
-            .Count = transfer_sampler_count(dx12_device->m_device, dxgi_format, std::to_underlying(info.sample_count)),
+            .Count = transfer_sampler_count(dx12_device->m_device, dxgi_format, to_underlying(info.sample_count)),
             .Quality = info.sample_quality,
         },
         .Layout = transfer_resource_layout(info),
@@ -290,10 +276,19 @@ AResult DX12Texture::initialize(GPUDevice const* device, GPUTextureCreateInfo co
             DX_CHECK_RESULT(m_resource->SetName(debug_name));
         }
     }
-
-    return AResult::e_succeed;
 }
 
+DX12Texture::~DX12Texture()
+{
+    if (m_info->is_aliasing)
+        Allocator<D3D12AliasingTextureInfo>::deallocate(static_cast<D3D12AliasingTextureInfo*>(m_info));
+    else if (m_info->is_tiled)
+        Allocator<D3D12TiledTextureInfo>::deallocate(static_cast<D3D12TiledTextureInfo*>(m_info));
+    else
+        Allocator<GPUTextureInfo>::deallocate(m_info);
 
+    DX_FREE(m_resource);
+    DX_FREE(m_allocation);
+}
 
 AMAZING_NAMESPACE_END

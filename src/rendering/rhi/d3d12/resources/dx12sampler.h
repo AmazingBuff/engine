@@ -12,10 +12,8 @@ AMAZING_NAMESPACE_BEGIN
 class DX12Sampler final : public GPUSampler
 {
 public:
-    DX12Sampler();
+    DX12Sampler(GPUDevice const* device, GPUSamplerCreateInfo const& info);
     ~DX12Sampler() override;
-
-    AResult initialize(GPUDevice const* device, GPUSamplerCreateInfo const& info) override;
 private:
     D3D12_SAMPLER_DESC m_desc;
     D3D12_CPU_DESCRIPTOR_HANDLE m_handle;

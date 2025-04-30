@@ -13,9 +13,9 @@ class GPURootSignature
 {
 public:
     GPURootSignature() : m_pipeline_type(GPUPipelineType::e_graphics), m_pool(nullptr) {}
-    virtual ~GPURootSignature();
-
-    virtual AResult initialize(GPUDevice const* device, GPURootSignatureCreateInfo const& info);
+    virtual ~GPURootSignature() = default;
+protected:
+    void initialize(GPURootSignatureCreateInfo const& info);
 protected:
     Vector<GPUParameterTable> m_tables;
     Vector<GPUShaderResource> m_push_constants;

@@ -14,16 +14,14 @@ class DX12Adapter;
 class DX12Instance final : public GPUInstance
 {
 public:
-    DX12Instance();
+    explicit DX12Instance(GPUInstanceCreateInfo const& info);
     ~DX12Instance() override;
 
-    AResult initialize(GPUInstanceCreateInfo const& info) override;
-
-    void enum_adapters(const GPUAdapter** const adapters, uint32_t* num_adapters) const override;
+    void enum_adapters(Vector<GPUAdapter*>& adapters) const override;
 private:
     IDXGIFactory6* m_dxgi_factory;
     ID3D12Debug* m_debug;
-    Vector<DX12Adapter> m_adapters;
+    Vector<DX12Adapter*> m_adapters;
 
     friend class DX12SwapChain;
 };

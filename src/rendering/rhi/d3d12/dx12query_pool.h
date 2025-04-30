@@ -12,10 +12,8 @@ AMAZING_NAMESPACE_BEGIN
 class DX12QueryPool final : public GPUQueryPool
 {
 public:
-    DX12QueryPool();
+    DX12QueryPool(GPUDevice const* device, GPUQueryPoolCreateInfo const& info);
     ~DX12QueryPool() override;
-
-    AResult initialize(GPUDevice const* device, GPUQueryPoolCreateInfo const& info) override;
 
 private:
     ID3D12QueryHeap* m_query_heap;

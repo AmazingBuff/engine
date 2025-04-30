@@ -34,6 +34,14 @@ int main()
     // producer.join();
     // consumer.join();
 
+    Amazing::HashMap<int, int> map;
+    map.emplace(2, 4);
+    map.emplace(3, 5);
+    map.emplace(4, 6);
+
+    int m1 = map[2];
+    int m2 = map[3];
+    int m3 = map[4];
 
     Amazing::String s("chr");
     Amazing::String f("fl");

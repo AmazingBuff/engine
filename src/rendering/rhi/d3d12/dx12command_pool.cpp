@@ -9,14 +9,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12CommandPool::DX12CommandPool() : m_command_allocator(nullptr) {}
-
-DX12CommandPool::~DX12CommandPool()
-{
-    DX_FREE(m_command_allocator);
-}
-
-AResult DX12CommandPool::initialize(GPUDevice const* device, GPUQueue const* queue)
+DX12CommandPool::DX12CommandPool(GPUDevice const* device, GPUQueue const* queue) : m_command_allocator(nullptr)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12Queue const* dx12_queue = static_cast<DX12Queue const*>(queue);
@@ -26,8 +19,16 @@ AResult DX12CommandPool::initialize(GPUDevice const* device, GPUQueue const* que
 
     DX_CHECK_RESULT(dx12_device->m_device->CreateCommandAllocator(type, IID_PPV_ARGS(&m_command_allocator)));
     m_type = dx12_queue->m_type;
+}
 
-    return AResult::e_succeed;
+DX12CommandPool::~DX12CommandPool()
+{
+    DX_FREE(m_command_allocator);
+}
+
+void DX12CommandPool::reset()
+{
+    DX_CHECK_RESULT(m_command_allocator->Reset());
 }
 
 

@@ -14,6 +14,10 @@ class GPUQueue
 public:
     GPUQueue() : m_type(GPUQueueType::e_graphics) {}
     virtual ~GPUQueue() = default;
+
+    virtual void submit(GPUQueueSubmitInfo const& info) const = 0;
+    virtual void wait_idle() const = 0;
+    virtual void present(GPUQueuePresentInfo const& info) const = 0;
 protected:
     GPUQueueType m_type;
 };

@@ -12,15 +12,16 @@ AMAZING_NAMESPACE_BEGIN
 class DX12Fence final : public GPUFence
 {
 public:
-    DX12Fence();
+    explicit DX12Fence(GPUDevice const* device);
     ~DX12Fence() override;
 
-    AResult initialize(GPUDevice const* device) override;
     AResult wait() override;
 private:
     ID3D12Fence*    m_fence;
     size_t          m_fence_value;
     HANDLE          m_wait_event;
+
+    friend class DX12Queue;
 };
 
 AMAZING_NAMESPACE_END

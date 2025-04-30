@@ -15,6 +15,10 @@ class DX12Queue final : public GPUQueue
 {
 public:
     ~DX12Queue() override;
+
+    void submit(GPUQueueSubmitInfo const& info) const override;
+    void wait_idle() const override;
+    void present(GPUQueuePresentInfo const& info) const override;
 private:
     DX12Queue();
 private:

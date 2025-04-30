@@ -62,16 +62,7 @@ static constexpr GPUFormat Format_Map[] =
     GPUFormat::e_r32g32b32a32_sfloat,
 };
 
-DX12ShaderLibrary::DX12ShaderLibrary() : m_blob_encoding(nullptr) {}
-
-
-
-DX12ShaderLibrary::~DX12ShaderLibrary()
-{
-
-}
-
-AResult DX12ShaderLibrary::initialize(GPUShaderLibraryCreateInfo const& info)
+DX12ShaderLibrary::DX12ShaderLibrary(GPUShaderLibraryCreateInfo const& info) : m_blob_encoding(nullptr)
 {
     IDxcUtils* dxc_utils;
     DX_CHECK_RESULT(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxc_utils)));
@@ -154,8 +145,11 @@ AResult DX12ShaderLibrary::initialize(GPUShaderLibraryCreateInfo const& info)
     dx12_reflection->Release();
     dxc_reflection->Release();
     dxc_utils->Release();
+}
 
-    return AResult::e_succeed;
+DX12ShaderLibrary::~DX12ShaderLibrary()
+{
+    DX_FREE(m_blob_encoding);
 }
 
 AMAZING_NAMESPACE_END

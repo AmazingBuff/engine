@@ -15,8 +15,7 @@ public:
     GPUDevice() : m_ref_adapter(nullptr) {}
     virtual ~GPUDevice() = default;
 
-    virtual AResult initialize(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info) = 0;
-    virtual GPUQueue const* get_queue(GPUQueueType type, uint32_t index) const = 0;
+    virtual GPUQueue const* fetch_queue(GPUQueueType type, uint32_t index) const = 0;
 protected:
     GPUAdapter const* m_ref_adapter;
 };

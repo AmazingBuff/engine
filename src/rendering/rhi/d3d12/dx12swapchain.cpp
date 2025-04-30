@@ -7,21 +7,13 @@
 #include "dx12device.h"
 #include "dx12queue.h"
 #include "rendering/api.h"
+#include "resources/dx12texture_view.h"
 #include "utils/dx_macro.h"
 #include "utils/dx_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12SwapChain::DX12SwapChain() : m_swap_chain(nullptr) {}
-
-DX12SwapChain::~DX12SwapChain()
-{
-    for (size_t i = 0; i < m_swap_chain_buffer.size(); i++)
-        DX_FREE(m_swap_chain_buffer[i].resource);
-    DX_FREE(m_swap_chain);
-}
-
-AResult DX12SwapChain::initialize(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info)
+DX12SwapChain::DX12SwapChain(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info) : m_swap_chain(nullptr), m_present_sync_interval(0), m_present_flags(0)
 {
     DX12Instance const* dx12_instance = static_cast<DX12Instance const*>(instance);
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
@@ -47,7 +39,7 @@ AResult DX12SwapChain::initialize(GPUInstance const* instance, GPUDevice const* 
     if (SUCCEEDED(dx12_instance->m_dxgi_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allow_tearing, sizeof(allow_tearing))) && allow_tearing)
     {
         swap_chain_desc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-
+        m_present_flags |= !info.enable_vsync ? DXGI_PRESENT_ALLOW_TEARING : 0;
     }
 
     IDXGISwapChain1* swap_chain;
@@ -55,7 +47,7 @@ AResult DX12SwapChain::initialize(GPUInstance const* instance, GPUDevice const* 
 
     DX12Queue const* queue = nullptr;
     if (info.present_queues.empty())
-        queue = static_cast<DX12Queue const*>(dx12_device->get_queue(GPUQueueType::e_graphics, 0));
+        queue = static_cast<DX12Queue const*>(dx12_device->fetch_queue(GPUQueueType::e_graphics, 0));
     else
         queue = static_cast<DX12Queue const*>(info.present_queues[0]);
 
@@ -69,29 +61,67 @@ AResult DX12SwapChain::initialize(GPUInstance const* instance, GPUDevice const* 
     for (uint32_t i = 0; i < info.frame_count; i++)
         DX_CHECK_RESULT(m_swap_chain->GetBuffer(i, IID_PPV_ARGS(&buffers[i])));
 
-    m_swap_chain_buffer.resize(info.frame_count);
+    m_back_textures.resize(info.frame_count);
     for (uint32_t i = 0; i < info.frame_count; i++)
     {
-        m_swap_chain_buffer[i].resource = buffers[i];
-        m_swap_chain_buffer[i].tex_info.is_cube = false;
-        m_swap_chain_buffer[i].tex_info.array_layers = 1;
-        m_swap_chain_buffer[i].tex_info.sample_count = GPUSampleCount::e_1; // TODO: ?
-        m_swap_chain_buffer[i].tex_info.format = info.format;
-        m_swap_chain_buffer[i].tex_info.aspect_mask = 1;
-        m_swap_chain_buffer[i].tex_info.depth = 1;
-        m_swap_chain_buffer[i].tex_info.width = info.width;
-        m_swap_chain_buffer[i].tex_info.height = info.height;
-        m_swap_chain_buffer[i].tex_info.mip_levels = 1;
-        m_swap_chain_buffer[i].tex_info.node_index = GPU_Node_Index;
-        m_swap_chain_buffer[i].tex_info.owns_image = false;
-    }
+        DX12Texture* back_texture = PLACEMENT_NEW(DX12Texture, sizeof(DX12Texture), nullptr);
+        // texture info will be freed automatically in ~DX12Texture
+        back_texture->m_info = Allocator<DX12Texture::GPUTextureInfo>::allocate(1);
+        back_texture->m_resource = buffers[i];
+        back_texture->m_info->is_cube = false;
+        back_texture->m_info->array_layers = 1;
+        back_texture->m_info->sample_count = GPUSampleCount::e_1; // TODO: ?
+        back_texture->m_info->format = info.format;
+        back_texture->m_info->aspect_mask = 1;
+        back_texture->m_info->depth = 1;
+        back_texture->m_info->width = info.width;
+        back_texture->m_info->height = info.height;
+        back_texture->m_info->mip_levels = 1;
+        back_texture->m_info->node_index = GPU_Node_Index;
+        back_texture->m_info->owns_image = false;
 
-    return AResult::e_succeed;
+        GPUTextureViewCreateInfo view_info{
+            .texture = back_texture,
+            .format = info.format,
+            .usage = GPUTextureViewUsageFlag::e_rtv_dsv,
+            .aspect = GPUTextureViewAspectFlag::e_color,
+            .type = GPUTextureType::e_2d,
+            .array_layers = 1,
+        };
+
+        DX12TextureView* back_texture_view = PLACEMENT_NEW(DX12TextureView, sizeof(DX12TextureView), nullptr, device, view_info);
+
+        m_back_textures[i] = {back_texture, back_texture_view};
+    }
+}
+
+DX12SwapChain::~DX12SwapChain()
+{
+    for (size_t i = 0; i < m_back_textures.size(); i++)
+    {
+        DX12Texture* back_texture = static_cast<DX12Texture*>(m_back_textures[i].back_texture);
+        DX12TextureView* back_texture_view = static_cast<DX12TextureView*>(m_back_textures[i].back_texture_view);
+        DX_FREE(back_texture->m_resource);
+        PLACEMENT_DELETE(DX12Texture, back_texture);
+        PLACEMENT_DELETE(DX12TextureView, back_texture_view);
+    }
+    DX_FREE(m_swap_chain);
 }
 
 uint32_t DX12SwapChain::acquire_next_frame(GPUSemaphore const* semaphore, GPUFence const* fence)
 {
     return m_swap_chain->GetCurrentBackBufferIndex();
 }
+
+GPUTexture const* DX12SwapChain::fetch_back_texture(uint32_t index) const
+{
+    return m_back_textures[index].back_texture;
+}
+
+GPUTextureView const* DX12SwapChain::fetch_back_texture_view(uint32_t index) const
+{
+    return m_back_textures[index].back_texture_view;
+}
+
 
 AMAZING_NAMESPACE_END

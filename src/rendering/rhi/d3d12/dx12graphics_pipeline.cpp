@@ -14,14 +14,7 @@
 AMAZING_NAMESPACE_BEGIN
 
 
-DX12GraphicsPipeline::DX12GraphicsPipeline() : m_root_signature(nullptr), m_pipeline_state(nullptr), m_pipeline_state_desc{}, m_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED) {}
-
-DX12GraphicsPipeline::~DX12GraphicsPipeline()
-{
-    DX_FREE(m_pipeline_state);
-}
-
-AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info)
+DX12GraphicsPipeline::DX12GraphicsPipeline(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info) : m_root_signature(nullptr), m_pipeline_state(nullptr), m_pipeline_state_desc{}, m_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12RootSignature const* dx12_root_signature = static_cast<DX12RootSignature const*>(info.root_signature);
@@ -112,15 +105,13 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
 
     // blend state
     D3D12_BLEND_DESC blend_desc{
-        .AlphaToCoverageEnable = 0,
         .IndependentBlendEnable = TRUE,
     };
-    blend_desc.RenderTarget[0].BlendEnable = 0;
+
     if (info.blend_state)
     {
         GPUBlendState const* blend_state = info.blend_state;
         blend_desc.AlphaToCoverageEnable = static_cast<uint32_t>(info.blend_state->alpha_to_coverage);
-        blend_desc.IndependentBlendEnable = 1;
 
         uint32_t blend_index = 0;
         for (uint32_t i = 0; i < GPU_Max_Render_Target; i++)
@@ -145,12 +136,31 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
                 blend_index++;
         }
     }
+    else
+    {
+        blend_desc.AlphaToCoverageEnable = FALSE;
+
+        for (uint32_t i = 0; i < GPU_Max_Render_Target; i++)
+        {
+            D3D12_RENDER_TARGET_BLEND_DESC& rt_blend = blend_desc.RenderTarget[i];
+            rt_blend.BlendEnable = FALSE;
+            rt_blend.LogicOpEnable = FALSE;
+            rt_blend.SrcBlend = D3D12_BLEND_ONE;
+            rt_blend.DestBlend = D3D12_BLEND_ZERO;
+            rt_blend.BlendOp = D3D12_BLEND_OP_ADD;
+            rt_blend.SrcBlendAlpha = D3D12_BLEND_ONE;
+            rt_blend.DestBlendAlpha = D3D12_BLEND_ZERO;
+            rt_blend.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            rt_blend.LogicOp = D3D12_LOGIC_OP_CLEAR;
+            rt_blend.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+        }
+    }
 
     // rasterizer state
     D3D12_RASTERIZER_DESC rasterizer_desc{
         .FillMode = D3D12_FILL_MODE_SOLID,
         .CullMode = D3D12_CULL_MODE_BACK,
-        .FrontCounterClockwise = 0,
+        .FrontCounterClockwise = 1,
         .DepthBias = 0,
         .DepthBiasClamp = 0.0f,
         .SlopeScaledDepthBias = 0.0f,
@@ -178,9 +188,24 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
 
     // depth stencil state
     D3D12_DEPTH_STENCIL_DESC depth_stencil_desc{
-        .DepthEnable = 0,
+        .DepthEnable = FALSE,
         .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
-        .StencilEnable = 0,
+        .DepthFunc = D3D12_COMPARISON_FUNC_NEVER,
+        .StencilEnable = FALSE,
+        .StencilReadMask = 0,
+        .StencilWriteMask = 0,
+        .FrontFace {
+            .StencilFailOp = D3D12_STENCIL_OP_KEEP,
+            .StencilDepthFailOp = D3D12_STENCIL_OP_KEEP,
+            .StencilPassOp = D3D12_STENCIL_OP_KEEP,
+            .StencilFunc = D3D12_COMPARISON_FUNC_NEVER,
+        },
+        .BackFace{
+            .StencilFailOp = D3D12_STENCIL_OP_KEEP,
+            .StencilDepthFailOp = D3D12_STENCIL_OP_KEEP,
+            .StencilPassOp = D3D12_STENCIL_OP_KEEP,
+            .StencilFunc = D3D12_COMPARISON_FUNC_NEVER,
+        },
     };
     if (info.depth_stencil_state)
     {
@@ -253,7 +278,7 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
         for (uint32_t i = 0; i < m_pipeline_state_desc.InputLayout.NumElements; i++)
             graphics_hash = hash_combine(graphics_hash, &m_pipeline_state_desc.InputLayout.pInputElementDescs[i], sizeof(D3D12_INPUT_ELEMENT_DESC));
 
-        swprintf_s(pipeline_name, L"%S_%zu_%zu_%zu", "GraphicsPSO", shader_hash, graphics_hash, graphics_hash, reinterpret_cast<size_t>(dx12_root_signature->m_root_signature));
+        swprintf_s(pipeline_name, L"%S_%zu_%zu_%zu", "GraphicsPSO", shader_hash, graphics_hash, reinterpret_cast<size_t>(dx12_root_signature->m_root_signature));
         result = dx12_device->m_pipeline_library->LoadGraphicsPipeline(pipeline_name, &m_pipeline_state_desc, IID_PPV_ARGS(&m_pipeline_state));
     }
     if (FAILED(result))
@@ -290,8 +315,11 @@ AResult DX12GraphicsPipeline::initialize(GPUDevice const* device, GPUGraphicsPip
     }
 
     m_root_signature = dx12_root_signature->m_root_signature;
+}
 
-    return AResult::e_succeed;
+DX12GraphicsPipeline::~DX12GraphicsPipeline()
+{
+    DX_FREE(m_pipeline_state);
 }
 
 AMAZING_NAMESPACE_END

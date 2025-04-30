@@ -14,8 +14,6 @@ class GPUShaderLibrary
 public:
     GPUShaderLibrary() = default;
     virtual ~GPUShaderLibrary() = default;
-
-    virtual AResult initialize(GPUShaderLibraryCreateInfo const& info) = 0;
 protected:
     Vector<GPUShaderReflection> m_shader_reflections;
 

@@ -86,6 +86,21 @@ static constexpr D3D12_FILL_MODE Fill_Mode_Map[] =
     D3D12_FILL_MODE_WIREFRAME,
 };
 
+static constexpr D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE Render_Pass_Begin_Map[] =
+{
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_DISCARD,
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE,
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR
+};
+
+static constexpr D3D12_RENDER_PASS_ENDING_ACCESS_TYPE Render_Pass_End_Map[] =
+{
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_DISCARD,
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE,
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_DISCARD
+};
+
+
 DXGI_FORMAT transfer_format(GPUFormat format, bool shader = false);
 D3D12_RESOURCE_STATES transfer_resource_state(GPUResourceState state);
 D3D12_HEAP_TYPE transfer_heap_type(GPUMemoryUsage usage);
@@ -94,6 +109,7 @@ D3D12_TEXTURE_ADDRESS_MODE transfer_address_mode(GPUAddressMode mode);
 D3D12_DESCRIPTOR_RANGE_TYPE transfer_resource_type(GPUResourceType type);
 D3D12_SHADER_VISIBILITY transfer_shader_stage(GPUShaderStage stage);
 D3D12_PRIMITIVE_TOPOLOGY_TYPE transfer_primitive_topology(GPUPrimitiveTopology primitive);
+uint32_t transfer_subresource_index(uint32_t mip, uint32_t layer, uint32_t plane, uint32_t mip_levels, uint32_t array_layers);
 
 DXGI_FORMAT format_typeless(DXGI_FORMAT format);
 uint32_t format_bit_size(GPUFormat format);

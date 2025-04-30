@@ -52,6 +52,20 @@ public:
             allocator::deallocate(m_c_str);
     }
 
+    StringT& operator=(const Tp* str)
+    {
+        size_t size = str_length(str);
+        if (Str::m_size == size && str_compare(Str::m_data, str, str_length(str)) == 0)
+            return *this;
+
+        Str::m_size = str_length(str);
+        if (Str::m_capacity < Str::m_size)
+            Str::reserve(Str::m_size);
+        std::memcpy(Str::m_data, str, Str::m_size * sizeof(Tp));
+        
+        return *this;
+    }
+
     NODISCARD size_t find(const Tp* str) const
     {
         size_t size = str_length(str);
@@ -239,12 +253,12 @@ private:
 template <typename Char, typename Tp>
 StringT<Char> to_str(const Tp& value)
 {
+    Char buf[21];
+    Char* end = std::end(buf);
+    *end = '\0';
+
     if constexpr (std::is_integral_v<Tp>)
     {
-        Char buf[21]{};
-        Char* end = std::end(buf);
-        *end = '\0';
-
         using Up = std::make_signed_t<Tp>;
         const Up up = static_cast<Up>(value);
 
@@ -261,7 +275,7 @@ StringT<Char> to_str(const Tp& value)
         if (value < 0)
             *--end = static_cast<Char>('-');
 
-        return end;
+        return StringT<Char>(end);
     }
 
     return {};

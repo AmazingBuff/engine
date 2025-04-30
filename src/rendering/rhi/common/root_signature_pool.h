@@ -6,7 +6,6 @@
 #define ROOT_SIGNATURE_POOL_H
 
 #include "rendering/rhi/create_info.h"
-#include <unordered_map>
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -14,9 +13,7 @@ class GPURootSignaturePool
 {
 public:
     GPURootSignaturePool() : m_ref_device(nullptr) {}
-    virtual ~GPURootSignaturePool();
-
-    virtual AResult initialize(GPUDevice const* device, GPURootSignaturePoolCreateInfo const& info);
+    virtual ~GPURootSignaturePool() = default;
 
     GPURootSignature* find(GPURootSignature const* tables, GPURootSignatureCreateInfo const& info);
     bool remove(GPURootSignature* root_signature);
@@ -63,10 +60,10 @@ protected:
     };
 
     // temporarily use std hash map
-    std::unordered_map<GPURootSignatureCharacteristic, GPURootSignature*, GPURootSignatureCharacteristicHasher> m_characteristic_map;
-    std::unordered_map<GPURootSignature*, GPURootSignatureCharacteristicCounter> m_reverse_characteristic_map;
+    HashMap<GPURootSignatureCharacteristic, GPURootSignature*, GPURootSignatureCharacteristicHasher> m_characteristic_map;
+    HashMap<GPURootSignature*, GPURootSignatureCharacteristicCounter> m_reverse_characteristic_map;
 private:
-    GPURootSignatureCharacteristic transfer_characteristic(GPURootSignature const* tables, GPURootSignatureCreateInfo const& info);
+    GPURootSignatureCharacteristic transfer_characteristic(GPURootSignature const* tables, GPURootSignatureCreateInfo const& info) const;
 
     friend class GPURootSignature;
 };

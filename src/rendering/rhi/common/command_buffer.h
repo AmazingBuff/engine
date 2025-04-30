@@ -15,12 +15,15 @@ public:
     GPUCommandBuffer() : m_ref_pool(nullptr) {}
     virtual ~GPUCommandBuffer() = default;
 
-    virtual AResult initialize(GPUDevice const* device, GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info) = 0;
     virtual void begin_command() = 0;
     virtual void end_command() = 0;
 
     virtual void begin_query(GPUQueryPool const* pool, GPUQueryInfo const& info) = 0;
     virtual void end_query(GPUQueryPool const* pool, GPUQueryInfo const& info) = 0;
+    virtual GPUGraphicsPassEncoder* begin_graphics_pass(GPUGraphicsPassCreateInfo const& info) = 0;
+    virtual void end_graphics_pass(GPUGraphicsPassEncoder* encoder) = 0;
+
+    virtual void resource_barrier(GPUResourceBarrierInfo const& info) = 0;
 protected:
     GPUCommandPool const* m_ref_pool;
 };

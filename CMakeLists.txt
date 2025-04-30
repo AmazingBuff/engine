@@ -30,7 +30,7 @@ target_include_directories(
     PUBLIC
     ${THIRD_PARTY_INCLUDE_DIRS}
     include/
-#    PRIVATE
+    PRIVATE
     src/
 )
 

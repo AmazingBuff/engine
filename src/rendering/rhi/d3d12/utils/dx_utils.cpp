@@ -4,8 +4,6 @@
 
 #include "dx_utils.h"
 
-#include <utility>
-
 AMAZING_NAMESPACE_BEGIN
 
 DXGI_FORMAT transfer_format(GPUFormat format, bool shader)
@@ -23,7 +21,6 @@ DXGI_FORMAT transfer_format(GPUFormat format, bool shader)
 
 D3D12_RESOURCE_STATES transfer_resource_state(GPUResourceState state)
 {
-
     // these states cannot be combined with other states so we just do an == check
     if (state == GPUResourceStateFlag::e_generic_read)
         return D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -86,7 +83,7 @@ D3D12_FILTER transfer_filter(GPUFilterType min, GPUFilterType mag, GPUMipMapMode
     if (anisotropy)
         return compare ? D3D12_FILTER_COMPARISON_ANISOTROPIC : D3D12_FILTER_ANISOTROPIC;
 
-    int filter = std::to_underlying(min) << 4 | std::to_underlying(mag) << 2 | std::to_underlying(mipmap);
+    int filter = to_underlying(min) << 4 | to_underlying(mag) << 2 | to_underlying(mipmap);
     int base = compare ? D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT : D3D12_FILTER_MIN_MAG_MIP_POINT;
 
     return static_cast<D3D12_FILTER>(base + filter);
@@ -169,6 +166,11 @@ D3D12_PRIMITIVE_TOPOLOGY_TYPE transfer_primitive_topology(GPUPrimitiveTopology p
     default:
         return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
     }
+}
+
+uint32_t transfer_subresource_index(uint32_t mip, uint32_t layer, uint32_t plane, uint32_t mip_levels, uint32_t array_layers)
+{
+    return mip + (layer + array_layers * plane) * mip_levels;
 }
 
 DXGI_FORMAT format_typeless(DXGI_FORMAT format)

@@ -3,6 +3,7 @@
 #include "astd/base/define.h"
 #include "astd/base/trait.h"
 #include "astd/base/logger.h"
+#include "astd/base/util.h"
 #include "astd/memory/allocator.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -100,6 +101,28 @@ public:
         m_data = nullptr;
         m_size = 0;
         m_capacity = 0;
+    }
+
+    template <typename OtherT>
+        requires(std::is_convertible_v<OtherT, Tp>)
+    Vector& operator=(const Vector<OtherT>& other)
+    {
+        if (this == &other)
+            return *this;
+
+        m_size = other.m_size;
+        if (m_capacity < m_size)
+            reserve(m_size);
+
+        if constexpr (memcopyable<Tp, OtherT>)
+            std::memcpy(m_data, other.m_data, other.m_size * sizeof(Tp));
+        else
+        {
+            for (size_t i = 0; i < m_size; ++i)
+                m_data[i] = other.m_data[i];
+        }
+
+        return *this;
     }
 
     template<typename... Args>
@@ -200,6 +223,16 @@ public:
         if (new_size > m_capacity)
             reserve(new_size);
         m_size = new_size;
+    }
+
+    void swap(Vector& other)
+    {
+        if (this != &other)
+        {
+            Amazing::swap(m_data, other.m_data);
+            Amazing::swap(m_size, other.m_size);
+            Amazing::swap(m_capacity, other.m_capacity);
+        }
     }
 
     void clear()

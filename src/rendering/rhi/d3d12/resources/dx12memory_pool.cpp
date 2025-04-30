@@ -9,14 +9,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12MemoryPool::DX12MemoryPool() : m_pool(nullptr) {}
-
-DX12MemoryPool::~DX12MemoryPool()
-{
-    DX_FREE(m_pool);
-}
-
-AResult DX12MemoryPool::initialize(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info)
+DX12MemoryPool::DX12MemoryPool(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info) : m_pool(nullptr)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
 
@@ -43,8 +36,11 @@ AResult DX12MemoryPool::initialize(GPUDevice const* device, GPUMemoryPoolCreateI
     DX_CHECK_RESULT(dx12_device->m_allocator->CreatePool(&desc, &m_pool));
 
     m_type = info.type;
+}
 
-    return AResult::e_succeed;
+DX12MemoryPool::~DX12MemoryPool()
+{
+    DX_FREE(m_pool);
 }
 
 AMAZING_NAMESPACE_END

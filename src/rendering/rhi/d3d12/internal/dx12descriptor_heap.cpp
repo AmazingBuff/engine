@@ -63,36 +63,7 @@ void DX12DescriptorHeap::copy_descriptor_handle(D3D12DescriptorHeap* heap, D3D12
 }
 
 
-DX12DescriptorHeap::DX12DescriptorHeap() : m_null_descriptors(nullptr)
-{
-    for (int i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; i++)
-        m_cpu_heaps[i] = nullptr;
-    for (uint32_t i = 0; i < GPU_Node_Count; i++)
-    {
-        m_gpu_cbv_srv_uav_heaps[i] = nullptr;
-        m_gpu_sampler_heaps[i] = nullptr;
-    }
-}
-
-DX12DescriptorHeap::~DX12DescriptorHeap()
-{
-    for (int i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; i++)
-    {
-        DX_FREE(m_cpu_heaps[i]->descriptor_heap);
-        Allocator<D3D12DescriptorHeap>::deallocate(m_cpu_heaps[i]);
-    }
-    for (uint32_t i = 0; i < GPU_Node_Count; i++)
-    {
-        DX_FREE(m_gpu_cbv_srv_uav_heaps[i]->descriptor_heap);
-        DX_FREE(m_gpu_sampler_heaps[i]->descriptor_heap);
-        Allocator<D3D12DescriptorHeap>::deallocate(m_gpu_cbv_srv_uav_heaps[i]);
-        Allocator<D3D12DescriptorHeap>::deallocate(m_gpu_sampler_heaps[i]);
-    }
-
-    Allocator<D3D12NullDescriptors>::deallocate(m_null_descriptors);
-}
-
-AResult DX12DescriptorHeap::initialize(ID3D12Device* device)
+DX12DescriptorHeap::DX12DescriptorHeap(ID3D12Device* device) : m_cpu_heaps{}, m_gpu_cbv_srv_uav_heaps{}, m_gpu_sampler_heaps{}, m_null_descriptors(nullptr)
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS options;
     DX_CHECK_RESULT(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options, sizeof(options)));
@@ -151,19 +122,19 @@ AResult DX12DescriptorHeap::initialize(ID3D12Device* device)
         }
 
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
-        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[std::to_underlying(GPUTextureType::e_1d)]);
+        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[to_underlying(GPUTextureType::e_1d)]);
 
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[std::to_underlying(GPUTextureType::e_1d_array)]);
+        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[to_underlying(GPUTextureType::e_1d_array)]);
 
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[std::to_underlying(GPUTextureType::e_2d)]);
+        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[to_underlying(GPUTextureType::e_2d)]);
 
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[std::to_underlying(GPUTextureType::e_2d_array)]);
+        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[to_underlying(GPUTextureType::e_2d_array)]);
 
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
-        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[std::to_underlying(GPUTextureType::e_3d)]);
+        create_uav(device, nullptr, nullptr, uav_desc, m_null_descriptors->texture_uav[to_underlying(GPUTextureType::e_3d)]);
 
         srv_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -176,8 +147,24 @@ AResult DX12DescriptorHeap::initialize(ID3D12Device* device)
         };
         create_cbv(device, cbv_desc, m_null_descriptors->buffer_cbv);
     }
+}
 
-    return AResult::e_succeed;
+DX12DescriptorHeap::~DX12DescriptorHeap()
+{
+    for (int i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; i++)
+    {
+        DX_FREE(m_cpu_heaps[i]->descriptor_heap);
+        Allocator<D3D12DescriptorHeap>::deallocate(m_cpu_heaps[i]);
+    }
+    for (uint32_t i = 0; i < GPU_Node_Count; i++)
+    {
+        DX_FREE(m_gpu_cbv_srv_uav_heaps[i]->descriptor_heap);
+        DX_FREE(m_gpu_sampler_heaps[i]->descriptor_heap);
+        Allocator<D3D12DescriptorHeap>::deallocate(m_gpu_cbv_srv_uav_heaps[i]);
+        Allocator<D3D12DescriptorHeap>::deallocate(m_gpu_sampler_heaps[i]);
+    }
+
+    Allocator<D3D12NullDescriptors>::deallocate(m_null_descriptors);
 }
 
 void DX12DescriptorHeap::create_cbv(ID3D12Device* device, D3D12_CONSTANT_BUFFER_VIEW_DESC const& cbv_desc, D3D12_CPU_DESCRIPTOR_HANDLE& handle) const

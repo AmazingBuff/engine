@@ -7,5 +7,6 @@ struct VSOut
 
 float4 main(VSOut psIn) : SV_TARGET
 {
-    return float4(psIn.color, 1.f);
+    //return float4(psIn.color, 1.f);
+return float4(0.1, 1.0, 0.1, 1.0);
 }

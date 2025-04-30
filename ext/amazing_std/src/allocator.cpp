@@ -135,6 +135,9 @@ void IMemoryPool::deallocate(void* p)
         prev->next = header->next;
 
         header->next->prev = prev;
+        if (m_current_info == header)
+            m_current_info = prev;
+        memset(header, 0, k_memory_header_size + header->size);
     }
     else
         header->offset = 0;

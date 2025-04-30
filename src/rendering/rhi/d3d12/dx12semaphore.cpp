@@ -8,7 +8,13 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12Semaphore::DX12Semaphore() : m_fence(nullptr), m_fence_value(0), m_wait_event(nullptr) {}
+DX12Semaphore::DX12Semaphore(GPUDevice const* device) : m_fence(nullptr), m_fence_value(0), m_wait_event(nullptr)
+{
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
+    DX_CHECK_RESULT(dx12_device->m_device->CreateFence(m_fence_value, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
+
+    m_wait_event = CreateEvent(nullptr, 0, 0, nullptr);
+}
 
 DX12Semaphore::~DX12Semaphore()
 {
@@ -16,12 +22,13 @@ DX12Semaphore::~DX12Semaphore()
     DX_FREE(m_fence);
 }
 
-AResult DX12Semaphore::initialize(GPUDevice const* device)
+AResult DX12Semaphore::wait()
 {
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
-    DX_CHECK_RESULT(dx12_device->m_device->CreateFence(m_fence_value, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
-
-    m_wait_event = CreateEvent(nullptr, 0, 0, nullptr);
+    if (m_fence->GetCompletedValue() < m_fence_value)
+    {
+        DX_CHECK_RESULT(m_fence->SetEventOnCompletion(m_fence_value, m_wait_event));
+        WaitForSingleObject(m_wait_event, INFINITE);
+    }
 
     return AResult::e_succeed;
 }

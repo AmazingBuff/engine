@@ -16,14 +16,15 @@ void* allocate(void* p, size_t size, void* data);
 
 void deallocate(void* p);
 
-
 template<typename Tp>
+    requires(!std::has_virtual_destructor_v<Tp>)
 Tp* allocate(size_t count, void* data)
 {
     return static_cast<Tp*>(allocate(sizeof(Tp) * count, data));
 }
 
 template<typename Tp>
+    requires(!std::has_virtual_destructor_v<Tp>)
 Tp* allocate(void* p, size_t count, void* data)
 {
     return static_cast<Tp*>(allocate(p, sizeof(Tp) * count, data));
@@ -31,6 +32,7 @@ Tp* allocate(void* p, size_t count, void* data)
 
 
 template <typename Tp>
+    requires(!std::has_virtual_destructor_v<Tp>)
 class Allocator
 {
 public:
@@ -56,5 +58,9 @@ public:
         Amazing::deallocate(p);
     }
 };
+
+
+#define PLACEMENT_NEW(type, size, data, ...) (new (allocate(size, data)) type(__VA_ARGS__))
+#define PLACEMENT_DELETE(type, p) if (p && std::is_destructible_v<type>) p->~type(); deallocate(p)
 
 AMAZING_NAMESPACE_END

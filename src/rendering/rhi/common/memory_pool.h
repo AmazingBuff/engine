@@ -15,7 +15,6 @@ public:
     GPUMemoryPool() : m_ref_device(nullptr), m_type(GPUMemoryPoolType::e_automatic) {}
     virtual ~GPUMemoryPool() = default;
 
-    virtual AResult initialize(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info) = 0;
 protected:
     GPUDevice const* m_ref_device;
     GPUMemoryPoolType m_type;
