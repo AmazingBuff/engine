@@ -18,7 +18,7 @@ class Probe
 public:
     Probe() : m_counter(0) {}
 
-    void increment() {m_counter++;}
+    void increment() { m_counter++; }
     void decrement()
     {
         if (m_counter > 0)
@@ -55,6 +55,12 @@ struct HashNode
 {
     ElementFlag flag;
     Tp val;
+
+    ~HashNode()
+    {
+        if constexpr (std::is_destructible_v<Tp>)
+            val.~Tp();
+    }
 };
 
 
@@ -133,7 +139,12 @@ public:
 
     ~Hash()
     {
-        allocator::deallocate(m_buckets);
+        for (size_t i = 0; i < m_bucket_count * max_bucket_size + 1; i++)
+            m_buckets[i].~node_type();
+
+        deallocate(m_buckets);
+        m_bucket_count = 0;
+        m_size = 0;
     }
 
     void insert(const value_type& value)

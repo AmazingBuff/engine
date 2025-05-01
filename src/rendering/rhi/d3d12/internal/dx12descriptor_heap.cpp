@@ -41,7 +41,7 @@ DX12DescriptorHeap::D3D12DescriptorHandle DX12DescriptorHeap::consume_descriptor
     heap->used_descriptor_count += descriptor_count;
 
     size_t offset = heap->used_descriptor_count * heap->descriptor_size;
-    return {{heap->start_handle.cpu.ptr + offset}, {heap->start_handle.gpu.ptr + offset}};
+    return { {heap->start_handle.cpu.ptr + offset}, {heap->start_handle.gpu.ptr + offset} };
 }
 
 void DX12DescriptorHeap::return_descriptor_handle(D3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t descriptor_count)
@@ -57,9 +57,11 @@ void DX12DescriptorHeap::return_descriptor_handle(D3D12DescriptorHeap* heap, D3D
     }
 }
 
-void DX12DescriptorHeap::copy_descriptor_handle(D3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE const& src_handle, uint64_t const& dst_handle, uint32_t index)
+void DX12DescriptorHeap::copy_descriptor_handle(ID3D12Device* device, D3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE const& src_handle, uint64_t const& dst_handle, uint32_t index)
 {
-
+    device->CopyDescriptorsSimple(1,
+        { heap->start_handle.cpu.ptr + dst_handle + (index * heap->descriptor_size) },
+        src_handle, heap->descriptor_heap->GetDesc().Type);
 }
 
 
@@ -83,15 +85,15 @@ DX12DescriptorHeap::DX12DescriptorHeap(ID3D12Device* device) : m_cpu_heaps{}, m_
     for (uint32_t i = 0; i < GPU_Node_Count; ++i)
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-        desc.Flags                      = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        desc.NodeMask                   = 0;
+        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        desc.NodeMask = 0;
 
         desc.NumDescriptors = DX12_Gpu_CbvSrvUav_Descriptor_Heap_Count;
-        desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         m_gpu_cbv_srv_uav_heaps[i] = create_descriptor_heap(device, desc);
 
         desc.NumDescriptors = DX12_Gpu_Sampler_Descriptor_Heap_Count;
-        desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+        desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
         m_gpu_sampler_heaps[i] = create_descriptor_heap(device, desc);
     }
     // null

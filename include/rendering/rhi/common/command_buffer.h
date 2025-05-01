@@ -12,7 +12,7 @@ AMAZING_NAMESPACE_BEGIN
 class GPUCommandBuffer
 {
 public:
-    GPUCommandBuffer() : m_ref_pool(nullptr) {}
+    GPUCommandBuffer() : m_ref_device(nullptr), m_ref_pool(nullptr) {}
     virtual ~GPUCommandBuffer() = default;
 
     virtual void begin_command() = 0;
@@ -23,8 +23,10 @@ public:
     virtual GPUGraphicsPassEncoder* begin_graphics_pass(GPUGraphicsPassCreateInfo const& info) = 0;
     virtual void end_graphics_pass(GPUGraphicsPassEncoder* encoder) = 0;
 
+    virtual void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info) = 0;
     virtual void resource_barrier(GPUResourceBarrierInfo const& info) = 0;
 protected:
+    GPUDevice const* m_ref_device;
     GPUCommandPool const* m_ref_pool;
 };
 

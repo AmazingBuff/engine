@@ -40,15 +40,23 @@ class Pair
 {
 public:
     template<typename OtherT, typename OtherU>
-        requires(std::is_convertible_v<OtherT, Tp> && std::is_convertible_v<OtherU, Up>)
+        requires(std::is_convertible_v<OtherT, Tp>&& std::is_convertible_v<OtherU, Up>)
     Pair(OtherT&& f, OtherU&& s) : first(std::forward<OtherT>(f)), second(std::forward<OtherU>(s)) {}
 
     template<typename OtherT, typename OtherU>
-        requires(std::is_convertible_v<OtherT, Tp> && std::is_convertible_v<OtherU, Up>)
+        requires(std::is_convertible_v<OtherT, Tp>&& std::is_convertible_v<OtherU, Up>)
     explicit Pair(Pair<OtherT, OtherU>&& other) : first(std::forward<OtherT>(other.first)), second(std::forward<OtherU>(other.second)) {}
 
+    ~Pair()
+    {
+        if constexpr (std::is_destructible_v<Tp>)
+            first.~Tp();
+        if constexpr (std::is_destructible_v<Up>)
+            second.~Up();
+    }
+
     template<typename OtherT, typename OtherU>
-        requires(std::is_convertible_v<OtherT, Tp> && std::is_convertible_v<OtherU, Up>)
+        requires(std::is_convertible_v<OtherT, Tp>&& std::is_convertible_v<OtherU, Up>)
     Pair& operator=(const Pair<OtherT, OtherU>& other)
     {
         first = other.first;
@@ -57,7 +65,7 @@ public:
     }
 
     template<typename OtherT, typename OtherU>
-        requires(std::is_convertible_v<OtherT, Tp> && std::is_convertible_v<OtherU, Up>)
+        requires(std::is_convertible_v<OtherT, Tp>&& std::is_convertible_v<OtherU, Up>)
     Pair& operator=(Pair<OtherT, OtherU>&& other)
     {
         first = std::forward<OtherT>(other.first);

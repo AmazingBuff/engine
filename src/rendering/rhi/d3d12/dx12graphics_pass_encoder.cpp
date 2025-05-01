@@ -53,10 +53,19 @@ void DX12GraphicsPassEncoder::bind_descriptor_set(GPUDescriptorSet const* set)
     m_command_buffer->reset_root_signature(GPUPipelineType::e_graphics, root_signature->m_root_signature);
     if (descriptor_set->m_cbv_srv_uav_handle != 0)
         m_command_buffer->m_command_list->SetGraphicsRootDescriptorTable(descriptor_set->m_set_index,
-            {m_command_buffer->m_bound_descriptor_heaps[0]->start_handle.gpu.ptr + descriptor_set->m_cbv_srv_uav_handle});
+            { m_command_buffer->m_bound_descriptor_heaps[0]->start_handle.gpu.ptr + descriptor_set->m_cbv_srv_uav_handle });
     else
         m_command_buffer->m_command_list->SetGraphicsRootDescriptorTable(descriptor_set->m_set_index,
-            {m_command_buffer->m_bound_descriptor_heaps[1]->start_handle.gpu.ptr + descriptor_set->m_sampler_handle});
+            { m_command_buffer->m_bound_descriptor_heaps[1]->start_handle.gpu.ptr + descriptor_set->m_sampler_handle });
+}
+
+void DX12GraphicsPassEncoder::bind_pipeline(GPUGraphicsPipeline const* pipeline)
+{
+    DX12GraphicsPipeline const* dx12_pipeline = static_cast<DX12GraphicsPipeline const*>(pipeline);
+
+    m_command_buffer->reset_root_signature(GPUPipelineType::e_graphics, dx12_pipeline->m_root_signature);
+    m_command_buffer->m_command_list->IASetPrimitiveTopology(dx12_pipeline->m_primitive_topology);
+    m_command_buffer->m_command_list->SetPipelineState(dx12_pipeline->m_pipeline_state);
 }
 
 void DX12GraphicsPassEncoder::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
@@ -81,15 +90,6 @@ void DX12GraphicsPassEncoder::set_scissor(uint32_t x, uint32_t y, uint32_t width
         .bottom = static_cast<int>(y + height),
     };
     m_command_buffer->m_command_list->RSSetScissorRects(1, &scissor);
-}
-
-void DX12GraphicsPassEncoder::bind_pipeline(GPUGraphicsPipeline const* pipeline)
-{
-    DX12GraphicsPipeline const* dx12_pipeline = static_cast<DX12GraphicsPipeline const*>(pipeline);
-
-    m_command_buffer->reset_root_signature(GPUPipelineType::e_graphics, dx12_pipeline->m_root_signature);
-    m_command_buffer->m_command_list->IASetPrimitiveTopology(dx12_pipeline->m_primitive_topology);
-    m_command_buffer->m_command_list->SetPipelineState(dx12_pipeline->m_pipeline_state);
 }
 
 void DX12GraphicsPassEncoder::set_push_constant(GPURootSignature const* root_signature, String const& name, void const* data)

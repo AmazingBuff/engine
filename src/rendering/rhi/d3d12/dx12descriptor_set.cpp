@@ -62,7 +62,7 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCr
     }
     if (sampler_count)
     {
-        D3D12_GPU_DESCRIPTOR_HANDLE handle = DX12DescriptorHeap::consume_descriptor_handle(sampler_heap, cbv_srv_uav_count).gpu;
+        D3D12_GPU_DESCRIPTOR_HANDLE handle = DX12DescriptorHeap::consume_descriptor_handle(sampler_heap, sampler_count).gpu;
         m_sampler_handle = handle.ptr - sampler_heap->start_handle.gpu.ptr;
         m_sampler_stride = sampler_count * sampler_heap->descriptor_size;
     }
@@ -101,7 +101,7 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCr
             {
                 for (uint32_t j = 0; j < resource.size; j++)
                 {
-                    DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, cbv_srv_uav_handle, m_cbv_srv_uav_handle, cbv_srv_uav_heap_index);
+                    DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, cbv_srv_uav_handle, m_cbv_srv_uav_handle, cbv_srv_uav_heap_index);
                     cbv_srv_uav_heap_index++;
                 }
             }
@@ -109,7 +109,7 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCr
             {
                 for (uint32_t j = 0; j < resource.size; j++)
                 {
-                    DX12DescriptorHeap::copy_descriptor_handle(sampler_heap, sampler_handle, m_sampler_handle, sampler_heap_index);
+                    DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, sampler_heap, sampler_handle, m_sampler_handle, sampler_heap_index);
                     sampler_heap_index++;
                 }
             }
@@ -167,6 +167,9 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             }
         }
 
+        if (!shader_resource)
+            continue;
+
         // update
         switch (static_cast<GPUResourceTypeFlag>(shader_resource->resource_type))
         {
@@ -175,7 +178,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12Sampler const* dx12_sampler = static_cast<DX12Sampler const*>(data.samplers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(sampler_heap, dx12_sampler->m_handle, m_sampler_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, sampler_heap, dx12_sampler->m_handle, m_sampler_handle, i + heap_offset);
             }
         }
         break;
@@ -185,7 +188,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, dx12_texture_view->m_srv_uva_handle, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_texture_view->m_srv_uva_handle, m_cbv_srv_uav_handle, i + heap_offset);
             }
         }
         break;
@@ -194,7 +197,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, { dx12_texture_view->m_srv_uva_handle.ptr + dx12_texture_view->m_uav_offset }, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_texture_view->m_srv_uva_handle.ptr + dx12_texture_view->m_uav_offset }, m_cbv_srv_uav_handle, i + heap_offset);
             }
         }
         break;
@@ -203,7 +206,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, dx12_buffer->m_handle, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_buffer->m_handle, m_cbv_srv_uav_handle, i + heap_offset);
             }
         }
         break;
@@ -213,7 +216,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_srv_offset }, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_srv_offset }, m_cbv_srv_uav_handle, i + heap_offset);
             }
         }
         break;
@@ -223,7 +226,7 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
             for (uint32_t i = 0; i < data.array_count; i++)
             {
                 DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_uav_offset }, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_uav_offset }, m_cbv_srv_uav_handle, i + heap_offset);
             }
         }
         break;

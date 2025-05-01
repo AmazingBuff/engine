@@ -37,19 +37,28 @@ class StringT : public Vector<Tp, Alloc>
     using allocator = Alloc<Tp>;
     using allocator_next = Alloc<size_t>;
 public:
-    StringT() : m_c_str(nullptr) {}
-    StringT(const Tp* str) : m_c_str(nullptr)
+    StringT() = default;
+    StringT(const Tp* str)
     {
         Str::m_size = str_length(str);
-        Str::m_capacity = Str::m_size;
+        Str::m_capacity = Str::m_size + 1;
         Str::m_data = allocator::allocate(Str::m_capacity);
         std::memcpy(Str::m_data, str, Str::m_size * sizeof(Tp));
+        Str::m_data[Str::m_size] = '\0';
     }
 
-    ~StringT()
+    StringT(const StringT& str)
     {
-        if (m_c_str != nullptr)
-            allocator::deallocate(m_c_str);
+        Str::m_size = str.m_size;
+        Str::m_capacity = str.m_capacity;
+        Str::m_data = allocator::allocate(Str::m_capacity);
+        std::memcpy(Str::m_data, str.m_data, Str::m_size * sizeof(Tp));
+        Str::m_data[Str::m_size] = '\0';
+    }
+
+    StringT(StringT&& str)
+    {
+        Str::swap(str);
     }
 
     StringT& operator=(const Tp* str)
@@ -59,10 +68,32 @@ public:
             return *this;
 
         Str::m_size = str_length(str);
-        if (Str::m_capacity < Str::m_size)
-            Str::reserve(Str::m_size);
+        if (Str::m_capacity < Str::m_size + 1)
+            Str::reserve(Str::m_size + 1);
         std::memcpy(Str::m_data, str, Str::m_size * sizeof(Tp));
-        
+        Str::m_data[Str::m_size] = '\0';
+
+        return *this;
+    }
+
+    StringT& operator=(const StringT& str)
+    {
+        if (*this == str)
+            return *this;
+
+        Str::m_size = str.m_size;
+        if (Str::m_capacity < Str::m_size + 1)
+            Str::reserve(Str::m_size + 1);
+        std::memcpy(Str::m_data, str.m_data, Str::m_size * sizeof(Tp));
+        Str::m_data[Str::m_size] = '\0';
+
+        return *this;
+    }
+
+    StringT& operator=(StringT&& str)
+    {
+        Str::swap(str);
+
         return *this;
     }
 
@@ -74,15 +105,12 @@ public:
 
     NODISCARD size_t find(const StringT& str) const
     {
-        return find(str.c_str(), str.m_size);
+        return find(str.m_data, str.m_size);
     }
 
     NODISCARD const Tp* c_str() const
     {
-        m_c_str = allocator::allocate(Str::m_size + 1);
-        memcpy(m_c_str, Str::m_data, sizeof(Tp) * Str::m_size);
-        m_c_str[Str::m_size] = '\0';
-        return m_c_str;
+        return Str::m_data;
     }
 
     NODISCARD StringT substr(size_t pos, size_t count) const
@@ -102,9 +130,11 @@ public:
     NODISCARD StringT operator+(const StringT& other) const
     {
         StringT str;
+        str.reserve(Str::m_size + other.m_size + 1);
         str.resize(Str::m_size + other.m_size);
         std::memcpy(str.m_data, Str::m_data, Str::m_size * sizeof(Tp));
         std::memcpy(str.m_data + Str::m_size, other.m_data, other.m_size * sizeof(Tp));
+        str.m_data[str.m_size] = '\0';
         return str;
     }
 
@@ -113,29 +143,33 @@ public:
         size_t size = str_length(other);
 
         StringT str;
+        str.reserve(Str::m_size + size + 1);
         str.resize(Str::m_size + size);
         std::memcpy(str.m_data, Str::m_data, Str::m_size * sizeof(Tp));
         std::memcpy(str.m_data + Str::m_size, other, size * sizeof(Tp));
+        str.m_data[str.m_size] = '\0';
         return str;
     }
 
     StringT& operator+=(const StringT& other)
     {
-        if (Str::m_size + other.m_size > Str::m_capacity)
-            Str::reserve(Str::m_size + other.m_size);
+        if (Str::m_size + other.m_size + 1 > Str::m_capacity)
+            Str::reserve(Str::m_size + other.m_size + 1);
         std::memcpy(Str::m_data + Str::m_size, other.m_data, other.m_size * sizeof(Tp));
         Str::m_size += other.m_size;
+        Str::m_data[Str::m_size] = '\0';
         return *this;
     }
 
     StringT& operator+=(const Tp* other)
     {
         size_t size = str_length(other);
-        if (Str::m_size + size > Str::m_capacity)
-            Str::reserve(Str::m_size + size);
+        if (Str::m_size + size + 1 > Str::m_capacity)
+            Str::reserve(Str::m_size + size + 1);
 
         std::memcpy(Str::m_data + Str::m_size, other, size * sizeof(Tp));
         Str::m_size += size;
+        Str::m_data[Str::m_size] = '\0';
         return *this;
     }
 
@@ -181,21 +215,23 @@ public:
         size_t size = str_length(lhs);
         StringT<Tp, Alloc> str;
 
+        str.reserve(size + rhs.m_size + 1);
         str.resize(size + rhs.m_size);
         std::memcpy(str.m_data, lhs, size * sizeof(Tp));
         std::memcpy(str.m_data + size, rhs.m_data, rhs.m_size * sizeof(Tp));
+        str.m_data[str.m_size] = '\0';
         return str;
     }
 
 
 public:
-    static constexpr size_t end = std::numeric_limits<size_t>::max();
+    static constexpr size_t end_pos = std::numeric_limits<size_t>::max();
 
 private:
     size_t find(const Tp* str, size_t size) const
     {
         if (size > Str::m_size || size <= 0)
-            return end;
+            return end_pos;
 
         // next array
         size_t len = 0;
@@ -242,11 +278,8 @@ private:
             }
         }
 
-        return j == size ? i - j : end;
+        return j == size ? i - j : end_pos;
     }
-
-private:
-    mutable Tp* m_c_str;
 };
 
 

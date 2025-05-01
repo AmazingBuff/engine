@@ -1,17 +1,83 @@
 //
-// Created by AmazingBuff on 2025/4/25.
+// Created by AmazingBuff on 2025/5/1.
 //
 
 #include <common.h>
 
 GPURootSignature* root_signature = nullptr;
 GPUGraphicsPipeline* pipeline = nullptr;
+GPUDescriptorSet* texture_set = nullptr;
+GPUDescriptorSet* sampler_set = nullptr;
+GPUTexture* texture = nullptr;
+GPUTextureView* texture_view = nullptr;
+GPUSampler* sampler = nullptr;
 
 void create_pipeline()
 {
+    ImageInfo image = load_image(RES_DIR"image/a.png");
+
+    GPUSamplerCreateInfo sampler_create_info{
+        .min_filter = GPUFilterType::e_linear,
+        .mag_filter = GPUFilterType::e_linear,
+        .mipmap_mode = GPUMipMapMode::e_linear,
+        .address_u = GPUAddressMode::e_repeat,
+        .address_v = GPUAddressMode::e_repeat,
+        .address_w = GPUAddressMode::e_repeat,
+        .compare_mode = GPUCompareMode::e_never,
+    };
+    sampler = GPU_create_sampler(t_device, sampler_create_info);
+
+    GPUTextureCreateInfo texture_create_info{
+        .width = static_cast<uint32_t>(image.width),
+        .height = static_cast<uint32_t>(image.height),
+        .depth = 1,
+        .array_layers = 1,
+        .mip_levels = 1,
+        .sample_quality = 0,
+        .sample_count = GPUSampleCount::e_1,
+        .format = GPUFormat::e_r8g8b8a8_unorm,
+        .state = GPUResourceStateFlag::e_copy_destination,
+        .type = GPUResourceTypeFlag::e_texture,
+        .flags = GPUTextureFlagsFlag::e_dedicated,
+    };
+    texture = GPU_create_texture(t_device, texture_create_info);
+
+    GPUTextureViewCreateInfo texture_view_create_info{
+        .texture = texture,
+        .format = GPUFormat::e_r8g8b8a8_unorm,
+        .usage = GPUTextureViewUsageFlag::e_srv,
+        .aspect = GPUTextureViewAspectFlag::e_color,
+        .type = GPUTextureType::e_2d,
+        .base_array_layer = 0,
+        .array_layers = 1,
+        .base_mip_level = 0,
+        .mip_levels = 1,
+    };
+    texture_view = GPU_create_texture_view(t_device, texture_view_create_info);
+
+    GPUBufferCreateInfo buffer_create_info{
+        .size = image.data.size(),
+        .data = image.data.data(),
+        .usage = GPUMemoryUsage::e_cpu_to_gpu,
+        .flags = GPUBufferFlagsFlag::e_persistent_map,
+    };
+    GPUBuffer* buffer = GPU_create_buffer(t_device, buffer_create_info);
+
+    GPUBufferToTextureTransferInfo transfer_info{
+        .src_buffer = buffer,
+        .src_buffer_offset = 0,
+        .dst_texture = texture,
+        .dst_texture_subresource{
+            .mip_level = 0,
+            .base_array_layer = 0,
+            .array_layers = 1
+        },
+    };
+    transfer_buffer_to_texture(transfer_info);
+
     // graphics pipeline
-    Vector<char> vs = read_file(RES_DIR"shader/triangle/vertex_shader.hlsl");
-    Vector<char> fs = read_file(RES_DIR"shader/triangle/fragment_shader.hlsl");
+    Vector<char> vs = read_file(RES_DIR"shader/quad/vert.hlsl");
+    Vector<char> fs = read_file(RES_DIR"shader/quad/frag.hlsl");
 
     Vector<char> vs_compile = compile_shader(vs, L"main", GPUShaderStageFlag::e_vertex);
     Vector<char> fs_compile = compile_shader(fs, L"main", GPUShaderStageFlag::e_fragment);
@@ -53,6 +119,31 @@ void create_pipeline()
 
     root_signature = GPU_create_root_signature(t_device, rs_desc);
 
+    GPUDescriptorSetCreateInfo descriptor_set_create_info{
+        .root_signature = root_signature,
+        .set_index = 0
+    };
+    texture_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
+
+    Vector<GPUDescriptorData> texture_set_data(1);
+    texture_set_data[0].array_count = 1;
+    texture_set_data[0].textures = &texture_view;
+    texture_set_data[0].resource_type = GPUResourceTypeFlag::e_texture;
+    texture_set_data[0].binding = 0;
+    texture_set->update(texture_set_data);
+
+
+    descriptor_set_create_info.set_index = 1;
+    sampler_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
+
+    Vector<GPUDescriptorData> sampler_set_data(1);
+    sampler_set_data[0].array_count = 1;
+    sampler_set_data[0].samplers = &sampler;
+    sampler_set_data[0].resource_type = GPUResourceTypeFlag::e_sampler;
+    sampler_set_data[0].binding = 0;
+    sampler_set->update(sampler_set_data);
+
+
     GPUFormat backend_format = GPUFormat::e_r8g8b8a8_unorm;
 
     GPUGraphicsPipelineCreateInfo pipeline_desc{
@@ -68,12 +159,22 @@ void create_pipeline()
 
     GPU_destroy_shader_library(vertex_shader);
     GPU_destroy_shader_library(fragment_shader);
+
+    GPU_destroy_buffer(buffer);
 }
 
 void destroy_pipeline()
 {
-    GPU_destroy_root_signature(root_signature);
     GPU_destroy_graphics_pipeline(pipeline);
+
+    GPU_destroy_descriptor_set(texture_set);
+    GPU_destroy_descriptor_set(sampler_set);
+
+    GPU_destroy_root_signature(root_signature);
+
+    GPU_destroy_texture_view(texture_view);
+    GPU_destroy_texture(texture);
+    GPU_destroy_sampler(sampler);
 }
 
 void draw(SDL_Window* window)
@@ -134,7 +235,9 @@ void draw(SDL_Window* window)
 
         GPUGraphicsPassEncoder* encoder = t_command_buffer[index]->begin_graphics_pass(graphics_pass_create_info);
 
-        encoder->set_viewport(Width / 4, 0, Width / 2, Height, 0, 1);
+        encoder->bind_descriptor_set(texture_set);
+        encoder->bind_descriptor_set(sampler_set);
+        encoder->set_viewport(0, 0, Width, Height, 0, 1);
         encoder->set_scissor(0, 0, Width, Height);
         encoder->bind_pipeline(pipeline);
         encoder->draw(3, 0);

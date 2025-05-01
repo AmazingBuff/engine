@@ -6,7 +6,7 @@
 AMAZING_NAMESPACE_BEGIN
 
 constexpr static size_t k_global_memory_size = 256 * 1024 * 1024;   // 256 MB
-constexpr static size_t k_local_memory_size = 256 * 1024;           // 256 KB
+constexpr static size_t k_local_memory_size = 256 * 1024 * 1024;    // 256 MB
 
 
 void* allocate(size_t size, void* data);

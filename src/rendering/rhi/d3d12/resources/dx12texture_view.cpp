@@ -20,12 +20,12 @@ DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateIn
     if (handle_count > 0)
     {
         DX12DescriptorHeap::D3D12DescriptorHeap* heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
-        m_rtv_dsv_handle = DX12DescriptorHeap::consume_descriptor_handle(heap, handle_count).cpu;
+        m_srv_uva_handle = DX12DescriptorHeap::consume_descriptor_handle(heap, handle_count).cpu;
 
         // srv
         if (usage & GPUTextureViewUsageFlag::e_srv)
         {
-            D3D12_CPU_DESCRIPTOR_HANDLE srv = m_rtv_dsv_handle;
+            D3D12_CPU_DESCRIPTOR_HANDLE srv = m_srv_uva_handle;
             D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{
                 .Format = transfer_format(info.format, true),
                 .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
@@ -114,7 +114,7 @@ DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateIn
         // uav
         if (usage & GPUTextureViewUsageFlag::e_uav)
         {
-            D3D12_CPU_DESCRIPTOR_HANDLE      uav{ m_rtv_dsv_handle.ptr + m_uav_offset };
+            D3D12_CPU_DESCRIPTOR_HANDLE      uav{ m_srv_uva_handle.ptr + m_uav_offset };
             D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc{
                 .Format = transfer_format(info.format, true)
             };
@@ -188,10 +188,10 @@ DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateIn
             break;
             case GPUTextureType::e_1d_array:
             {
-                dsv_desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
-                dsv_desc.Texture1DArray.MipSlice        = info.base_mip_level;
+                dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+                dsv_desc.Texture1DArray.MipSlice = info.base_mip_level;
                 dsv_desc.Texture1DArray.FirstArraySlice = info.base_array_layer;
-                dsv_desc.Texture1DArray.ArraySize       = info.array_layers;
+                dsv_desc.Texture1DArray.ArraySize = info.array_layers;
             }
             break;
             case GPUTextureType::e_2dms:
@@ -201,23 +201,23 @@ DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateIn
             break;
             case GPUTextureType::e_2d:
             {
-                dsv_desc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
                 dsv_desc.Texture2D.MipSlice = info.base_mip_level;
             }
             break;
             case GPUTextureType::e_2dms_array:
             {
-                dsv_desc.ViewDimension                    = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
                 dsv_desc.Texture2DMSArray.FirstArraySlice = info.base_array_layer;
-                dsv_desc.Texture2DMSArray.ArraySize       = info.array_layers;
+                dsv_desc.Texture2DMSArray.ArraySize = info.array_layers;
             }
             break;
             case GPUTextureType::e_2d_array:
             {
-                dsv_desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-                dsv_desc.Texture2DArray.MipSlice        = info.base_mip_level;
+                dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+                dsv_desc.Texture2DArray.MipSlice = info.base_mip_level;
                 dsv_desc.Texture2DArray.FirstArraySlice = info.base_array_layer;
-                dsv_desc.Texture2DArray.ArraySize       = info.array_layers;
+                dsv_desc.Texture2DArray.ArraySize = info.array_layers;
             }
             break;
             default:
@@ -243,10 +243,10 @@ DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateIn
             break;
             case GPUTextureType::e_1d_array:
             {
-                rtv_desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
-                rtv_desc.Texture1DArray.MipSlice        = info.base_mip_level;
+                rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+                rtv_desc.Texture1DArray.MipSlice = info.base_mip_level;
                 rtv_desc.Texture1DArray.FirstArraySlice = info.base_array_layer;
-                rtv_desc.Texture1DArray.ArraySize       = info.array_layers;
+                rtv_desc.Texture1DArray.ArraySize = info.array_layers;
             }
             break;
             case GPUTextureType::e_2dms:
@@ -256,31 +256,31 @@ DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateIn
             break;
             case GPUTextureType::e_2d:
             {
-                rtv_desc.ViewDimension      = D3D12_RTV_DIMENSION_TEXTURE2D;
+                rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
                 rtv_desc.Texture2D.MipSlice = info.base_mip_level;
             }
             break;
             case GPUTextureType::e_2dms_array:
             {
-                rtv_desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+                rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
                 rtv_desc.Texture2DMSArray.FirstArraySlice = info.base_array_layer;
-                rtv_desc.Texture2DMSArray.ArraySize       = info.array_layers;
+                rtv_desc.Texture2DMSArray.ArraySize = info.array_layers;
             }
             break;
             case GPUTextureType::e_2d_array:
             {
-                rtv_desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-                rtv_desc.Texture2DArray.MipSlice        = info.base_mip_level;
+                rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+                rtv_desc.Texture2DArray.MipSlice = info.base_mip_level;
                 rtv_desc.Texture2DArray.FirstArraySlice = info.base_array_layer;
-                rtv_desc.Texture2DArray.ArraySize       = info.array_layers;
+                rtv_desc.Texture2DArray.ArraySize = info.array_layers;
             }
             break;
             case GPUTextureType::e_3d:
             {
-                rtv_desc.ViewDimension         = D3D12_RTV_DIMENSION_TEXTURE3D;
-                rtv_desc.Texture3D.MipSlice    = info.base_mip_level;
+                rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
+                rtv_desc.Texture3D.MipSlice = info.base_mip_level;
                 rtv_desc.Texture3D.FirstWSlice = info.base_array_layer;
-                rtv_desc.Texture3D.WSize       = info.array_layers;
+                rtv_desc.Texture3D.WSize = info.array_layers;
             }
             break;
             default:

@@ -62,12 +62,10 @@ public:
         m_size = size;
     }
 
-    template <typename OtherT>
-        requires(std::is_convertible_v<OtherT, Tp>)
-    Vector(const std::initializer_list<OtherT>& list) : m_data(nullptr), m_size(list.size()), m_capacity(0)
+    Vector(const std::initializer_list<Tp>& list) : m_data(nullptr), m_size(list.size()), m_capacity(0)
     {
         reserve(m_size);
-        if constexpr (memcopyable<Tp, OtherT>)
+        if constexpr (copyable<Tp>)
             std::memcpy(m_data, list.begin(), sizeof(Tp) * m_size);
         else
         {
@@ -80,12 +78,10 @@ public:
         }
     }
 
-    template <typename OtherT>
-        requires(std::is_convertible_v<OtherT, Tp>)
-    Vector(const Vector<OtherT>& other) : m_data(nullptr), m_size(other.m_size), m_capacity(other.m_capacity)
+    Vector(const Vector& other) : m_data(nullptr), m_size(other.m_size), m_capacity(0)
     {
-        reserve(m_capacity);
-        if constexpr (memcopyable<Tp, OtherT>)
+        reserve(other.m_capacity);
+        if constexpr (copyable<Tp>)
             std::memcpy(m_data, other.m_data, other.m_size * sizeof(Tp));
         else
         {
@@ -94,18 +90,26 @@ public:
         }
     }
 
+    Vector(Vector&& other) : m_data(nullptr), m_size(other.m_size), m_capacity(other.m_capacity)
+    {
+        swap(other);
+    }
+
     ~Vector()
     {
-        if (m_data != nullptr)
-            allocator::deallocate(m_data);
+        if constexpr (std::is_destructible_v<Tp>)
+        {
+            for (size_t i = 0; i < m_size; i++)
+                m_data[i].~Tp();
+        }
+
+        deallocate(m_data);
         m_data = nullptr;
         m_size = 0;
         m_capacity = 0;
     }
 
-    template <typename OtherT>
-        requires(std::is_convertible_v<OtherT, Tp>)
-    Vector& operator=(const Vector<OtherT>& other)
+    Vector& operator=(const Vector& other)
     {
         if (this == &other)
             return *this;
@@ -114,13 +118,23 @@ public:
         if (m_capacity < m_size)
             reserve(m_size);
 
-        if constexpr (memcopyable<Tp, OtherT>)
+        if constexpr (copyable<Tp>)
             std::memcpy(m_data, other.m_data, other.m_size * sizeof(Tp));
         else
         {
             for (size_t i = 0; i < m_size; ++i)
                 m_data[i] = other.m_data[i];
         }
+
+        return *this;
+    }
+
+    Vector& operator=(Vector&& other)
+    {
+        if (this == &other)
+            return *this;
+
+        swap(other);
 
         return *this;
     }

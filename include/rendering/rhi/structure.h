@@ -256,6 +256,14 @@ struct GPUBufferBinding
     uint32_t offset;
 };
 
+struct GPUTextureSubresource
+{
+    GPUTextureViewAspect aspect;
+    uint32_t mip_level;
+    uint32_t base_array_layer;
+    uint32_t array_layers;
+};
+
 AMAZING_NAMESPACE_END
 
 #endif //STRUCTURE_H

@@ -44,6 +44,7 @@ DX12CommandBuffer::DX12CommandBuffer(GPUDevice const* device, GPUCommandPool con
     m_bound_descriptor_heaps[0] = dx12_device->m_descriptor_heap->m_gpu_cbv_srv_uav_heaps[m_bound_heap_index];
     m_bound_descriptor_heaps[1] = dx12_device->m_descriptor_heap->m_gpu_sampler_heaps[m_bound_heap_index];
     m_ref_pool = dx12_command_pool;
+    m_ref_device = dx12_device;
 }
 
 DX12CommandBuffer::~DX12CommandBuffer()
@@ -117,7 +118,7 @@ GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCr
             DX12Texture const* texture = static_cast<DX12Texture const*>(texture_view->m_ref_texture);
             DX12Texture const* resolve = static_cast<DX12Texture const*>(resolve_view->m_ref_texture);
 
-            sub_resolve_subresource[i].SrcRect = {0, 0, static_cast<int>(texture->m_info->width), static_cast<int>(texture->m_info->height)};
+            sub_resolve_subresource[i].SrcRect = { 0, 0, static_cast<int>(texture->m_info->width), static_cast<int>(texture->m_info->height) };
 
             D3D12_RENDER_PASS_ENDING_ACCESS_TYPE render_pass_end_access_type = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE;
             D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS resolve_parameters{
@@ -130,15 +131,15 @@ GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCr
                 .PreserveResolveSource = false,
             };
 
-            render_target_desc[i].EndingAccess = {render_pass_end_access_type, {resolve_parameters}};
+            render_target_desc[i].EndingAccess = { render_pass_end_access_type, {resolve_parameters} };
         }
         else
         {
             D3D12_RENDER_PASS_ENDING_ACCESS_TYPE render_pass_end_access_type = Render_Pass_End_Map[to_underlying(color_attachment.store)];
-            render_target_desc[i].EndingAccess = {render_pass_end_access_type, {}};
+            render_target_desc[i].EndingAccess = { render_pass_end_access_type, {} };
         }
         render_target_desc[i].cpuDescriptor = texture_view->m_rtv_dsv_handle;
-        render_target_desc[i].BeginningAccess = {render_pass_begin_access_type, {color_clear_value}};
+        render_target_desc[i].BeginningAccess = { render_pass_begin_access_type, {color_clear_value} };
     }
 
     // depth stencil
@@ -149,8 +150,8 @@ GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCr
         DX12TextureView const* texture_view = static_cast<DX12TextureView const*>(info.depth_stencil_attachment->texture_view);
         D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depth_begin_access = Render_Pass_Begin_Map[to_underlying(info.depth_stencil_attachment->depth_load)];
         D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencil_begin_access = Render_Pass_Begin_Map[to_underlying(info.depth_stencil_attachment->stencil_load)];
-        D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depth_end_access   = Render_Pass_End_Map[to_underlying(info.depth_stencil_attachment->depth_store)];
-        D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencil_end_access   = Render_Pass_End_Map[to_underlying(info.depth_stencil_attachment->stencil_store)];
+        D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depth_end_access = Render_Pass_End_Map[to_underlying(info.depth_stencil_attachment->depth_store)];
+        D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencil_end_access = Render_Pass_End_Map[to_underlying(info.depth_stencil_attachment->stencil_store)];
 
         D3D12_CLEAR_VALUE depth_clear_value{
             .Format = transfer_format(texture_view->m_format),
@@ -166,10 +167,10 @@ GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCr
         };
 
         depth_stencil.cpuDescriptor = texture_view->m_rtv_dsv_handle;
-        depth_stencil.DepthBeginningAccess = {depth_begin_access, {depth_clear_value}};
-        depth_stencil.DepthEndingAccess = {depth_end_access, {}};
-        depth_stencil.StencilBeginningAccess = {stencil_begin_access, {stencil_clear_value}};
-        depth_stencil.StencilEndingAccess = {stencil_end_access, {}};
+        depth_stencil.DepthBeginningAccess = { depth_begin_access, {depth_clear_value} };
+        depth_stencil.DepthEndingAccess = { depth_end_access, {} };
+        depth_stencil.StencilBeginningAccess = { stencil_begin_access, {stencil_clear_value} };
+        depth_stencil.StencilEndingAccess = { stencil_end_access, {} };
         depth_stencil_desc = &depth_stencil;
     }
 
@@ -184,6 +185,32 @@ void DX12CommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
 {
     PLACEMENT_DELETE(DX12GraphicsPassEncoder, static_cast<DX12GraphicsPassEncoder*>(encoder));
     m_command_list->EndRenderPass();
+}
+
+void DX12CommandBuffer::transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
+{
+    DX12Device const* device = static_cast<DX12Device const*>(m_ref_device);
+    DX12Buffer const* buffer = static_cast<DX12Buffer const*>(info.src_buffer);
+    DX12Texture const* texture = static_cast<DX12Texture const*>(info.dst_texture);
+
+    GPUTextureSubresource const& subresource = info.dst_texture_subresource;
+    uint32_t subresource_index = transfer_subresource_index(subresource.mip_level, subresource.base_array_layer,
+        0, 1, subresource.array_layers);
+
+    D3D12_RESOURCE_DESC texture_desc = texture->m_resource->GetDesc();
+    D3D12_TEXTURE_COPY_LOCATION src_copy{
+        .pResource = buffer->m_resource,
+        .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+    };
+    device->m_device->GetCopyableFootprints(&texture_desc, subresource_index, 1, info.src_buffer_offset, &src_copy.PlacedFootprint, nullptr, nullptr, nullptr);
+
+    src_copy.PlacedFootprint.Offset = info.src_buffer_offset;
+    D3D12_TEXTURE_COPY_LOCATION dst_copy{
+        .pResource = texture->m_resource,
+        .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+        .SubresourceIndex = subresource_index
+    };
+    m_command_list->CopyTextureRegion(&dst_copy, 0, 0, 0, &src_copy, nullptr);
 }
 
 void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
@@ -271,11 +298,14 @@ void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
 
 void DX12CommandBuffer::reset_root_signature(GPUPipelineType type, ID3D12RootSignature* root_signature)
 {
-    m_bound_root_signature = root_signature;
-    if (type == GPUPipelineType::e_graphics)
-        m_command_list->SetGraphicsRootSignature(root_signature);
-    else
-        m_command_list->SetComputeRootSignature(root_signature);
+    if (m_bound_root_signature != root_signature)
+    {
+        m_bound_root_signature = root_signature;
+        if (type == GPUPipelineType::e_graphics)
+            m_command_list->SetGraphicsRootSignature(root_signature);
+        else
+            m_command_list->SetComputeRootSignature(root_signature);
+    }
 }
 
 

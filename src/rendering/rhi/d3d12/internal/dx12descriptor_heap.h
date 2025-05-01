@@ -55,7 +55,7 @@ private:
     static D3D12DescriptorHeap* create_descriptor_heap(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_DESC const& desc);
     static D3D12DescriptorHandle consume_descriptor_handle(D3D12DescriptorHeap* heap, uint32_t descriptor_count);
     static void return_descriptor_handle(D3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t descriptor_count);
-    static void copy_descriptor_handle(D3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE const& src_handle, uint64_t const& dst_handle, uint32_t index);
+    static void copy_descriptor_handle(ID3D12Device* device, D3D12DescriptorHeap* heap, D3D12_CPU_DESCRIPTOR_HANDLE const& src_handle, uint64_t const& dst_handle, uint32_t index);
 private:
     // cpu
     D3D12DescriptorHeap* m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];

@@ -109,7 +109,7 @@ DX12Texture::DX12Texture() : m_resource(nullptr), m_allocation(nullptr) {}
 
 DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& info) : m_resource(nullptr), m_allocation(nullptr)
 {
-DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12Adapter const* dx12_adapter = static_cast<DX12Adapter const*>(dx12_device->m_ref_adapter);
 
     DXGI_FORMAT dxgi_format = transfer_format(info.format);

@@ -113,10 +113,11 @@ struct GPUMemoryPoolCreateInfo
 struct GPUBufferCreateInfo
 {
     String name;
-    size_t size;
+    uint64_t size;
+    uint8_t* data;
     struct
     {
-        size_t first_element;
+        uint64_t first_element;
         uint32_t element_count;
         uint32_t element_stride;
     } data_array;
@@ -204,6 +205,13 @@ struct GPUQueuePresentInfo
     uint8_t index;
 };
 
+struct GPUBufferToTextureTransferInfo
+{
+    GPUBuffer const* src_buffer;
+    uint64_t src_buffer_offset;
+    GPUTexture const* dst_texture;
+    GPUTextureSubresource dst_texture_subresource;
+};
 
 AMAZING_NAMESPACE_END
 

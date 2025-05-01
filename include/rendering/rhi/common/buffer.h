@@ -20,7 +20,7 @@ public:
 protected:
     struct GPUBufferInfo
     {
-        size_t size;
+        uint64_t size;
         void* mapped_data;
         GPUResourceType type;
         GPUMemoryUsage memory_usage;

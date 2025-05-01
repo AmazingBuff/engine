@@ -31,3 +31,7 @@
 # build files
 build/
 .vs/
+
+# shader
+.dxil
+.spv

@@ -32,6 +32,7 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
         .Width = allocate_size,
         .Height = 1,
         .DepthOrArraySize = 1,
+        .MipLevels = 1,
         .Format = DXGI_FORMAT_UNKNOWN,
         .SampleDesc = {
             .Count = 1,
@@ -91,8 +92,13 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
         }
     }
 
-    if (info.flags & GPUBufferFlagsFlag::e_persistent_map && FAILED(m_resource->Map(0, nullptr, &m_info->mapped_data)))
-        RENDERING_LOG_WARNING("map buffer failed!");
+    if (info.flags & GPUBufferFlagsFlag::e_persistent_map)
+    {
+        if (SUCCEEDED(m_resource->Map(0, nullptr, &m_info->mapped_data)))
+            memcpy(m_info->mapped_data, info.data, info.size);
+        else
+            RENDERING_LOG_WARNING("map buffer failed!");
+    }
 
     m_gpu_address = m_resource->GetGPUVirtualAddress();
 

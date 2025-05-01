@@ -24,6 +24,7 @@ public:
     GPUGraphicsPassEncoder* begin_graphics_pass(GPUGraphicsPassCreateInfo const& info) override;
     void end_graphics_pass(GPUGraphicsPassEncoder* encoder) override;
 
+    void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info) override;
     void resource_barrier(GPUResourceBarrierInfo const& info) override;
 private:
     void reset_root_signature(GPUPipelineType type, ID3D12RootSignature* root_signature);

@@ -19,6 +19,12 @@ struct RBTreeNode
         Red,
         Black
     } color;
+
+    ~RBTreeNode()
+    {
+        if constexpr (std::is_destructible_v<Tp>)
+            val.~Tp();
+    }
 };
 
 template <typename Tp>

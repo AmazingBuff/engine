@@ -9,3 +9,4 @@ target_link_libraries(${sample_name} PUBLIC rendering_common)
 endfunction()
 
 add_rendering_sample(triangle)
+add_rendering_sample(quad)

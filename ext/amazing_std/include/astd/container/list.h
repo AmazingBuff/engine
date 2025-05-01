@@ -115,6 +115,7 @@ public:
 
         node->next = p->next;
         node->prev = p;
+        p->next = node;
 
         m_size++;
     }
