@@ -56,14 +56,14 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCr
     // cbv srv uav
     if (cbv_srv_uav_count)
     {
-        D3D12_GPU_DESCRIPTOR_HANDLE handle = DX12DescriptorHeap::consume_descriptor_handle(cbv_srv_uav_heap, cbv_srv_uav_count).gpu;
-        m_cbv_srv_uav_handle = handle.ptr - cbv_srv_uav_heap->start_handle.gpu.ptr;
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = DX12DescriptorHeap::consume_descriptor_handle(cbv_srv_uav_heap, cbv_srv_uav_count).cpu;
+        m_cbv_srv_uav_handle = handle.ptr - cbv_srv_uav_heap->start_handle.cpu.ptr;
         m_cbv_srv_uav_stride = cbv_srv_uav_count * cbv_srv_uav_heap->descriptor_size;
     }
     if (sampler_count)
     {
-        D3D12_GPU_DESCRIPTOR_HANDLE handle = DX12DescriptorHeap::consume_descriptor_handle(sampler_heap, sampler_count).gpu;
-        m_sampler_handle = handle.ptr - sampler_heap->start_handle.gpu.ptr;
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = DX12DescriptorHeap::consume_descriptor_handle(sampler_heap, sampler_count).cpu;
+        m_sampler_handle = handle.ptr - sampler_heap->start_handle.cpu.ptr;
         m_sampler_stride = sampler_count * sampler_heap->descriptor_size;
     }
 
@@ -99,7 +99,7 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCr
             }
             if (cbv_srv_uav_handle.ptr != 0)
             {
-                for (uint32_t j = 0; j < resource.size; j++)
+                for (uint32_t j = 0; j < resource.array_count; j++)
                 {
                     DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, cbv_srv_uav_handle, m_cbv_srv_uav_handle, cbv_srv_uav_heap_index);
                     cbv_srv_uav_heap_index++;
@@ -107,7 +107,7 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCr
             }
             if (sampler_handle.ptr != 0)
             {
-                for (uint32_t j = 0; j < resource.size; j++)
+                for (uint32_t j = 0; j < resource.array_count; j++)
                 {
                     DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, sampler_heap, sampler_handle, m_sampler_handle, sampler_heap_index);
                     sampler_heap_index++;
@@ -129,7 +129,7 @@ DX12DescriptorSet::~DX12DescriptorSet()
 
 }
 
-void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
+void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_t descriptor_data_count)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(m_ref_device);
     DX12RootSignature const* dx12_root_signature = static_cast<DX12RootSignature const*>(m_ref_root_signature);
@@ -137,8 +137,9 @@ void DX12DescriptorSet::update(Vector<GPUDescriptorData> const& descriptor_data)
     DX12DescriptorHeap::D3D12DescriptorHeap* cbv_srv_uav_heap = dx12_device->m_descriptor_heap->m_gpu_cbv_srv_uav_heaps[GPU_Node_Index];
     DX12DescriptorHeap::D3D12DescriptorHeap* sampler_heap = dx12_device->m_descriptor_heap->m_gpu_sampler_heaps[GPU_Node_Index];
 
-    for (const GPUDescriptorData& data : descriptor_data)
+    for (uint32_t i = 0; i < descriptor_data_count; i++)
     {
+        const GPUDescriptorData& data = descriptor_data[i];
         GPUShaderResource const* shader_resource = nullptr;
         uint32_t heap_offset = 0;
         if (!data.name.empty())

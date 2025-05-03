@@ -10,3 +10,4 @@ endfunction()
 
 add_rendering_sample(triangle)
 add_rendering_sample(quad)
+add_rendering_sample(box)

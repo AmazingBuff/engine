@@ -107,6 +107,11 @@ public:
             return m_node->val;
         }
 
+        const value_type& operator*() const
+        {
+            return m_node->val;
+        }
+
         value_type* operator->()
         {
             return &m_node->val;

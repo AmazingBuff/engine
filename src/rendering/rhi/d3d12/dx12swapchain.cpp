@@ -91,7 +91,7 @@ DX12SwapChain::DX12SwapChain(GPUInstance const* instance, GPUDevice const* devic
 
         DX12TextureView* back_texture_view = PLACEMENT_NEW(DX12TextureView, sizeof(DX12TextureView), nullptr, device, view_info);
 
-        m_back_textures[i] = {back_texture, back_texture_view};
+        m_back_textures[i] = { back_texture, back_texture_view };
     }
 }
 

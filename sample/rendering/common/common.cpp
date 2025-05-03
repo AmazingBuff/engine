@@ -8,6 +8,8 @@
 #include "stb_image.h"
 #include <dxc/dxcapi.h>
 
+#include <filesystem>
+
 thread_local GPUInstance* t_instance = nullptr;
 thread_local GPUDevice* t_device = nullptr;
 thread_local GPUSurface* t_surface = nullptr;
@@ -16,8 +18,8 @@ thread_local GPUCommandPool* t_command_pool[Frame_In_Flight] = { nullptr };
 thread_local GPUCommandBuffer* t_command_buffer[Frame_In_Flight] = { nullptr };
 thread_local GPUSwapChain* t_swap_chain = nullptr;
 thread_local GPUFence* t_present_fence[Frame_In_Flight] = { nullptr };
-thread_local GPUSemaphore* t_image_semaphore[Frame_In_Flight] = { nullptr };
-thread_local GPUSemaphore* t_present_semaphore[Frame_In_Flight] = { nullptr };
+thread_local GPUSemaphore* t_image_semaphore = nullptr;
+thread_local GPUSemaphore* t_present_semaphore = nullptr;
 
 
 thread_local GPUQueue* t_transfer_queue = nullptr;
@@ -63,13 +65,14 @@ void create_api_object(HWND hwnd, GPUBackend backend)
     t_transfer_pool = GPU_create_command_pool(t_device, t_transfer_queue);
     t_transfer_buffer = GPU_create_command_buffer(t_device, t_transfer_pool, command_buffer_create_info);
 
+    t_image_semaphore = GPU_create_semaphore(t_device);
+    t_present_semaphore = GPU_create_semaphore(t_device);
+
     for (uint32_t i = 0; i < Frame_In_Flight; i++)
     {
         t_command_pool[i] = GPU_create_command_pool(t_device, t_graphics_queue);
         t_command_buffer[i] = GPU_create_command_buffer(t_device, t_command_pool[i], command_buffer_create_info);
         t_present_fence[i] = GPU_create_fence(t_device);
-        t_image_semaphore[i] = GPU_create_semaphore(t_device);
-        t_present_semaphore[i] = GPU_create_semaphore(t_device);
     }
 
     t_surface = GPU_create_surface(hwnd);
@@ -92,10 +95,11 @@ void destroy_api_object()
     GPU_destroy_command_buffer(t_transfer_buffer);
     GPU_destroy_command_pool(t_transfer_pool);
 
+    GPU_destroy_semaphore(t_image_semaphore);
+    GPU_destroy_semaphore(t_present_semaphore);
+
     for (uint32_t i = 0; i < Frame_In_Flight; i++)
     {
-        GPU_destroy_semaphore(t_image_semaphore[i]);
-        GPU_destroy_semaphore(t_present_semaphore[i]);
         GPU_destroy_fence(t_present_fence[i]);
         GPU_destroy_command_buffer(t_command_buffer[i]);
         GPU_destroy_command_pool(t_command_pool[i]);
@@ -112,6 +116,7 @@ void destroy_api_object()
 ImageInfo load_image(const String& file_path)
 {
     int width, height, channels;
+    stbi_set_flip_vertically_on_load(true);
     uint8_t* image = stbi_load(file_path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
     Vector<uint8_t> image_data(width * height * 4);
@@ -160,13 +165,17 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
         .Encoding = CP_UTF8
     };
 
+    std::filesystem::path include_path{ RES_DIR"shader" };
+    const wchar_t* inc = include_path.c_str();
+
     Vector<LPCWSTR> arguments = {
         L"-E", L"main",
         L"-T", shader_model,
+        L"-I", inc
     };
 
     IDxcResult* ret = nullptr;
-    if (FAILED(compiler->Compile(&buffer, arguments.data(), arguments.size(), nullptr, IID_PPV_ARGS(&ret))))
+    compiler->Compile(&buffer, arguments.data(), arguments.size(), nullptr, IID_PPV_ARGS(&ret));
     {
         IDxcBlobUtf8* errors = nullptr;
         ret->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);

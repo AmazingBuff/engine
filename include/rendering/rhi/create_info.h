@@ -74,7 +74,7 @@ struct GPUGraphicsPipelineCreateInfo
     GPUShaderEntry const* tessellation_evaluation_shader;
     GPUShaderEntry const* geometry_shader;
     GPUShaderEntry const* fragment_shader;
-    Vector<GPUVertexAttribute> const vertex_input;
+    Vector<GPUVertexAttribute> const vertex_inputs;
 
     GPUBlendState const* blend_state;
     GPUDepthStencilState const* depth_stencil_state;
@@ -114,7 +114,7 @@ struct GPUBufferCreateInfo
 {
     String name;
     uint64_t size;
-    uint8_t* data;
+    void const* data;
     struct
     {
         uint64_t first_element;

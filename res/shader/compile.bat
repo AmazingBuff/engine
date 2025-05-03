@@ -1,2 +1,2 @@
-"../../3rd/dxc/bin/x64/dxc.exe" -E main -T vs_6_0 -I triangle/common -Fo triangle/vertex_shader.dxil triangle/vertex_shader.hlsl
-"../../3rd/dxc/bin/x64/dxc.exe" -E main -T ps_6_0 -I triangle/common -Fo triangle/fragment_shader.dxil triangle/fragment_shader.hlsl
+"../../3rd/dxc/bin/x64/dxc.exe" -E main -T vs_6_0 -I . -Fo box/vert.dxil box/vert.hlsl
+"../../3rd/dxc/bin/x64/dxc.exe" -E main -T ps_6_0 -I . -Fo box/frag.dxil box/frag.hlsl

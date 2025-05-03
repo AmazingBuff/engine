@@ -1,8 +1,3 @@
-struct VSOut
-{
-    float3 color : TEXCOORD0;
-};
-
 static const float2 positions[3] =
 {
     float2(0.0, 0.5),
@@ -17,12 +12,11 @@ static const float3 colors[3] =
     float3(0.0, 0.0, 1.0)
 };
 
-VSOut main(uint VertexIndex : SV_VertexID, out float4 position : SV_POSITION)
+float3 main(uint VertexIndex : SV_VertexID, out float4 position : SV_POSITION) : COLOR
 {
-    VSOut output;
-    output.color = colors[VertexIndex];
+    float3 color = colors[VertexIndex];
 
     position = float4(positions[VertexIndex], 0.f, 1.f);
 
-    return output;
+    return color;
 }

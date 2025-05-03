@@ -7,11 +7,12 @@
 #include <rendering/rhi/wrapper.h>
 #include <io/read.h>
 #include <SDL3/SDL.h>
+#include <core/math/algebra.h>
 
 using namespace Amazing;
 
-static constexpr uint32_t Width = 960;
-static constexpr uint32_t Height = 540;
+static constexpr uint32_t Width = 1920;
+static constexpr uint32_t Height = 1080;
 static constexpr uint32_t Frame_In_Flight = 2;
 
 
@@ -23,8 +24,8 @@ extern thread_local GPUCommandPool* t_command_pool[Frame_In_Flight];
 extern thread_local GPUCommandBuffer* t_command_buffer[Frame_In_Flight];
 extern thread_local GPUSwapChain* t_swap_chain;
 extern thread_local GPUFence* t_present_fence[Frame_In_Flight];
-extern thread_local GPUSemaphore* t_image_semaphore[Frame_In_Flight];
-extern thread_local GPUSemaphore* t_present_semaphore[Frame_In_Flight];
+extern thread_local GPUSemaphore* t_image_semaphore;
+extern thread_local GPUSemaphore* t_present_semaphore;
 
 
 struct ImageInfo

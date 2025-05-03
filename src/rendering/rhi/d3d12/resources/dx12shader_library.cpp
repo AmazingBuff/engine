@@ -100,7 +100,7 @@ DX12ShaderLibrary::DX12ShaderLibrary(GPUShaderLibraryCreateInfo const& info) : m
         shader_resource.resource_type = Resource_Type_Flag_Map[input_bind_desc.Type];
         shader_resource.set = input_bind_desc.Space;
         shader_resource.binding = input_bind_desc.BindPoint;
-        shader_resource.size = input_bind_desc.BindCount;
+        shader_resource.array_count = input_bind_desc.BindCount;
         shader_resource.stage = info.stage;
         shader_resource.texture_type = Texture_Type_Map[input_bind_desc.Dimension];
 

@@ -287,7 +287,7 @@ template <typename Char, typename Tp>
 StringT<Char> to_str(const Tp& value)
 {
     Char buf[21];
-    Char* end = std::end(buf);
+    Char* end = buf + 20;
     *end = '\0';
 
     if constexpr (std::is_integral_v<Tp>)

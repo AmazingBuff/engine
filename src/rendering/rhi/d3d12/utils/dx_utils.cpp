@@ -10,10 +10,115 @@ DXGI_FORMAT transfer_format(GPUFormat format, bool shader)
 {
     switch (format)
     {
+    case GPUFormat::e_r1_unorm:
+        return DXGI_FORMAT_R1_UNORM;
+    case GPUFormat::e_r8_unorm:
+        return DXGI_FORMAT_R8_UNORM;
+    case GPUFormat::e_r8_snorm:
+        return DXGI_FORMAT_R8_SNORM;
+    case GPUFormat::e_r8_uint:
+        return DXGI_FORMAT_R8_UINT;
+    case GPUFormat::e_r8_sint:
+        return DXGI_FORMAT_R8_SINT;
+    case GPUFormat::e_r8g8_unorm:
+        return DXGI_FORMAT_R8G8_UNORM;
+    case GPUFormat::e_r8g8_snorm:
+        return DXGI_FORMAT_R8G8_SNORM;
+    case GPUFormat::e_r8g8_uint:
+        return DXGI_FORMAT_R8G8_UINT;
+    case GPUFormat::e_r8g8_sint:
+        return DXGI_FORMAT_R8G8_SINT;
+    case GPUFormat::e_r5g6b5_unorm:
+        return DXGI_FORMAT_B5G6R5_UNORM;
+    case GPUFormat::e_b5g6r5_unorm:
+        return DXGI_FORMAT_B5G6R5_UNORM;
+    case GPUFormat::e_b5g5r5a1_unorm:
+        return DXGI_FORMAT_B5G5R5A1_UNORM;
+    case GPUFormat::e_b4g4r4a4_unorm:
+        return DXGI_FORMAT_B4G4R4A4_UNORM;
     case GPUFormat::e_r8g8b8a8_unorm:
         return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case GPUFormat::e_r8g8b8a8_snorm:
+        return DXGI_FORMAT_R8G8B8A8_SNORM;
+    case GPUFormat::e_r8g8b8a8_uint:
+        return DXGI_FORMAT_R8G8B8A8_UINT;
+    case GPUFormat::e_r8g8b8a8_sint:
+        return DXGI_FORMAT_R8G8B8A8_SINT;
     case GPUFormat::e_r8g8b8a8_srgb:
         return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    case GPUFormat::e_b8g8r8a8_unorm:
+        return DXGI_FORMAT_B8G8R8A8_UNORM;
+    case GPUFormat::e_b8g8r8x8_unorm:
+        return DXGI_FORMAT_B8G8R8X8_UNORM;
+    case GPUFormat::e_b8g8r8a8_srgb:
+        return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    case GPUFormat::e_r10g10b10a2_unorm:
+        return DXGI_FORMAT_R10G10B10A2_UNORM;
+    case GPUFormat::e_r10g10b10a2_uint:
+        return DXGI_FORMAT_R10G10B10A2_UINT;
+    case GPUFormat::e_r16_unorm:
+        return DXGI_FORMAT_R16_UNORM;
+    case GPUFormat::e_r16_snorm:
+        return DXGI_FORMAT_R16_SNORM;
+    case GPUFormat::e_r16_uint:
+        return DXGI_FORMAT_R16_UINT;
+    case GPUFormat::e_r16_sint:
+        return DXGI_FORMAT_R16_SINT;
+    case GPUFormat::e_r16_sfloat:
+        return DXGI_FORMAT_R16_FLOAT;
+    case GPUFormat::e_r16g16_unorm:
+        return DXGI_FORMAT_R16G16_UNORM;
+    case GPUFormat::e_r16g16_snorm:
+        return DXGI_FORMAT_R16G16_SNORM;
+    case GPUFormat::e_r16g16_uint:
+        return DXGI_FORMAT_R16G16_UINT;
+    case GPUFormat::e_r16g16_sint:
+        return DXGI_FORMAT_R16G16_SINT;
+    case GPUFormat::e_r16g16_sfloat:
+        return DXGI_FORMAT_R16G16_FLOAT;
+    case GPUFormat::e_r16g16b16a16_unorm:
+        return DXGI_FORMAT_R16G16B16A16_UNORM;
+    case GPUFormat::e_r16g16b16a16_snorm:
+        return DXGI_FORMAT_R16G16B16A16_SNORM;
+    case GPUFormat::e_r16g16b16a16_uint:
+        return DXGI_FORMAT_R16G16B16A16_UINT;
+    case GPUFormat::e_r16g16b16a16_sint:
+        return DXGI_FORMAT_R16G16B16A16_SINT;
+    case GPUFormat::e_r16g16b16a16_sfloat:
+        return DXGI_FORMAT_R16G16B16A16_FLOAT;
+    case GPUFormat::e_r32_uint:
+        return DXGI_FORMAT_R32_UINT;
+    case GPUFormat::e_r32_sint:
+        return DXGI_FORMAT_R32_SINT;
+    case GPUFormat::e_r32_sfloat:
+        return DXGI_FORMAT_R32_FLOAT;
+    case GPUFormat::e_r32g32_uint:
+        return DXGI_FORMAT_R32G32_UINT;
+    case GPUFormat::e_r32g32_sint:
+        return DXGI_FORMAT_R32G32_SINT;
+    case GPUFormat::e_r32g32_sfloat:
+        return DXGI_FORMAT_R32G32_FLOAT;
+    case GPUFormat::e_r32g32b32_uint:
+        return DXGI_FORMAT_R32G32B32_UINT;
+    case GPUFormat::e_r32g32b32_sint:
+        return DXGI_FORMAT_R32G32B32_SINT;
+    case GPUFormat::e_r32g32b32_sfloat:
+        return DXGI_FORMAT_R32G32B32_FLOAT;
+    case GPUFormat::e_r32g32b32a32_uint:
+        return DXGI_FORMAT_R32G32B32A32_UINT;
+    case GPUFormat::e_r32g32b32a32_sint:
+        return DXGI_FORMAT_R32G32B32A32_SINT;
+    case GPUFormat::e_r32g32b32a32_sfloat:
+        return DXGI_FORMAT_R32G32B32A32_FLOAT;
+    case GPUFormat::e_d16_unorm:
+        return shader ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_D16_UNORM;
+    case GPUFormat::e_d32_sfloat:
+        return  shader ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_D32_FLOAT;
+    case GPUFormat::e_d24_unorm_s8_uint:
+    case GPUFormat::e_d24_x8_unorm:
+        return  shader ? DXGI_FORMAT_R24_UNORM_X8_TYPELESS : DXGI_FORMAT_D24_UNORM_S8_UINT;
+    case GPUFormat::e_d32_sfloat_s8_uint:
+        return shader ? DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS : DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
     }
 
     return DXGI_FORMAT_UNKNOWN;
@@ -345,10 +450,72 @@ uint32_t format_bit_size(GPUFormat format)
 {
     switch (format)
     {
-
+    case GPUFormat::e_r1_unorm:
+        return 1;
+    case GPUFormat::e_r8_unorm:
+    case GPUFormat::e_r8_snorm:
+    case GPUFormat::e_r8_uint:
+    case GPUFormat::e_r8_sint:
+        return 8;
+    case GPUFormat::e_r8g8_unorm:
+    case GPUFormat::e_r8g8_snorm:
+    case GPUFormat::e_r8g8_uint:
+    case GPUFormat::e_r8g8_sint:
+    case GPUFormat::e_r5g6b5_unorm:
+    case GPUFormat::e_b5g6r5_unorm:
+    case GPUFormat::e_b5g5r5a1_unorm:
+    case GPUFormat::e_b4g4r4a4_unorm:
+    case GPUFormat::e_r16_unorm:
+    case GPUFormat::e_r16_snorm:
+    case GPUFormat::e_r16_uint:
+    case GPUFormat::e_r16_sint:
+    case GPUFormat::e_r16_sfloat:
+    case GPUFormat::e_d16_unorm:
+        return 16;
+    case GPUFormat::e_r8g8b8a8_unorm:
+    case GPUFormat::e_r8g8b8a8_snorm:
+    case GPUFormat::e_r8g8b8a8_uint:
+    case GPUFormat::e_r8g8b8a8_sint:
+    case GPUFormat::e_r8g8b8a8_srgb:
+    case GPUFormat::e_b8g8r8a8_unorm:
+    case GPUFormat::e_b8g8r8x8_unorm:
+    case GPUFormat::e_b8g8r8a8_srgb:
+    case GPUFormat::e_r10g10b10a2_unorm:
+    case GPUFormat::e_r10g10b10a2_uint:
+    case GPUFormat::e_r16g16_unorm:
+    case GPUFormat::e_r16g16_snorm:
+    case GPUFormat::e_r16g16_uint:
+    case GPUFormat::e_r16g16_sint:
+    case GPUFormat::e_r16g16_sfloat:
+    case GPUFormat::e_r32_uint:
+    case GPUFormat::e_r32_sint:
+    case GPUFormat::e_r32_sfloat:
+    case GPUFormat::e_d32_sfloat:
+    case GPUFormat::e_d24_unorm_s8_uint:
+    case GPUFormat::e_d24_x8_unorm:
+        return 32;
+    case GPUFormat::e_r16g16b16a16_unorm:
+    case GPUFormat::e_r16g16b16a16_snorm:
+    case GPUFormat::e_r16g16b16a16_uint:
+    case GPUFormat::e_r16g16b16a16_sint:
+    case GPUFormat::e_r16g16b16a16_sfloat:
+    case GPUFormat::e_r32g32_uint:
+    case GPUFormat::e_r32g32_sint:
+    case GPUFormat::e_r32g32_sfloat:
+        return 64;
+    case GPUFormat::e_r32g32b32_uint:
+    case GPUFormat::e_r32g32b32_sint:
+    case GPUFormat::e_r32g32b32_sfloat:
+        return 96;
+    case GPUFormat::e_r32g32b32a32_uint:
+    case GPUFormat::e_r32g32b32a32_sint:
+    case GPUFormat::e_r32g32b32a32_sfloat:
+        return 128;
+    case GPUFormat::e_d32_sfloat_s8_uint:
+        return 40;
     }
 
-    return 0;
+    return 32;
 }
 
 AMAZING_NAMESPACE_END

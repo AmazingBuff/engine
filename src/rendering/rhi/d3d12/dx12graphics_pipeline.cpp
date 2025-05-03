@@ -21,20 +21,21 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUDevice const* device, GPUGraphicsP
 
     uint32_t input_element_count = 0;
     Vector<D3D12_INPUT_ELEMENT_DESC> input_element_desc;
-    if (!info.vertex_input.empty())
+    if (!info.vertex_inputs.empty())
     {
-        for (GPUVertexAttribute const& vertex_attribute : info.vertex_input)
+        for (GPUVertexAttribute const& vertex_attribute : info.vertex_inputs)
             input_element_count += vertex_attribute.array_size;
 
         input_element_desc.resize(input_element_count);
 
         Map<String, uint32_t> semantic_name_to_index;
         uint32_t fill_index = 0;
-        for (GPUVertexAttribute const& vertex_attribute : info.vertex_input)
+        for (GPUVertexAttribute const& vertex_attribute : info.vertex_inputs)
         {
             for (uint32_t i = 0; i < vertex_attribute.array_size; ++i)
             {
-                input_element_desc[fill_index].SemanticName = vertex_attribute.semantic_name.c_str();
+                D3D12_INPUT_ELEMENT_DESC& input_desc = input_element_desc[fill_index];
+                input_desc.SemanticName = vertex_attribute.semantic_name.c_str();
                 auto iter = semantic_name_to_index.find(vertex_attribute.semantic_name);
                 if (iter != semantic_name_to_index.end())
                     iter->second++;
@@ -44,19 +45,19 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUDevice const* device, GPUGraphicsP
                     iter = semantic_name_to_index.find(vertex_attribute.semantic_name);
                 }
 
-                input_element_desc[fill_index].SemanticIndex = iter->second;
-                input_element_desc[fill_index].Format = transfer_format(vertex_attribute.format);
-                input_element_desc[fill_index].InputSlot = vertex_attribute.binding;
-                input_element_desc[fill_index].AlignedByteOffset = vertex_attribute.offset + i * format_bit_size(vertex_attribute.format) / 8;
+                input_desc.SemanticIndex = iter->second;
+                input_desc.Format = transfer_format(vertex_attribute.format);
+                input_desc.InputSlot = vertex_attribute.slot;
+                input_desc.AlignedByteOffset = vertex_attribute.offset;
                 if (vertex_attribute.rate == GPUVertexInputRate::e_instance)
                 {
-                    input_element_desc[fill_index].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
-                    input_element_desc[fill_index].InstanceDataStepRate = 1;
+                    input_desc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+                    input_desc.InstanceDataStepRate = 1;
                 }
                 else
                 {
-                    input_element_desc[fill_index].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
-                    input_element_desc[fill_index].InstanceDataStepRate = 1;
+                    input_desc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+                    input_desc.InstanceDataStepRate = 0;
                 }
                 fill_index++;
             }

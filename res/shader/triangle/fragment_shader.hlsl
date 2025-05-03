@@ -1,11 +1,5 @@
-struct VSOut
-{
-    // ignore SV_POSITION in pixel shader if we dont use it
-    // float4 position : SV_POSITION;
-    float3 color : TEXCOORD0;
-};
 
-float4 main(VSOut psIn) : SV_TARGET
+float4 main(float3 color : COLOR) : SV_TARGET
 {
-    return float4(psIn.color, 1.f);
+    return float4(color, 1.f);
 }

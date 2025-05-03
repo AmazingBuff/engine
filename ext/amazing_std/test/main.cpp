@@ -8,7 +8,7 @@ Amazing::Ring<int32_t> ring;
 
 void produce()
 {
-    int32_t v[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int32_t v[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     while (true)
     {
         ring.write(v, 10);
@@ -33,6 +33,8 @@ int main()
     //
     // producer.join();
     // consumer.join();
+
+    Amazing::String ss = Amazing::to_str(23);
 
     Amazing::HashMap<int, int> map;
     map.emplace(2, 4);

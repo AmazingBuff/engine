@@ -78,6 +78,7 @@ struct GPUShaderResource
     uint32_t set;
     uint32_t binding;
     uint32_t size;
+    uint32_t array_count;
     uint32_t offset;
 };
 
@@ -153,7 +154,8 @@ struct GPUVertexAttribute
     String semantic_name;
     uint32_t array_size;
     GPUFormat format;
-    uint32_t binding;
+    uint32_t location;  // for vulkan
+    uint32_t slot;      // for d3d12
     uint32_t offset;
     uint32_t stride;
     GPUVertexInputRate rate;

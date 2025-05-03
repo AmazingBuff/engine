@@ -40,12 +40,59 @@ enum class GPUFormat : uint8_t
 {
     e_undefined,
 
+    e_r1_unorm,
+
+    e_r8_unorm,
+    e_r8_snorm,
+    e_r8_uint,
+    e_r8_sint,
+
+    e_r8g8_unorm,
+    e_r8g8_snorm,
+    e_r8g8_uint,
+    e_r8g8_sint,
+
+    e_r5g6b5_unorm,
+    e_b5g6r5_unorm,
+    e_b5g5r5a1_unorm,
+    e_b4g4r4a4_unorm,
+
     e_r8g8b8a8_unorm,
     e_r8g8b8a8_snorm,
+    e_r8g8b8a8_uint,
+    e_r8g8b8a8_sint,
     e_r8g8b8a8_srgb,
 
     e_b8g8r8a8_unorm,
+    e_b8g8r8x8_unorm,
+    e_b8g8r8a8_srgb,
 
+    e_r10g10b10a2_unorm,
+    e_r10g10b10a2_uint,
+
+    e_r16_unorm,
+    e_r16_snorm,
+    e_r16_uint,
+    e_r16_sint,
+    e_r16_sfloat,
+
+    e_r16g16_unorm,
+    e_r16g16_snorm,
+    e_r16g16_uint,
+    e_r16g16_sint,
+    e_r16g16_sfloat,
+
+    e_r16g16b16_unorm,
+    e_r16g16b16_snorm,
+    e_r16g16b16_uint,
+    e_r16g16b16_sint,
+    e_r16g16b16_sfloat,
+
+    e_r16g16b16a16_unorm,
+    e_r16g16b16a16_snorm,
+    e_r16g16b16a16_uint,
+    e_r16g16b16a16_sint,
+    e_r16g16b16a16_sfloat,
 
     e_r32_uint,
     e_r32_sint,
@@ -63,10 +110,12 @@ enum class GPUFormat : uint8_t
     e_r32g32b32a32_sint,
     e_r32g32b32a32_sfloat,
 
+
     e_d24_unorm_s8_uint,
     e_d32_sfloat_s8_uint,
+    e_d24_sfloat,
     e_d32_sfloat,
-    e_x8_d24_unorm,
+    e_d24_x8_unorm,
     e_d16_unorm,
     e_d16_unorm_s8_uint,
 
@@ -385,7 +434,7 @@ static bool is_depth_stencil_format(GPUFormat const format)
     case GPUFormat::e_d24_unorm_s8_uint:
     case GPUFormat::e_d32_sfloat_s8_uint:
     case GPUFormat::e_d32_sfloat:
-    case GPUFormat::e_x8_d24_unorm:
+    case GPUFormat::e_d24_x8_unorm:
     case GPUFormat::e_d16_unorm:
     case GPUFormat::e_d16_unorm_s8_uint:
         return true;

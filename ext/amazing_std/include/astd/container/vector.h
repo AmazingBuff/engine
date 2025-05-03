@@ -31,7 +31,12 @@ public:
             return *this;
         }
 
-        Tp operator*()
+        Tp& operator*()
+        {
+            return *m_ptr;
+        }
+
+        const Tp& operator*() const
         {
             return *m_ptr;
         }

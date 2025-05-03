@@ -15,7 +15,7 @@ public:
     DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCreateInfo const& info);
     ~DX12DescriptorSet();
 
-    void update(Vector<GPUDescriptorData> const& descriptor_data) override;
+    void update(GPUDescriptorData const* descriptor_data, uint32_t descriptor_data_count) override;
 private:
     uint64_t m_cbv_srv_uav_handle;
     uint32_t m_cbv_srv_uav_stride;

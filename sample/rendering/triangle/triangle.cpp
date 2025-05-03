@@ -84,7 +84,6 @@ void draw(SDL_Window* window)
     create_pipeline();
 
     bool quit = false;
-    uint32_t index = 0;
     while (!quit)
     {
         SDL_Event event;
@@ -99,7 +98,7 @@ void draw(SDL_Window* window)
         }
 
         // draw
-        t_swap_chain->acquire_next_frame(t_image_semaphore[index], nullptr);
+        uint32_t index = t_swap_chain->acquire_next_frame(t_image_semaphore, nullptr);
         GPUTexture const* texture = t_swap_chain->fetch_back_texture(index);
         GPUTextureView const* texture_view = t_swap_chain->fetch_back_texture_view(index);
 
@@ -156,8 +155,8 @@ void draw(SDL_Window* window)
 
         GPUQueueSubmitInfo queue_submit_info{
             .command_buffers = {t_command_buffer[index]},
-            .wait_semaphores = {t_image_semaphore[index]},
-            .signal_semaphores = {t_present_semaphore[index]},
+            .wait_semaphores = {t_image_semaphore},
+            .signal_semaphores = {t_present_semaphore},
             .signal_fence = t_present_fence[index],
         };
         t_graphics_queue->submit(queue_submit_info);
@@ -167,12 +166,10 @@ void draw(SDL_Window* window)
 
         GPUQueuePresentInfo queue_present_info{
             .swap_chain = t_swap_chain,
-            .wait_semaphores = {t_present_semaphore[index]},
+            .wait_semaphores = {t_present_semaphore},
             .index = static_cast<uint8_t>(index),
         };
         t_graphics_queue->present(queue_present_info);
-
-        index = (index + 1) % Frame_In_Flight;
     }
 
     t_graphics_queue->wait_idle();

@@ -52,6 +52,11 @@ public:
             return m_ptr->val;
         }
 
+        const Tp& operator*() const
+        {
+            return m_ptr->val;
+        }
+
         NODISCARD bool operator==(const Iterator& other)
         {
             return m_ptr == other.m_ptr;
