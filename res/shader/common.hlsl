@@ -6,7 +6,8 @@ struct VertexAttribute
     float3 tangent : TANGENT;
 };
 
-// view space
+// view space, because light position is defined in world space,
+// so to avoid 
 struct VertexOutput
 {
     float3 position : POSITION;
@@ -28,6 +29,7 @@ struct PassInfo
 
 struct LightInfo
 {
+    // must transform to view space in cpu
     float3 pos;
     float3 color;
 };
