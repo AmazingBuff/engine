@@ -176,7 +176,7 @@ GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCr
 
     m_command_list->BeginRenderPass(info.color_attachments.size(), render_target_desc, depth_stencil_desc, D3D12_RENDER_PASS_FLAG_NONE);
 
-    DX12GraphicsPassEncoder* encoder = PLACEMENT_NEW(DX12GraphicsPassEncoder, sizeof(DX12GraphicsPassEncoder), nullptr);
+    DX12GraphicsPassEncoder* encoder = PLACEMENT_NEW(DX12GraphicsPassEncoder, sizeof(DX12GraphicsPassEncoder));
     encoder->m_command_buffer = this;
     return encoder;
 }

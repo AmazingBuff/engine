@@ -226,6 +226,16 @@ public:
         insert(std::move(val));
     }
 
+    template <typename Iter>
+    void insert(Iter first, Iter last)
+    {
+        while (first != last)
+        {
+            emplace(*first);
+            ++first;
+        }
+    }
+
     void insert(value_type&& val)
     {
         // find position

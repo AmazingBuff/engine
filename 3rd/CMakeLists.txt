@@ -21,6 +21,8 @@ set(${include_dirs} ${current_include_dirs} PARENT_SCOPE)
 endfunction()
 
 add_lib(dxc LIBS DLLS INCLUDE_DIRS)
+add_lib(vulkan LIBS DLLS INCLUDE_DIRS)
+add_lib(spirv_cross LIBS DLLS INCLUDE_DIRS)
 
 set(THIRD_PARTY_LIBS ${LIBS} PARENT_SCOPE)
 set(THIRD_PARTY_DLLS ${DLLS} PARENT_SCOPE)

@@ -5,6 +5,7 @@
 #ifndef DX12SAMPLER_H
 #define DX12SAMPLER_H
 
+#include "rendering/rhi/d3d12/dx12.h"
 #include "rendering/rhi/common/sampler.h"
 
 AMAZING_NAMESPACE_BEGIN

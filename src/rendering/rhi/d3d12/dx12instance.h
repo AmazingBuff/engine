@@ -5,7 +5,9 @@
 #ifndef DX12INSTANCE_H
 #define DX12INSTANCE_H
 
+#include "dx12.h"
 #include "rendering/rhi/common/instance.h"
+#include <dxgi1_6.h>
 
 AMAZING_NAMESPACE_BEGIN
 

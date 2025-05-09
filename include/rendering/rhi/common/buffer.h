@@ -15,7 +15,7 @@ public:
     GPUBuffer() : m_ref_device(nullptr), m_info(nullptr) {}
     virtual ~GPUBuffer() = default;
 
-    virtual void map(size_t offset, size_t size) = 0;
+    virtual void map(size_t offset, size_t size, const void* data = nullptr) = 0;
     virtual void unmap() = 0;
 protected:
     struct GPUBufferInfo
@@ -24,6 +24,7 @@ protected:
         void* mapped_data;
         GPUResourceType type;
         GPUMemoryUsage memory_usage;
+        GPUBufferFlags flags;
     };
 
     GPUDevice const* m_ref_device;

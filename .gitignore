@@ -28,9 +28,14 @@
 *.out
 *.app
 
+# ide
+.vs/
+.idea/
+
 # build files
 build/
-.vs/
+cmake-build-debug/
+cmake-build-release/
 
 # shader
 .dxil

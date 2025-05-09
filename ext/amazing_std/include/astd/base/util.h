@@ -12,6 +12,13 @@ constexpr Tp align_to(const Tp value, const Tp alignment)
     return (value + alignment - 1) / alignment * alignment;
 }
 
+template<typename Tp>
+    requires(std::is_integral_v<Tp>)
+constexpr Tp division_up(const Tp value, const Tp divisor)
+{
+    return (value + divisor - 1) / divisor;
+}
+
 template<typename Tp, size_t N>
 constexpr size_t array_size(const Tp(&)[N])
 {
@@ -92,7 +99,7 @@ constexpr size_t count_bits(const Tp value)
 }
 
 template<typename Tp>
-void swap(Tp& l, Tp& r)
+void swap(Tp& l, Tp& r) noexcept
 {
     Tp tmp = l;
     l = r;

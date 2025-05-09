@@ -64,7 +64,7 @@ DX12SwapChain::DX12SwapChain(GPUInstance const* instance, GPUDevice const* devic
     m_back_textures.resize(info.frame_count);
     for (uint32_t i = 0; i < info.frame_count; i++)
     {
-        DX12Texture* back_texture = PLACEMENT_NEW(DX12Texture, sizeof(DX12Texture), nullptr);
+        DX12Texture* back_texture = PLACEMENT_NEW(DX12Texture, sizeof(DX12Texture));
         // texture info will be freed automatically in ~DX12Texture
         back_texture->m_info = Allocator<DX12Texture::GPUTextureInfo>::allocate(1);
         back_texture->m_resource = buffers[i];
@@ -89,7 +89,7 @@ DX12SwapChain::DX12SwapChain(GPUInstance const* instance, GPUDevice const* devic
             .array_layers = 1,
         };
 
-        DX12TextureView* back_texture_view = PLACEMENT_NEW(DX12TextureView, sizeof(DX12TextureView), nullptr, device, view_info);
+        DX12TextureView* back_texture_view = PLACEMENT_NEW(DX12TextureView, sizeof(DX12TextureView), device, view_info);
 
         m_back_textures[i] = { back_texture, back_texture_view };
     }

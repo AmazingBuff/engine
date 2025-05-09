@@ -5,6 +5,7 @@
 #ifndef DX12SEMAPHORE_H
 #define DX12SEMAPHORE_H
 
+#include "dx12.h"
 #include "rendering/rhi/common/semaphore.h"
 
 AMAZING_NAMESPACE_BEGIN

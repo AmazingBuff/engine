@@ -4,32 +4,34 @@
 
 #include <common.h>
 
-GPURootSignature* root_signature = nullptr;
-GPUGraphicsPipeline* pipeline = nullptr;
-GPUDescriptorSet* texture_set = nullptr;
-GPUDescriptorSet* buffer_set = nullptr;
-GPUDescriptorSet* sampler_set = nullptr;
-GPUTexture* texture = nullptr;
-GPUTextureView* texture_view = nullptr;
-GPUSampler* sampler = nullptr;
-GPUBuffer* buffer = nullptr;
-GPUBuffer* vertex_buffer = nullptr;
-GPUBuffer* index_buffer = nullptr;
+thread_local GPURootSignature* root_signature = nullptr;
+thread_local GPUGraphicsPipeline* pipeline = nullptr;
+thread_local GPUDescriptorSet* texture_set = nullptr;
+thread_local GPUDescriptorSet* buffer_set = nullptr;
+thread_local GPUDescriptorSet* sampler_set = nullptr;
+thread_local GPUTexture* texture = nullptr;
+thread_local GPUTextureView* texture_view = nullptr;
+thread_local GPUSampler* sampler = nullptr;
+thread_local GPUBuffer* buffer = nullptr;
+thread_local GPUBuffer* vertex_buffer = nullptr;
+thread_local GPUBuffer* index_buffer = nullptr;
 
-bool use_static_samplers = true;
+thread_local bool use_static_samplers = true;
 
 
 struct ObjectInfo
 {
     Affine3f model;
     Affine3f model_inv;
-} world;
+};
+thread_local ObjectInfo world;
 
 struct PassInfo
 {
     Affine3f view;
     Affine3f proj;
-} push_constant;
+};
+thread_local PassInfo push_constant;
 
 constexpr static Float vertices[] = {
     // position       // texcoord // normal          // tangent
@@ -117,15 +119,15 @@ void set_scene()
 
     GPUBufferCreateInfo buffer_ci{
     .size = sizeof(vertices),
-    .data = reinterpret_cast<void const*>(vertices),
     .usage = GPUMemoryUsage::e_cpu_to_gpu,
     .flags = GPUBufferFlagsFlag::e_persistent_map,
     };
     vertex_buffer = GPU_create_buffer(t_device, buffer_ci);
+    vertex_buffer->map(0, sizeof(vertices), vertices);
 
     buffer_ci.size = sizeof(indices);
-    buffer_ci.data = reinterpret_cast<void const*>(indices);
     index_buffer = GPU_create_buffer(t_device, buffer_ci);
+    index_buffer->map(0, sizeof(indices), indices);
 }
 
 void create_pipeline()
@@ -163,11 +165,11 @@ void create_pipeline()
 
     GPUBufferCreateInfo buffer_create_info{
         .size = image.data.size(),
-        .data = image.data.data(),
         .usage = GPUMemoryUsage::e_cpu_to_gpu,
         .flags = GPUBufferFlagsFlag::e_persistent_map,
     };
     GPUBuffer* transfer_buffer = GPU_create_buffer(t_device, buffer_create_info);
+    transfer_buffer->map(0, image.data.size(), image.data.data());
 
     GPUBufferToTextureTransferInfo transfer_info{
         .src_buffer = transfer_buffer,
@@ -194,16 +196,19 @@ void create_pipeline()
 
     GPUBufferCreateInfo buffer_ci{
         .size = sizeof(ObjectInfo),
-        .data = &world,
         .usage = GPUMemoryUsage::e_cpu_to_gpu,
         .type = GPUResourceTypeFlag::e_uniform_buffer,
         .flags = GPUBufferFlagsFlag::e_persistent_map,
     };
     buffer = GPU_create_buffer(t_device, buffer_ci);
+    buffer->map(0, sizeof(ObjectInfo), &world);
 
     // graphics pipeline
-    Vector<char> vs_compile = read_file(RES_DIR"shader/box/vert.dxil");
-    Vector<char> fs_compile = read_file(RES_DIR"shader/box/frag.dxil");
+    Vector<char> vs = read_file(RES_DIR"shader/box/box.hlsl");
+    Vector<char> fs = read_file(RES_DIR"shader/box/box.hlsl");
+
+    Vector<char> vs_compile = compile_shader(vs, L"vs", GPUShaderStageFlag::e_vertex);
+    Vector<char> fs_compile = compile_shader(fs, L"ps", GPUShaderStageFlag::e_fragment);
 
     GPUShaderLibraryCreateInfo vs_desc{
         .name = "VertexShaderLibrary",
@@ -484,6 +489,8 @@ int main()
     SDL_Window* window = SDL_CreateWindow("Amazing Rendering", Width, Height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 
     draw(window);
+
+    int* p = Allocator<int>::allocate(1);
 
     return 0;
 }

@@ -60,6 +60,14 @@ class Set : public Internal::RBTree<Internal::SetTrait<Tp, Pred, Alloc, false>>
     using Tree = Internal::RBTree<Internal::SetTrait<Tp, Pred, Alloc, false>>;
     using Iterator = typename Tree::Iterator;
 public:
+    Set() = default;
+
+    template <typename Iter>
+    Set(Iter first, Iter last)
+    {
+        Tree::insert(first, last);
+    }
+
     Iterator find(const Tp& key)
     {
         return Iterator(Tree::find_node(key));

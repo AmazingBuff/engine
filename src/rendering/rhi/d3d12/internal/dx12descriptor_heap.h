@@ -7,6 +7,7 @@
 
 #include "rendering/api.h"
 #include "rendering/rhi/enumeration.h"
+#include "rendering/rhi/d3d12/dx12.h"
 
 AMAZING_NAMESPACE_BEGIN
 

@@ -6,14 +6,6 @@
 #define PCH_H
 
 #include <fstream>
-
-#ifdef _WIN64
-
-#include <d3d12.h>
-#include <dxgi1_6.h>
-#include <dxc/dxcapi.h>
-#include <dxc/d3d12shader.h>
-
-#endif
+#include <algorithm>
 
 #endif //PCH_H

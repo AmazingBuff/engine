@@ -42,20 +42,38 @@ enum class GPUFormat : uint8_t
 
     e_r1_unorm,
 
+    e_r4g4_unorm,
+
     e_r8_unorm,
     e_r8_snorm,
     e_r8_uint,
     e_r8_sint,
+    e_r8_srgb,
 
     e_r8g8_unorm,
     e_r8g8_snorm,
     e_r8g8_uint,
     e_r8g8_sint,
+    e_r8g8_srgb,
 
     e_r5g6b5_unorm,
     e_b5g6r5_unorm,
+    e_r5g5b5a1_unorm,
     e_b5g5r5a1_unorm,
+    e_r4g4b4a4_unorm,
     e_b4g4r4a4_unorm,
+
+    e_r8g8b8_unorm,
+    e_r8g8b8_snorm,
+    e_r8g8b8_uint,
+    e_r8g8b8_sint,
+    e_r8g8b8_srgb,
+
+    e_b8g8r8_unorm,
+    e_b8g8r8_snorm,
+    e_b8g8r8_uint,
+    e_b8g8r8_sint,
+    e_b8g8r8_srgb,
 
     e_r8g8b8a8_unorm,
     e_r8g8b8a8_snorm,
@@ -64,8 +82,12 @@ enum class GPUFormat : uint8_t
     e_r8g8b8a8_srgb,
 
     e_b8g8r8a8_unorm,
-    e_b8g8r8x8_unorm,
+    e_b8g8r8a8_snorm,
+    e_b8g8r8a8_uint,
+    e_b8g8r8a8_sint,
     e_b8g8r8a8_srgb,
+
+    e_b8g8r8x8_unorm,
 
     e_r10g10b10a2_unorm,
     e_r10g10b10a2_uint,
@@ -110,6 +132,21 @@ enum class GPUFormat : uint8_t
     e_r32g32b32a32_sint,
     e_r32g32b32a32_sfloat,
 
+    e_r64_uint,
+    e_r64_sint,
+    e_r64_sfloat,
+
+    e_r64g64_uint,
+    e_r64g64_sint,
+    e_r64g64_sfloat,
+
+    e_r64g64b64_uint,
+    e_r64g64b64_sint,
+    e_r64g64b64_sfloat,
+
+    e_r64g64b64a64_uint,
+    e_r64g64b64a64_sint,
+    e_r64g64b64a64_sfloat,
 
     e_d24_unorm_s8_uint,
     e_d32_sfloat_s8_uint,
@@ -118,6 +155,7 @@ enum class GPUFormat : uint8_t
     e_d24_x8_unorm,
     e_d16_unorm,
     e_d16_unorm_s8_uint,
+    e_s8_uint,
 
     e_count
 };
@@ -294,7 +332,7 @@ enum class GPUStoreAction : uint8_t
 
 
 // flags
-enum GPUShaderStageFlag : uint8_t
+enum class GPUShaderStageFlag : uint8_t
 {
     e_undefined = 0,
     e_vertex = 1,
@@ -403,6 +441,61 @@ enum class GPUTextureViewAspectFlag : uint8_t
 };
 using GPUTextureViewAspect = BitFlag<GPUTextureViewAspectFlag>;
 
+enum class GPUDynamicStateFlag : uint64_t
+{
+    e_undefined = 0,
+    e_cull_mode = 1ull << 0,
+    e_front_face = 1ull << 1,
+    e_primitive_topology = 1ull << 2,
+    e_depth_test = 1ull << 3,
+    e_depth_write = 1ull << 4,
+    e_depth_compare = 1ull << 5,
+    e_depth_bound_test = 1ull << 6,
+    e_stencil_test = 1ull << 7,
+    e_stencil_op = 1ull << 8,
+    e_tier1 = (1ull << 9) - 1,
+
+    e_raster_discard = 1ull << 9,
+    e_depth_bias = 1ull << 10,
+    e_primitive_restart = 1ull << 11,
+    e_logic_op = 1ull << 12,
+    e_patch_control_points = 1ull << 13,
+    e_tier2 = (1ull << 14) - 1,
+
+    e_tessellation_domain_origin = 1ull << 14,
+    e_depth_clamp_enable = 1ull << 15,
+    e_polygon_mode = 1ull << 16,
+    e_sample_count = 1ull << 17,
+    e_sample_mask = 1ull << 18,
+    e_alpha_to_coverage_enable = 1ull << 19,
+    e_alpha_to_one_enable = 1ull << 20,
+    e_logic_op_enable = 1ull << 21,
+    e_color_blend_enable = 1ull << 22,
+    e_color_blend_equation = 1ull << 23,
+    e_color_write_mask = 1ull << 24,
+    e_raster_stream = 1ull << 25,
+    e_conservative_raster_mode = 1ull << 26,
+    e_extra_primitive_overestimation_size = 1ull << 27,
+    e_depth_clip_enable = 1ull << 28,
+    e_sample_locations_enable = 1ull << 29,
+    e_color_blend_advanced = 1ull << 30,
+    e_provoking_vertex_mode = 1ull << 31,
+    e_line_rasterization_mode = 1ull << 32,
+    e_line_stipple_enable = 1ull << 33,
+    e_depth_clip_negative_one_to_one = 1ull << 34,
+    e_viewport_scaling_enable = 1ull << 35,
+    e_viewport_swizzle = 1ull << 36,
+    e_coverage_to_color_enable = 1ull << 37,
+    e_coverage_to_color_location = 1ull << 38,
+    e_coverage_modulation_mode = 1ull << 39,
+    e_coverage_modulation_table_enable = 1ull << 40,
+    e_coverage_modulation_table = 1ull << 41,
+    e_coverage_reduction_mode = 1ull << 42,
+    e_representative_fragment_test_enable = 1ull << 43,
+    e_shading_rate_image_enable = 1ull << 44,
+    e_tier3 = (1ull << 45) - 1,
+};
+using GPUDynamicState = BitFlag<GPUDynamicStateFlag>;
 
 
 

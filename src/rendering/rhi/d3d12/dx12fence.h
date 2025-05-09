@@ -5,6 +5,7 @@
 #ifndef DX12FENCE_H
 #define DX12FENCE_H
 
+#include "dx12.h"
 #include "rendering/rhi/common/fence.h"
 
 AMAZING_NAMESPACE_BEGIN

@@ -16,8 +16,14 @@ public:
     class Iterator
     {
     public:
+        using value_type = Tp;
+
         Iterator() : m_ptr(nullptr) {}
         explicit Iterator(Tp* ptr) : m_ptr(ptr) {}
+        Iterator(Iterator&& other) noexcept : m_ptr(nullptr) { Amazing::swap(m_ptr, other.m_ptr);}
+        Iterator& operator=(Iterator&& other) noexcept { Amazing::swap(m_ptr, other.m_ptr); return *this; }
+        Iterator(const Iterator& other) = default;
+        Iterator& operator=(const Iterator& other) = default;
 
         Iterator& operator++()
         {
@@ -44,6 +50,11 @@ public:
         Tp* operator->()
         {
             return m_ptr;
+        }
+
+        size_t operator-(const Iterator& other) const
+        {
+            return m_ptr - other.m_ptr;
         }
 
         NODISCARD bool operator==(const Iterator& other) const
@@ -95,7 +106,7 @@ public:
         }
     }
 
-    Vector(Vector&& other) : m_data(nullptr), m_size(other.m_size), m_capacity(other.m_capacity)
+    Vector(Vector&& other) noexcept : m_data(nullptr), m_size(other.m_size), m_capacity(other.m_capacity)
     {
         swap(other);
     }
@@ -134,7 +145,7 @@ public:
         return *this;
     }
 
-    Vector& operator=(Vector&& other)
+    Vector& operator=(Vector&& other) noexcept
     {
         if (this == &other)
             return *this;
@@ -211,7 +222,7 @@ public:
 
         if (new_capacity != 0)
         {
-            Tp* new_data = allocator::allocate(m_data, new_capacity);
+            Tp* new_data = allocator::reallocate(m_data, new_capacity);
             if (new_data != m_data)
             {
                 if constexpr (copyable<Tp>)
@@ -244,7 +255,7 @@ public:
         m_size = new_size;
     }
 
-    void swap(Vector& other)
+    void swap(Vector& other) noexcept
     {
         if (this != &other)
         {

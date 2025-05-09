@@ -11,6 +11,8 @@ add_subdirectory(ext/sdl)
 add_subdirectory(ext/amazing_std)
 add_subdirectory(3rd)
 
+find_package(Vulkan)
+
 file(GLOB_RECURSE HEADER_FILES src/*.h)
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
 

@@ -12,7 +12,7 @@ AMAZING_NAMESPACE_BEGIN
 class GPUTexture
 {
 public:
-    GPUTexture() : m_info(nullptr) {}
+    GPUTexture() : m_ref_device(nullptr), m_info(nullptr) {}
     virtual ~GPUTexture() = default;
 
 protected:
@@ -49,7 +49,7 @@ protected:
         uint32_t tile_height_in_texels;
         uint32_t tile_depth_in_texels;
 
-        uint32_t packed_mip_standard;
+        uint32_t packed_mip_start;
         uint32_t packed_mip_count;
     };
 
@@ -62,7 +62,7 @@ protected:
         uint32_t depth_in_tiles;
     };
 
-
+    GPUDevice const* m_ref_device;
     GPUTextureInfo* m_info;
 };
 

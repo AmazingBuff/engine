@@ -6,6 +6,12 @@
 
 Amazing::Ring<int32_t> ring;
 
+struct NoDtor
+{
+    Amazing::Vector<int> v;
+    Amazing::Map<int, Amazing::String> m;
+};
+
 void produce()
 {
     int32_t v[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -26,8 +32,25 @@ void consume()
     }
 }
 
+void just()
+{
+    NoDtor* no_dtor = Amazing::Allocator<NoDtor>::allocate(1);
+
+    no_dtor->v.emplace_back(4);
+    no_dtor->v.emplace_back(5);
+    no_dtor->v.emplace_back(6);
+
+    no_dtor->m.emplace(3, "third");
+    no_dtor->m.emplace(4, "four");
+    no_dtor->m.emplace(5, "five");
+
+    Amazing::Allocator<NoDtor>::deallocate(no_dtor);
+}
+
 int main()
 {
+    just();
+    int* pi = Amazing::Allocator<int>::allocate(1);
     // std::thread producer(&produce);
     // std::thread consumer(&consume);
     //
@@ -109,6 +132,7 @@ int main()
 
     for (size_t i = 0; i < d.size(); i++)
         std::cout << d[i] << '\n';
+
 
     return 0;
 }

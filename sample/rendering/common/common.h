@@ -11,8 +11,8 @@
 
 using namespace Amazing;
 
-static constexpr uint32_t Width = 1920;
-static constexpr uint32_t Height = 1080;
+static constexpr uint32_t Width = 960;
+static constexpr uint32_t Height = 540;
 static constexpr uint32_t Frame_In_Flight = 2;
 
 
@@ -40,5 +40,5 @@ void create_api_object(HWND hwnd, GPUBackend backend);
 void destroy_api_object();
 
 ImageInfo load_image(const String& file_path);
-Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStageFlag stage);
+Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStageFlag stage, bool spv = false);
 void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info);

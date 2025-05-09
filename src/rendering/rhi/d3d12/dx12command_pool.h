@@ -5,6 +5,7 @@
 #ifndef DX12COMMAND_POOL_H
 #define DX12COMMAND_POOL_H
 
+#include "dx12.h"
 #include "rendering/rhi/common/command_pool.h"
 
 AMAZING_NAMESPACE_BEGIN

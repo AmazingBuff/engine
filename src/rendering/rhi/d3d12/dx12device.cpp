@@ -28,7 +28,7 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
 
         for (uint32_t j = 0; j < queue_group.queue_count; j++)
         {
-            DX12Queue* queue = PLACEMENT_NEW(DX12Queue, sizeof(DX12Queue), nullptr);
+            DX12Queue* queue = PLACEMENT_NEW(DX12Queue, sizeof(DX12Queue));
 
             D3D12_COMMAND_QUEUE_DESC queue_desc{};
             switch (queue_group.queue_type)
@@ -49,7 +49,7 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
             DX_CHECK_RESULT(m_device->CreateCommandQueue(&queue_desc, IID_PPV_ARGS(&queue->m_queue)));
 
             queue->m_type = queue_group.queue_type;
-            queue->m_fence = PLACEMENT_NEW(DX12Fence, sizeof(DX12Fence), nullptr, this);
+            queue->m_fence = PLACEMENT_NEW(DX12Fence, sizeof(DX12Fence), this);
 
             m_command_queues[type][j] = queue;
         }
@@ -57,7 +57,7 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
 
     // d3d12ma
     D3D12MA::ALLOCATION_CALLBACKS allocator_callbacks{
-        .pAllocate = [](size_t size, size_t, void* data) { return allocate(size, data); },
+        .pAllocate = [](size_t size, size_t alignment, void* data) { return allocate(size, alignment); },
         .pFree = [](void* p, void*) { deallocate(p); },
         .pPrivateData = nullptr
     };
@@ -81,10 +81,10 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
         .min_allocation_alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
     };
 
-    m_memory_pool = PLACEMENT_NEW(DX12MemoryPool, sizeof(DX12MemoryPool), nullptr, this, memory_pool_create_info);
+    m_memory_pool = PLACEMENT_NEW(DX12MemoryPool, sizeof(DX12MemoryPool), this, memory_pool_create_info);
 
     // descriptor heap
-    m_descriptor_heap = PLACEMENT_NEW(DX12DescriptorHeap, sizeof(DX12DescriptorHeap), nullptr, m_device);
+    m_descriptor_heap = PLACEMENT_NEW(DX12DescriptorHeap, sizeof(DX12DescriptorHeap), m_device);
 
     // pipeline cache
     if (!info.disable_pipeline_cache)

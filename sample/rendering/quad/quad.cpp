@@ -60,11 +60,11 @@ void create_pipeline()
 
     GPUBufferCreateInfo buffer_create_info{
         .size = image.data.size(),
-        .data = image.data.data(),
         .usage = GPUMemoryUsage::e_cpu_to_gpu,
         .flags = GPUBufferFlagsFlag::e_persistent_map,
     };
     GPUBuffer* buffer = GPU_create_buffer(t_device, buffer_create_info);
+    buffer->map(0, image.data.size(), image.data.data());
 
     GPUBufferToTextureTransferInfo transfer_info{
         .src_buffer = buffer,
@@ -79,8 +79,8 @@ void create_pipeline()
     transfer_buffer_to_texture(transfer_info);
 
     // graphics pipeline
-    Vector<char> vs = read_file(RES_DIR"shader/box/vert.hlsl");
-    Vector<char> fs = read_file(RES_DIR"shader/box/frag.hlsl");
+    Vector<char> vs = read_file(RES_DIR"shader/quad/vert.hlsl");
+    Vector<char> fs = read_file(RES_DIR"shader/quad/frag.hlsl");
 
     Vector<char> vs_compile = compile_shader(vs, L"main", GPUShaderStageFlag::e_vertex);
     Vector<char> fs_compile = compile_shader(fs, L"main", GPUShaderStageFlag::e_fragment);
@@ -131,24 +131,24 @@ void create_pipeline()
     };
     texture_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
 
-    Vector<GPUDescriptorData> texture_set_data(1);
-    texture_set_data[0].array_count = 1;
-    texture_set_data[0].textures = &texture_view;
-    texture_set_data[0].resource_type = GPUResourceTypeFlag::e_texture;
-    texture_set_data[0].binding = 0;
-    texture_set->update(texture_set_data);
+    GPUDescriptorData texture_set_data;
+    texture_set_data.array_count = 1;
+    texture_set_data.textures = &texture_view;
+    texture_set_data.resource_type = GPUResourceTypeFlag::e_texture;
+    texture_set_data.binding = 0;
+    texture_set->update(&texture_set_data, 1);
 
     if (!use_static_samplers)
     {
         descriptor_set_create_info.set_index = 1;
         sampler_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
 
-        Vector<GPUDescriptorData> sampler_set_data(1);
-        sampler_set_data[0].array_count = 1;
-        sampler_set_data[0].samplers = &sampler;
-        sampler_set_data[0].resource_type = GPUResourceTypeFlag::e_sampler;
-        sampler_set_data[0].binding = 0;
-        sampler_set->update(sampler_set_data);
+        GPUDescriptorData sampler_set_data;
+        sampler_set_data.array_count = 1;
+        sampler_set_data.samplers = &sampler;
+        sampler_set_data.resource_type = GPUResourceTypeFlag::e_sampler;
+        sampler_set_data.binding = 0;
+        sampler_set->update(&sampler_set_data, 1);
     }
 
     GPUFormat backend_format = GPUFormat::e_r8g8b8a8_unorm;

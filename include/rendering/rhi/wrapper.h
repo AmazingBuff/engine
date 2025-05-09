@@ -35,11 +35,7 @@
 AMAZING_NAMESPACE_BEGIN
 
 GPUInstance* GPU_create_instance(GPUInstanceCreateInfo const& info);
-
-#ifdef _WIN64
-GPUSurface* GPU_create_surface(HWND hwnd);
-#endif
-
+GPUSurface* GPU_create_surface(GPUInstance const* instance, void* handle); // for windows, handle is a HWND
 GPUDevice* GPU_create_device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info);
 GPUCommandPool* GPU_create_command_pool(GPUDevice const* device, GPUQueue const* queue);
 GPUCommandBuffer* GPU_create_command_buffer(GPUDevice const* device, GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info);

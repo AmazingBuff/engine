@@ -5,6 +5,7 @@
 #ifndef DX12_H
 #define DX12_H
 
+#include <d3d12.h>
 #include "rendering/rhi/create_info.h"
 
 AMAZING_NAMESPACE_BEGIN

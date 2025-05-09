@@ -17,6 +17,8 @@ struct GPUInstanceCreateInfo
     GPUBackend backend;
     bool enable_debug_layer;
     bool enable_gpu_based_validation;
+    // this parameter for extensions
+    const void* next;
 };
 
 struct GPUDeviceCreateInfo
@@ -114,7 +116,6 @@ struct GPUBufferCreateInfo
 {
     String name;
     uint64_t size;
-    void const* data;
     struct
     {
         uint64_t first_element;

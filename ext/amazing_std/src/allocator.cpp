@@ -1,3 +1,4 @@
+#include <cstring>
 #include <astd/base/util.h>
 #include <astd/base/except.h>
 #include <astd/memory/allocator.h>
@@ -26,8 +27,8 @@ public:
     explicit IMemoryPool(size_t size = k_local_memory_size);
     ~IMemoryPool();
 
-    void* allocate(size_t size, void* data);
-    void* allocate(void* p, size_t size, void* data);
+    void* allocate(size_t size, size_t alignment, void* data);
+    void* reallocate(void* p, size_t size, size_t alignment, void* data);
     void deallocate(void* p);
 private:
     uint8_t* m_data;
@@ -40,7 +41,7 @@ IMemoryPool::IMemoryPool(size_t size) : m_current_info(nullptr)
     m_data = new uint8_t[size];
     if (!m_data)
         throw AStdException(AStdError::NO_ENOUGH_MEMORY);
-    memset(m_data, 0, size);
+    std::memset(m_data, 0, size);
     m_size = size;
 }
 
@@ -50,9 +51,9 @@ IMemoryPool::~IMemoryPool()
     m_data = nullptr;
 }
 
-void* IMemoryPool::allocate(size_t size, void* data)
+void* IMemoryPool::allocate(size_t size, size_t alignment, void* data)
 {
-    size_t align_size = align_to(size, k_cache_alignment);
+    size_t align_size = align_to(size, alignment);
     if (m_current_info)
     {
         MemoryHeaderInfo* iterator = m_current_info;
@@ -99,15 +100,15 @@ void* IMemoryPool::allocate(size_t size, void* data)
     return m_data + m_current_info->position + k_memory_header_size;
 }
 
-void* IMemoryPool::allocate(void* p, size_t size, void* data)
+void* IMemoryPool::reallocate(void* p, size_t size, size_t alignment, void* data)
 {
     if (p == nullptr)
-        return allocate(size, data);
+        return allocate(size, alignment, data);
 
     MemoryHeaderInfo* header = reinterpret_cast<MemoryHeaderInfo*>(reinterpret_cast<uint8_t*>(p) - k_memory_header_size);
     if (size <= header->size)
     {
-        header->offset = align_to(size, k_cache_alignment);
+        header->offset = align_to(size, alignment);
         header->data = data;
         return p;
     }
@@ -119,7 +120,7 @@ void* IMemoryPool::allocate(void* p, size_t size, void* data)
 
     header->next->prev = prev;
 
-    return allocate(size, data);
+    return allocate(size, alignment, data);
 }
 
 void IMemoryPool::deallocate(void* p)
@@ -147,14 +148,14 @@ void IMemoryPool::deallocate(void* p)
 static thread_local IMemoryPool t_local_pool;
 
 
-void* allocate(size_t size, void* data)
+void* allocate(size_t size, size_t alignment, void* data)
 {
-    return t_local_pool.allocate(size, data);
+    return t_local_pool.allocate(size, alignment, data);
 }
 
-void* allocate(void* p, size_t size, void* data)
+void* reallocate(void* p, size_t size, size_t alignment, void* data)
 {
-    return t_local_pool.allocate(p, size, data);
+    return t_local_pool.reallocate(p, size, alignment,  data);
 }
 
 void deallocate(void* p)

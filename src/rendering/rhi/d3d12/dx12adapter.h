@@ -5,7 +5,9 @@
 #ifndef DX12ADAPTER_H
 #define DX12ADAPTER_H
 
+#include "dx12.h"
 #include "rendering/rhi/common/adapter.h"
+#include <dxgi1_6.h>
 
 AMAZING_NAMESPACE_BEGIN
 

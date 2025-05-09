@@ -13,7 +13,7 @@ AMAZING_NAMESPACE_BEGIN
 class GPUAdapter
 {
 public:
-    GPUAdapter() = default;
+    GPUAdapter() : m_adapter_detail{}, m_ref_instance(nullptr) {}
     virtual ~GPUAdapter() = default;
     virtual void query_memory_usage(uint64_t* total, uint64_t* used) = 0;
 public:
@@ -25,9 +25,18 @@ public:
         char gpu_name[GPU_Vendor_String_Length];
     };
 
+    struct GPUFormatSupport
+    {
+        uint8_t shader_read : 1;
+        uint8_t shader_write : 1;
+        uint8_t render_target_write : 1;
+    };
+
     struct GPUAdapterDetail
     {
         GPUAdapterVendor vendor;
+        GPUFormatSupport format_support[GPU_Format_Count];
+        GPUDynamicState dynamic_states;
         uint32_t uniform_buffer_alignment;
         uint32_t upload_buffer_texture_alignment;
         uint32_t upload_buffer_texture_row_alignment;
@@ -52,6 +61,8 @@ public:
     };
 
     GPUAdapterDetail m_adapter_detail;
+protected:
+    GPUInstance const* m_ref_instance;
 };
 
 

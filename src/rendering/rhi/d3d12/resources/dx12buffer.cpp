@@ -17,8 +17,6 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
     DX12Adapter const* dx12_adapter = static_cast<DX12Adapter const*>(dx12_device->m_ref_adapter);
 
     // allocate info
-    m_info = Allocator<GPUBufferInfo>::allocate(1);
-
     size_t allocate_size = info.size;
     if (info.type & GPUResourceTypeFlag::e_uniform_buffer)
     {
@@ -70,33 +68,30 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
     if (info.flags & GPUBufferFlagsFlag::e_dedicated)
         buffer_allocation_desc.Flags |= D3D12MA::ALLOCATION_FLAG_COMMITTED;
 
-    if (!m_resource)
+
+    if (buffer_allocation_desc.HeapType != D3D12_HEAP_TYPE_DEFAULT &&
+        (buffer_desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
     {
-        if (buffer_allocation_desc.HeapType != D3D12_HEAP_TYPE_DEFAULT &&
-            (buffer_desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
-        {
-            D3D12_HEAP_PROPERTIES prop{
-                .Type = D3D12_HEAP_TYPE_CUSTOM,
-                .CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE,
-                .MemoryPoolPreference = D3D12_MEMORY_POOL_L0,
-                .CreationNodeMask = GPU_Node_Mask,
-                .VisibleNodeMask = GPU_Node_Mask,
-            };
-            if (buffer_state == D3D12_RESOURCE_STATE_GENERIC_READ)
-                buffer_state = D3D12_RESOURCE_STATE_COMMON;
-            DX_CHECK_RESULT(dx12_device->m_device->CreateCommittedResource(&prop, buffer_allocation_desc.ExtraHeapFlags, &buffer_desc, buffer_state, nullptr, IID_PPV_ARGS(&m_resource)));
-        }
-        else
-        {
-            DX_CHECK_RESULT(dx12_device->m_allocator->CreateResource(&buffer_allocation_desc, &buffer_desc, buffer_state, nullptr, &m_allocation, IID_PPV_ARGS(&m_resource)));
-        }
+        D3D12_HEAP_PROPERTIES prop{
+            .Type = D3D12_HEAP_TYPE_CUSTOM,
+            .CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE,
+            .MemoryPoolPreference = D3D12_MEMORY_POOL_L0,
+            .CreationNodeMask = GPU_Node_Mask,
+            .VisibleNodeMask = GPU_Node_Mask,
+        };
+        if (buffer_state == D3D12_RESOURCE_STATE_GENERIC_READ)
+            buffer_state = D3D12_RESOURCE_STATE_COMMON;
+        DX_CHECK_RESULT(dx12_device->m_device->CreateCommittedResource(&prop, buffer_allocation_desc.ExtraHeapFlags, &buffer_desc, buffer_state, nullptr, IID_PPV_ARGS(&m_resource)));
+    }
+    else
+    {
+        DX_CHECK_RESULT(dx12_device->m_allocator->CreateResource(&buffer_allocation_desc, &buffer_desc, buffer_state, nullptr, &m_allocation, IID_PPV_ARGS(&m_resource)));
     }
 
+    void* mapped_data = nullptr;
     if (info.flags & GPUBufferFlagsFlag::e_persistent_map)
     {
-        if (SUCCEEDED(m_resource->Map(0, nullptr, &m_info->mapped_data)))
-            memcpy(m_info->mapped_data, info.data, info.size);
-        else
+        if (FAILED(m_resource->Map(0, nullptr, &mapped_data)))
             RENDERING_LOG_WARNING("map buffer failed!");
     }
 
@@ -217,10 +212,14 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
         DX_CHECK_RESULT(m_resource->SetName(debug_name));
     }
 
-    m_ref_device = dx12_device;
+    m_info = Allocator<GPUBufferInfo>::allocate(1);
     m_info->size = allocate_size;
     m_info->type = info.type;
+    m_info->mapped_data = mapped_data;
     m_info->memory_usage = info.usage;
+    m_info->flags = info.flags;
+
+    m_ref_device = dx12_device;
 }
 
 DX12Buffer::~DX12Buffer()
@@ -239,14 +238,19 @@ DX12Buffer::~DX12Buffer()
     DX_FREE(m_allocation);
 }
 
-void DX12Buffer::map(size_t offset, size_t size)
+void DX12Buffer::map(size_t offset, size_t size, const void* data)
 {
-    D3D12_RANGE range{
-        .Begin = offset,
-        .End = offset + size,
-    };
+    if (m_info->flags & GPUBufferFlagsFlag::e_persistent_map)
+        memcpy(static_cast<uint8_t*>(m_info->mapped_data) + offset, data, size);
+    else
+    {
+        D3D12_RANGE range{
+            .Begin = offset,
+            .End = offset + size,
+        };
 
-    DX_CHECK_RESULT(m_resource->Map(0, &range, &m_info->mapped_data));
+        DX_CHECK_RESULT(m_resource->Map(0, &range, &m_info->mapped_data));
+    }
 }
 
 void DX12Buffer::unmap()

@@ -75,7 +75,7 @@ void create_api_object(HWND hwnd, GPUBackend backend)
         t_present_fence[i] = GPU_create_fence(t_device);
     }
 
-    t_surface = GPU_create_surface(hwnd);
+    t_surface = GPU_create_surface(t_instance, hwnd);
 
     GPUSwapChainCreateInfo swap_chain_create_info{
         .width = Width,
@@ -126,7 +126,7 @@ ImageInfo load_image(const String& file_path)
     return { width, height, 4, image_data };
 }
 
-Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStageFlag stage)
+Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStageFlag stage, bool spv)
 {
     const wchar_t* shader_model = nullptr;
     switch (stage)
@@ -156,6 +156,9 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
     DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
     DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
 
+    IDxcIncludeHandler* include_handler = nullptr;
+    utils->CreateDefaultIncludeHandler(&include_handler);
+
     IDxcBlobEncoding* source_blob = nullptr;
     utils->CreateBlob(code.data(), code.size(), DXC_CP_ACP, &source_blob);
 
@@ -165,17 +168,18 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
         .Encoding = CP_UTF8
     };
 
-    std::filesystem::path include_path{ RES_DIR"shader" };
+    std::filesystem::path include_path(RES_DIR"shader");
     const wchar_t* inc = include_path.c_str();
-
     Vector<LPCWSTR> arguments = {
-        L"-E", L"main",
+        L"-E", entry,
         L"-T", shader_model,
         L"-I", inc
     };
+    if (spv)
+        arguments.push_back(L"-spirv");
 
     IDxcResult* ret = nullptr;
-    compiler->Compile(&buffer, arguments.data(), arguments.size(), nullptr, IID_PPV_ARGS(&ret));
+    compiler->Compile(&buffer, arguments.data(), arguments.size(), include_handler, IID_PPV_ARGS(&ret));
     {
         IDxcBlobUtf8* errors = nullptr;
         ret->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
@@ -192,6 +196,7 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
 
     ret->Release();
     source_blob->Release();
+    include_handler->Release();
     compiler->Release();
     utils->Release();
 

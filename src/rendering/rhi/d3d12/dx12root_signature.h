@@ -5,6 +5,7 @@
 #ifndef DX12ROOT_SIGNATURE_H
 #define DX12ROOT_SIGNATURE_H
 
+#include "dx12.h"
 #include "rendering/rhi/common/root_signature.h"
 
 AMAZING_NAMESPACE_BEGIN

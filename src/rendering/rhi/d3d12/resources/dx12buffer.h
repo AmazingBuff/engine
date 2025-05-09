@@ -16,7 +16,7 @@ public:
     DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info);
     ~DX12Buffer() override;
 
-    void map(size_t offset, size_t size) override;
+    void map(size_t offset, size_t size, const void* data) override;
     void unmap() override;
 private:
     ID3D12Resource*  m_resource;

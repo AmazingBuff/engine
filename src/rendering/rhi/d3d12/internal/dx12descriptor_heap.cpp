@@ -3,10 +3,8 @@
 //
 
 #include "dx12descriptor_heap.h"
-#include "rendering/rhi/d3d12/dx12.h"
 #include "rendering/rhi/d3d12/utils/dx_macro.h"
 #include "rendering/rhi/d3d12/utils/dx_utils.h"
-
 
 AMAZING_NAMESPACE_BEGIN
 

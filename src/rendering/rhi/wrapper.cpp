@@ -3,6 +3,9 @@
 //
 
 #include "rendering/rhi/wrapper.h"
+
+// d3d12
+#ifdef _WIN64
 #include "d3d12/dx12instance.h"
 #include "d3d12/dx12device.h"
 #include "d3d12/dx12command_pool.h"
@@ -20,6 +23,12 @@
 #include "d3d12/resources/dx12shader_library.h"
 #include "d3d12/resources/dx12texture.h"
 #include "d3d12/resources/dx12texture_view.h"
+#endif
+
+// vulkan
+#include "vulkan/vkinstance.h"
+#include "vulkan/vkdevice.h"
+#include "vulkan/vksurface.h"
 
 
 AMAZING_NAMESPACE_BEGIN
@@ -34,11 +43,12 @@ GPUInstance* GPU_create_instance(GPUInstanceCreateInfo const& info)
 #ifdef _WIN64
     case GPUBackend::e_d3d12:
         t_backend = GPUBackend::e_d3d12;
-        instance = PLACEMENT_NEW(DX12Instance, sizeof(DX12Instance), nullptr, info);
+        instance = PLACEMENT_NEW(DX12Instance, sizeof(DX12Instance), info);
         break;
 #endif
     case GPUBackend::e_vulkan:
         t_backend = GPUBackend::e_vulkan;
+        instance = PLACEMENT_NEW(VKInstance, sizeof(VKInstance), info);
         break;
     default:
         RENDERING_LOG_ERROR("unsupported backend type");
@@ -48,9 +58,19 @@ GPUInstance* GPU_create_instance(GPUInstanceCreateInfo const& info)
     return instance;
 }
 
-GPUSurface* GPU_create_surface(HWND hwnd)
+GPUSurface* GPU_create_surface(GPUInstance const* instance, void* handle)
 {
-    return reinterpret_cast<GPUSurface*>(hwnd);
+#ifdef _WIN64
+    switch (t_backend)
+    {
+    case GPUBackend::e_d3d12:
+        return static_cast<GPUSurface*>(handle);
+    case GPUBackend::e_vulkan:
+        VKSurface* surface = PLACEMENT_NEW(VKSurface, sizeof(VKSurface), instance, handle);
+        return reinterpret_cast<GPUSurface*>(surface);
+    }
+#endif
+    return nullptr;
 }
 
 #define GPU_CREATE(type, dx_type, vk_type, ...)                                     \
@@ -58,7 +78,7 @@ GPUSurface* GPU_create_surface(HWND hwnd)
     switch (t_backend)                                                              \
     {                                                                               \
     case GPUBackend::e_d3d12:                                                       \
-        ret = PLACEMENT_NEW(dx_type, sizeof(dx_type), nullptr, __VA_ARGS__);        \
+        ret = PLACEMENT_NEW(dx_type, sizeof(dx_type), __VA_ARGS__);                 \
         break;                                                                      \
     case GPUBackend::e_vulkan:                                                      \
         break;                                                                      \
@@ -67,7 +87,7 @@ GPUSurface* GPU_create_surface(HWND hwnd)
 
 GPUDevice* GPU_create_device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
 {
-    GPU_CREATE(GPUDevice, DX12Device, VkDevice, adapter, info);
+    GPU_CREATE(GPUDevice, DX12Device, VKDevice, adapter, info);
 }
 GPUCommandPool* GPU_create_command_pool(GPUDevice const* device, GPUQueue const* queue)
 {
@@ -132,14 +152,24 @@ GPUShaderLibrary* GPU_create_shader_library(GPUShaderLibraryCreateInfo const& in
 
 GPURootSignaturePool* GPU_create_root_signature_pool(GPURootSignatureCreateInfo const& info)
 {
-    GPURootSignaturePool* pool = PLACEMENT_NEW(GPURootSignaturePool, sizeof(GPURootSignaturePool), nullptr);
+    GPURootSignaturePool* pool = PLACEMENT_NEW(GPURootSignaturePool, sizeof(GPURootSignaturePool));
     return pool;
 }
 
 #undef GPU_CREATE
 
 
-void GPU_destroy_surface(GPUSurface*) {}
+void GPU_destroy_surface(GPUSurface* surface)
+{
+    switch (t_backend)
+    {
+    case GPUBackend::e_vulkan:
+        PLACEMENT_DELETE(VKSurface, reinterpret_cast<VKSurface*>(surface));
+        break;
+    case GPUBackend::e_d3d12:
+        break;
+    }
+}
 
 #define GPU_DESTROY(type, name) void GPU_destroy_##name(type* name) { PLACEMENT_DELETE(type, name); }
 GPU_DESTROY(GPUInstance, instance)

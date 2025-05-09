@@ -5,8 +5,6 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-constexpr static size_t k_cache_alignment = 64;
-
 enum class AResult
 {
 
@@ -46,14 +44,6 @@ public:
     template<typename OtherT, typename OtherU>
         requires(std::is_convertible_v<OtherT, Tp>&& std::is_convertible_v<OtherU, Up>)
     explicit Pair(Pair<OtherT, OtherU>&& other) : first(std::forward<OtherT>(other.first)), second(std::forward<OtherU>(other.second)) {}
-
-    ~Pair()
-    {
-        if constexpr (std::is_destructible_v<Tp>)
-            first.~Tp();
-        if constexpr (std::is_destructible_v<Up>)
-            second.~Up();
-    }
 
     template<typename OtherT, typename OtherU>
         requires(std::is_convertible_v<OtherT, Tp>&& std::is_convertible_v<OtherU, Up>)

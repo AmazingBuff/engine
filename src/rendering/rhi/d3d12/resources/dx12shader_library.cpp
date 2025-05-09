@@ -2,6 +2,9 @@
 // Created by AmazingBuff on 2025/4/23.
 //
 
+#include <windows.h>
+#include <dxc/d3d12shader.h>
+
 #include "dx12shader_library.h"
 #include "rendering/rhi/d3d12/dx12.h"
 #include "rendering/rhi/d3d12/dx12device.h"

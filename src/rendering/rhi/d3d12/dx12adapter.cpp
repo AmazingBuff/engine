@@ -3,7 +3,6 @@
 //
 
 #include "dx12adapter.h"
-#include "dx12.h"
 #include "utils/dx_macro.h"
 
 AMAZING_NAMESPACE_BEGIN

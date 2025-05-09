@@ -5,6 +5,7 @@
 #ifndef DX_UTILS_H
 #define DX_UTILS_H
 
+#include "rendering/rhi/d3d12/dx12.h"
 #include "rendering/rhi/enumeration.h"
 
 AMAZING_NAMESPACE_BEGIN

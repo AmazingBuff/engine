@@ -119,9 +119,9 @@ DXGI_FORMAT transfer_format(GPUFormat format, bool shader)
         return  shader ? DXGI_FORMAT_R24_UNORM_X8_TYPELESS : DXGI_FORMAT_D24_UNORM_S8_UINT;
     case GPUFormat::e_d32_sfloat_s8_uint:
         return shader ? DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS : DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+    default:
+        return DXGI_FORMAT_UNKNOWN;
     }
-
-    return DXGI_FORMAT_UNKNOWN;
 }
 
 D3D12_RESOURCE_STATES transfer_resource_state(GPUResourceState state)

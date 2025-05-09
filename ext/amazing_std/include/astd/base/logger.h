@@ -24,19 +24,23 @@ public:
 template<typename... Args>
 void Logger::log(const Level& level, const char* loc, const std::string& message, Args&&... args)
 {
-	if constexpr (sizeof...(Args) != 0)
-		message = std::format(message, std::forward<Args>(args)...);
+	std::string msg;
+	if constexpr (sizeof...(Args) > 0)
+		msg = std::vformat(message, std::make_format_args(args...));
+	else
+		msg = message;
 	switch (level)
 	{
 	case Level::e_info:
-		std::cout << "[" << loc << ", Info]: " << message << std::endl;
+		std::cout << "[" << loc << ", Info]: " << msg << std::endl;
 		break;
 	case Level::e_warning:
-		std::cerr << "[" << loc << ", Warning]: " << message << std::endl;
+		std::cerr << "[" << loc << ", Warning]: " << msg << std::endl;
 		break;
 	case Level::e_error:
-        std::string msg = std::format("[{}, Error]: ", loc) + message;
-		throw std::runtime_error(msg);
+		const std::string format = std::format("[{}, Error]: {}", loc, msg);
+		std::cerr << format << std::endl;
+		throw std::runtime_error(format);
 	}
 }
 

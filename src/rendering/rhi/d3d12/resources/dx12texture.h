@@ -13,10 +13,10 @@ AMAZING_NAMESPACE_BEGIN
 class DX12Texture final : public GPUTexture
 {
 public:
-    DX12Texture();
     DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& info);
-    ~DX12Texture();
+    ~DX12Texture() override;
 private:
+    DX12Texture();
     static D3D12_RESOURCE_DIMENSION transfer_resource_dimension(GPUTextureCreateInfo const& info);
     static D3D12_TEXTURE_LAYOUT transfer_resource_layout(GPUTextureCreateInfo const& info);
     static D3D12_RESOURCE_FLAGS transfer_resource_flags(GPUTextureCreateInfo const& info);

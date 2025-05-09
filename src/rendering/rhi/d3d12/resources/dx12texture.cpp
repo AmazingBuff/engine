@@ -183,10 +183,10 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
         tiled->tiled_info.tile_height_in_texels = tile_shape.HeightInTexels;
         tiled->tiled_info.tile_depth_in_texels = tile_shape.DepthInTexels;
 
-        tiled->tiled_info.packed_mip_standard = packed_mip_info.NumStandardMips;
+        tiled->tiled_info.packed_mip_start = packed_mip_info.NumStandardMips;
         tiled->tiled_info.packed_mip_count = packed_mip_info.NumPackedMips;
 
-        tiled->subresources.reserve(subresource_count);
+        tiled->subresources.resize(subresource_count);
         for (uint32_t i = 0; i < subresource_count; i++)
         {
             D3D12TiledTextureInfo::D3D12TiledSubresourceMapping subresource{
@@ -202,7 +202,7 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
             tiled->subresources[i] = subresource;
         }
 
-        tiled->subresources.reserve(layers);
+        tiled->packings.resize(layers);
         for (uint16_t i = 0; i < layers; i++)
         {
             D3D12TiledTextureInfo::D3D12TiledPackingMipMapping packing{
@@ -251,6 +251,19 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
         }
     }
 
+    // debug name
+    if (!info.name.empty())
+    {
+        wchar_t debug_name[GPU_Debug_Name_Length];
+        mbstowcs_s(nullptr, debug_name, info.name.c_str(), GPU_Debug_Name_Length);
+        if (m_allocation)
+            m_allocation->SetName(debug_name);
+        DX_CHECK_RESULT(m_resource->SetName(debug_name));
+    }
+
+    const D3D12_RESOURCE_DESC resource_desc = m_resource->GetDesc();
+    const D3D12_RESOURCE_ALLOCATION_INFO alloc_info = dx12_device->m_device->GetResourceAllocationInfo(GPU_Node_Mask, 1, &resource_desc);
+    m_info->size_in_bytes = alloc_info.SizeInBytes;
     m_info->width = info.width;
     m_info->height = info.height;
     m_info->depth = info.depth;
@@ -260,22 +273,7 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
     m_info->sample_count = info.sample_count;
     m_info->is_cube = (info.type & GPUResourceTypeFlag::e_texture_cube) == GPUResourceTypeFlag::e_texture_cube ? 1 : 0;
 
-    if (m_resource)
-    {
-        const D3D12_RESOURCE_DESC resource_desc = m_resource->GetDesc();
-        const D3D12_RESOURCE_ALLOCATION_INFO alloc_info = dx12_device->m_device->GetResourceAllocationInfo(GPU_Node_Mask, 1, &resource_desc);
-        m_info->size_in_bytes = alloc_info.SizeInBytes;
-
-        // debug name
-        if (!info.name.empty())
-        {
-            wchar_t debug_name[GPU_Debug_Name_Length];
-            mbstowcs_s(nullptr, debug_name, info.name.c_str(), GPU_Debug_Name_Length);
-            if (m_allocation)
-                m_allocation->SetName(debug_name);
-            DX_CHECK_RESULT(m_resource->SetName(debug_name));
-        }
-    }
+    m_ref_device = device;
 }
 
 DX12Texture::~DX12Texture()

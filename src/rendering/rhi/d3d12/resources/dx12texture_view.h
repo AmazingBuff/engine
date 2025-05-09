@@ -5,6 +5,7 @@
 #ifndef DX12TEXTURE_VIEW_H
 #define DX12TEXTURE_VIEW_H
 
+#include "rendering/rhi/d3d12/dx12.h"
 #include "rendering/rhi/common/texture_view.h"
 
 AMAZING_NAMESPACE_BEGIN

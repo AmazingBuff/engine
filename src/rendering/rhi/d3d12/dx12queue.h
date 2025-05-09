@@ -5,6 +5,7 @@
 #ifndef DX12QUEUE_H
 #define DX12QUEUE_H
 
+#include "dx12.h"
 #include "rendering/rhi/common/queue.h"
 
 AMAZING_NAMESPACE_BEGIN
