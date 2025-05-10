@@ -38,9 +38,14 @@ struct GPUSwapChainCreateInfo
     Vector<GPUQueue const*> present_queues;
 };
 
+struct GPUCommandPoolCreateInfo
+{
+    String name;
+};
+
 struct GPUCommandBufferCreateInfo
 {
-
+    bool is_secondary;
 };
 
 struct GPUQueryPoolCreateInfo

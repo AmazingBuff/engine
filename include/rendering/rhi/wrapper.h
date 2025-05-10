@@ -37,9 +37,9 @@ AMAZING_NAMESPACE_BEGIN
 GPUInstance* GPU_create_instance(GPUInstanceCreateInfo const& info);
 GPUSurface* GPU_create_surface(GPUInstance const* instance, void* handle); // for windows, handle is a HWND
 GPUDevice* GPU_create_device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info);
-GPUCommandPool* GPU_create_command_pool(GPUDevice const* device, GPUQueue const* queue);
-GPUCommandBuffer* GPU_create_command_buffer(GPUDevice const* device, GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info);
-GPUSwapChain* GPU_create_swap_chain(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info);
+GPUCommandPool* GPU_create_command_pool(GPUQueue const* queue, GPUCommandPoolCreateInfo const& info);
+GPUCommandBuffer* GPU_create_command_buffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info);
+GPUSwapChain* GPU_create_swap_chain(GPUDevice const* device, GPUSwapChainCreateInfo const& info);
 GPUGraphicsPipeline* GPU_create_graphics_pipeline(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info);
 GPUFence* GPU_create_fence(GPUDevice const* device);
 GPUSemaphore* GPU_create_semaphore(GPUDevice const* device);

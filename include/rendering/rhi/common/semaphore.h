@@ -12,8 +12,10 @@ AMAZING_NAMESPACE_BEGIN
 class GPUSemaphore
 {
 public:
-    GPUSemaphore() = default;
+    GPUSemaphore() : m_ref_device(nullptr) {}
     virtual ~GPUSemaphore() = default;
+protected:
+    GPUDevice const* m_ref_device;
 };
 
 AMAZING_NAMESPACE_END

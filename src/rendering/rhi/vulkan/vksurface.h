@@ -18,6 +18,8 @@ public:
 private:
     VkSurfaceKHR m_surface;
     VkInstance m_ref_instance;
+
+    friend class VKSwapChain;
 };
 
 AMAZING_NAMESPACE_END

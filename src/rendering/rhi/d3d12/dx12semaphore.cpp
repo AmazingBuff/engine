@@ -14,6 +14,7 @@ DX12Semaphore::DX12Semaphore(GPUDevice const* device) : m_fence(nullptr), m_fenc
     DX_CHECK_RESULT(dx12_device->m_device->CreateFence(m_fence_value, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
 
     m_wait_event = CreateEvent(nullptr, 0, 0, nullptr);
+    m_ref_device = device;
 }
 
 DX12Semaphore::~DX12Semaphore()

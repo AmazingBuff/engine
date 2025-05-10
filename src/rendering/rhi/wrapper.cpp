@@ -73,33 +73,39 @@ GPUSurface* GPU_create_surface(GPUInstance const* instance, void* handle)
     return nullptr;
 }
 
-#define GPU_CREATE(type, dx_type, vk_type, ...)                                     \
-    type* ret = nullptr;                                                            \
-    switch (t_backend)                                                              \
-    {                                                                               \
-    case GPUBackend::e_d3d12:                                                       \
-        ret = PLACEMENT_NEW(dx_type, sizeof(dx_type), __VA_ARGS__);                 \
-        break;                                                                      \
-    case GPUBackend::e_vulkan:                                                      \
-        break;                                                                      \
-    }                                                                               \
+#ifdef _WIN64
+#define D3D_CREATE(dx_type, ...) ret = PLACEMENT_NEW(dx_type, sizeof(dx_type), __VA_ARGS__);
+#else
+#define D3D_CREATE(dx_type, ...)
+#endif
+
+#define GPU_CREATE(type, dx_type, vk_type, ...)                         \
+    type* ret = nullptr;                                                \
+    switch (t_backend)                                                  \
+    {                                                                   \
+    case GPUBackend::e_d3d12:                                           \
+        D3D_CREATE(dx_type, __VA_ARGS__);                               \
+        break;                                                          \
+    case GPUBackend::e_vulkan:                                          \
+        break;                                                          \
+    }                                                                   \
     return ret;
 
 GPUDevice* GPU_create_device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
 {
     GPU_CREATE(GPUDevice, DX12Device, VKDevice, adapter, info);
 }
-GPUCommandPool* GPU_create_command_pool(GPUDevice const* device, GPUQueue const* queue)
+GPUCommandPool* GPU_create_command_pool(GPUQueue const* queue, GPUCommandPoolCreateInfo const& info)
 {
-    GPU_CREATE(GPUCommandPool, DX12CommandPool, VkDevice, device, queue);
+    GPU_CREATE(GPUCommandPool, DX12CommandPool, VkDevice, queue, info);
 }
-GPUCommandBuffer* GPU_create_command_buffer(GPUDevice const* device, GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info)
+GPUCommandBuffer* GPU_create_command_buffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info)
 {
-    GPU_CREATE(GPUCommandBuffer, DX12CommandBuffer, VkCommandBuffer, device, pool, info);
+    GPU_CREATE(GPUCommandBuffer, DX12CommandBuffer, VkCommandBuffer, pool, info);
 }
-GPUSwapChain* GPU_create_swap_chain(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info)
+GPUSwapChain* GPU_create_swap_chain(GPUDevice const* device, GPUSwapChainCreateInfo const& info)
 {
-    GPU_CREATE(GPUSwapChain, DX12SwapChain, VkSwapchainKHR, instance, device, info);
+    GPU_CREATE(GPUSwapChain, DX12SwapChain, VkSwapchainKHR, device, info);
 }
 GPUGraphicsPipeline* GPU_create_graphics_pipeline(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info)
 {
@@ -156,6 +162,7 @@ GPURootSignaturePool* GPU_create_root_signature_pool(GPURootSignatureCreateInfo 
     return pool;
 }
 
+#undef D3D_CREATE
 #undef GPU_CREATE
 
 

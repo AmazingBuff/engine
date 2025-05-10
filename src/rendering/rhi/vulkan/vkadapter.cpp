@@ -3,6 +3,7 @@
 //
 
 #include "vkadapter.h"
+#include "vkdevice.h"
 #include "utils/vk_utils.h"
 #include "rendering/api.h"
 
@@ -21,9 +22,26 @@ VKAdapter::VKAdapter() : m_vulkan_detail{}, m_physical_device(nullptr), m_queue_
     memset(m_queue_family_indices, std::numeric_limits<uint32_t>::max(), sizeof(m_queue_family_indices));
 }
 
-VKAdapter::~VKAdapter()
-{
+VKAdapter::~VKAdapter() {}
 
+void VKAdapter::query_memory_usage(GPUDevice const* device, uint64_t* total, uint64_t* used)
+{
+    VKDevice const* vk_device = static_cast<VKDevice const*>(device);
+
+    const VkPhysicalDeviceMemoryProperties* mem_props;
+    vmaGetMemoryProperties(vk_device->m_allocator, &mem_props);
+    VmaBudget budgets[VK_MAX_MEMORY_HEAPS];
+    vmaGetHeapBudgets(vk_device->m_allocator, budgets);
+    *total = 0;
+    *used = 0;
+    for (uint32_t i = 0; i < mem_props->memoryHeapCount; i++)
+    {
+        if (mem_props->memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+        {
+            *total += budgets[i].budget;
+            *used += budgets[i].usage;
+        }
+    }
 }
 
 void VKAdapter::record_adapter_detail()
@@ -37,7 +55,7 @@ void VKAdapter::record_adapter_detail()
             m_queue_family_indices[to_underlying(GPUQueueType::e_graphics)] = j;
         else if (m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] != std::numeric_limits<uint32_t>::max() &&
             queue_families[j].queueFlags & VK_QUEUE_COMPUTE_BIT)
-            m_queue_family_indices[to_underlying(GPUQueueType::e_compute)]= j;
+            m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] = j;
         else if (m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] != std::numeric_limits<uint32_t>::max() &&
             queue_families[j].queueFlags & VK_QUEUE_TRANSFER_BIT)
             m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] = j;
@@ -64,7 +82,7 @@ void VKAdapter::record_adapter_detail()
     }
 
     // properties
-    VkPhysicalDeviceProperties2 properties_2 {
+    VkPhysicalDeviceProperties2 properties_2{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2
     };
 
@@ -178,7 +196,7 @@ void VKAdapter::record_adapter_detail()
         const uint32_t v3 = (vraw) & 0x03f;
         m_adapter_detail.vendor.driver_version = combine_version(combine_version(combine_version(v0, v1), v2), v3);
     }
-    else if (m_adapter_detail.vendor.vendor_id == 0x8086 ) // Intel
+    else if (m_adapter_detail.vendor.vendor_id == 0x8086) // Intel
     {
         const uint32_t vraw = properties.driverVersion;
         const uint32_t v0 = (vraw >> 14);
@@ -250,7 +268,7 @@ void VKAdapter::record_adapter_detail()
                 {
                     m_adapter_detail.support_host_visible_vram = true;
                     m_adapter_detail.host_visible_vram_budget = budget_properties.heapBudget[heap_index] ?
-                    budget_properties.heapBudget[heap_index] : memory_properties.memoryHeaps[heap_index].size;
+                        budget_properties.heapBudget[heap_index] : memory_properties.memoryHeaps[heap_index].size;
                     break;
                 }
             }

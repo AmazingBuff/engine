@@ -16,7 +16,6 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
 {
     DX12Adapter const* dx12_adapter = static_cast<DX12Adapter const*>(adapter);
     DX_CHECK_RESULT(D3D12CreateDevice(dx12_adapter->m_adapter, dx12_adapter->m_feature_level, IID_PPV_ARGS(&m_device)));
-    m_ref_adapter = adapter;
 
     // queues
     for (uint32_t i = 0; i < info.queue_groups.size(); i++)
@@ -50,6 +49,7 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
 
             queue->m_type = queue_group.queue_type;
             queue->m_fence = PLACEMENT_NEW(DX12Fence, sizeof(DX12Fence), this);
+            queue->m_ref_device = this;
 
             m_command_queues[type][j] = queue;
         }
@@ -104,6 +104,8 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
         if (FAILED(result))
             RENDERING_LOG_WARNING("enable pipeline cache, but not supported!");
     }
+
+    m_ref_adapter = adapter;
 }
 
 DX12Device::~DX12Device()

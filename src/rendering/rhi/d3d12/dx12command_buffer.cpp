@@ -23,10 +23,10 @@ static constexpr D3D12_COMMAND_LIST_TYPE Command_List_Map[GPU_Queue_Type_Count] 
 };
 
 
-DX12CommandBuffer::DX12CommandBuffer(GPUDevice const* device, GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info) : m_command_list(nullptr), m_bound_descriptor_heaps{}, m_bound_heap_index(0), m_bound_root_signature(nullptr)
+DX12CommandBuffer::DX12CommandBuffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info) : m_command_list(nullptr), m_bound_descriptor_heaps{}, m_bound_heap_index(0), m_bound_root_signature(nullptr)
 {
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12CommandPool const* dx12_command_pool = static_cast<DX12CommandPool const*>(pool);
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_command_pool->m_ref_device);
 
     m_bound_heap_index = GPU_Node_Index;
 
@@ -44,7 +44,6 @@ DX12CommandBuffer::DX12CommandBuffer(GPUDevice const* device, GPUCommandPool con
     m_bound_descriptor_heaps[0] = dx12_device->m_descriptor_heap->m_gpu_cbv_srv_uav_heaps[m_bound_heap_index];
     m_bound_descriptor_heaps[1] = dx12_device->m_descriptor_heap->m_gpu_sampler_heaps[m_bound_heap_index];
     m_ref_pool = dx12_command_pool;
-    m_ref_device = dx12_device;
 }
 
 DX12CommandBuffer::~DX12CommandBuffer()
@@ -189,7 +188,8 @@ void DX12CommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
 
 void DX12CommandBuffer::transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
 {
-    DX12Device const* device = static_cast<DX12Device const*>(m_ref_device);
+    DX12CommandPool const* command_pool = static_cast<DX12CommandPool const*>(m_ref_pool);
+    DX12Device const* device = static_cast<DX12Device const*>(command_pool->m_ref_device);
     DX12Buffer const* buffer = static_cast<DX12Buffer const*>(info.src_buffer);
     DX12Texture const* texture = static_cast<DX12Texture const*>(info.dst_texture);
 

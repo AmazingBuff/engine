@@ -16,7 +16,7 @@ public:
     explicit DX12Fence(GPUDevice const* device);
     ~DX12Fence() override;
 
-    AResult wait() override;
+    void wait() override;
 private:
     ID3D12Fence*    m_fence;
     size_t          m_fence_value;

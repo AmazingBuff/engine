@@ -14,7 +14,7 @@ DX12Adapter::~DX12Adapter()
     DX_FREE(m_adapter);
 }
 
-void DX12Adapter::query_memory_usage(uint64_t* total, uint64_t* used)
+void DX12Adapter::query_memory_usage(GPUDevice const* device, uint64_t* total, uint64_t* used)
 {
     DXGI_QUERY_VIDEO_MEMORY_INFO info;
     DX_CHECK_RESULT(m_adapter->QueryVideoMemoryInfo(GPU_Node_Index, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info));

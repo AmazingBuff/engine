@@ -15,7 +15,7 @@ class DX12Adapter final : public GPUAdapter
 {
 public:
     ~DX12Adapter() override;
-    void query_memory_usage(uint64_t* total, uint64_t* used) override;
+    void query_memory_usage(GPUDevice const* device, uint64_t* total, uint64_t* used) override;
 
 public:
     struct D3D12AdapterDetail
@@ -29,11 +29,12 @@ private:
     void record_adapter_detail();
 
 private:
-    IDXGIAdapter4*          m_adapter;
+    IDXGIAdapter4* m_adapter;
     D3D_FEATURE_LEVEL       m_feature_level;
 
     friend class DX12Instance;
     friend class DX12Device;
+    friend class DX12SwapChain;
 };
 
 AMAZING_NAMESPACE_END

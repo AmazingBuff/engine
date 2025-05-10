@@ -62,16 +62,17 @@ void create_api_object(HWND hwnd, GPUBackend backend)
 
     GPUCommandBufferCreateInfo command_buffer_create_info{};
 
-    t_transfer_pool = GPU_create_command_pool(t_device, t_transfer_queue);
-    t_transfer_buffer = GPU_create_command_buffer(t_device, t_transfer_pool, command_buffer_create_info);
+    GPUCommandPoolCreateInfo command_pool_create_info{};
+    t_transfer_pool = GPU_create_command_pool(t_transfer_queue, command_pool_create_info);
+    t_transfer_buffer = GPU_create_command_buffer(t_transfer_pool, command_buffer_create_info);
 
     t_image_semaphore = GPU_create_semaphore(t_device);
     t_present_semaphore = GPU_create_semaphore(t_device);
 
     for (uint32_t i = 0; i < Frame_In_Flight; i++)
     {
-        t_command_pool[i] = GPU_create_command_pool(t_device, t_graphics_queue);
-        t_command_buffer[i] = GPU_create_command_buffer(t_device, t_command_pool[i], command_buffer_create_info);
+        t_command_pool[i] = GPU_create_command_pool(t_graphics_queue, command_pool_create_info);
+        t_command_buffer[i] = GPU_create_command_buffer(t_command_pool[i], command_buffer_create_info);
         t_present_fence[i] = GPU_create_fence(t_device);
     }
 
@@ -87,7 +88,7 @@ void create_api_object(HWND hwnd, GPUBackend backend)
         .present_queues = { t_graphics_queue }
     };
 
-    t_swap_chain = GPU_create_swap_chain(t_instance, t_device, swap_chain_create_info);
+    t_swap_chain = GPU_create_swap_chain(t_device, swap_chain_create_info);
 }
 
 void destroy_api_object()

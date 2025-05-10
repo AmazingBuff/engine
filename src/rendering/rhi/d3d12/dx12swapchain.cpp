@@ -4,6 +4,7 @@
 
 #include "dx12swapchain.h"
 #include "dx12instance.h"
+#include "dx12adapter.h"
 #include "dx12device.h"
 #include "dx12queue.h"
 #include "rendering/api.h"
@@ -13,10 +14,11 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12SwapChain::DX12SwapChain(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info) : m_swap_chain(nullptr), m_present_sync_interval(0), m_present_flags(0)
+DX12SwapChain::DX12SwapChain(GPUDevice const* device, GPUSwapChainCreateInfo const& info) : m_swap_chain(nullptr), m_present_sync_interval(0), m_present_flags(0)
 {
-    DX12Instance const* dx12_instance = static_cast<DX12Instance const*>(instance);
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
+    DX12Adapter const* dx12_adapter = static_cast<DX12Adapter const*>(dx12_device->m_ref_adapter);
+    DX12Instance const* dx12_instance = static_cast<DX12Instance const*>(dx12_adapter->m_ref_instance);
 
     DXGI_SWAP_CHAIN_DESC1 swap_chain_desc{
         .Width = info.width,
@@ -93,6 +95,8 @@ DX12SwapChain::DX12SwapChain(GPUInstance const* instance, GPUDevice const* devic
 
         m_back_textures[i] = { back_texture, back_texture_view };
     }
+
+    m_ref_device = device;
 }
 
 DX12SwapChain::~DX12SwapChain()

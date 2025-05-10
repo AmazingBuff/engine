@@ -10,6 +10,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+class VKQueue;
 class VKDescriptorPool;
 
 class VKDevice final : public GPUDevice
@@ -28,6 +29,16 @@ private:
     VmaAllocator m_allocator;
     VKDescriptorPool* m_descriptor_pool;
     VolkDeviceTable m_device_table;
+
+    Vector<VKQueue*> m_command_queues[GPU_Queue_Type_Count];
+
+    friend class VKAdapter;
+    friend class VKQueue;
+    friend class VKCommandPool;
+    friend class VKCommandBuffer;
+    friend class VKSwapChain;
+    friend class VKFence;
+    friend class VKSemaphore;
 
     friend class VKBuffer;
     friend class VKTexture;

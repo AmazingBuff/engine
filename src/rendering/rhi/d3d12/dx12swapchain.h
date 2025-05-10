@@ -13,7 +13,7 @@ AMAZING_NAMESPACE_BEGIN
 class DX12SwapChain final : public GPUSwapChain
 {
 public:
-    DX12SwapChain(GPUInstance const* instance, GPUDevice const* device, GPUSwapChainCreateInfo const& info);
+    DX12SwapChain(GPUDevice const* device, GPUSwapChainCreateInfo const& info);
     ~DX12SwapChain() override;
 
     uint32_t acquire_next_frame(GPUSemaphore const* semaphore, GPUFence const* fence) override;

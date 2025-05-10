@@ -12,10 +12,12 @@ AMAZING_NAMESPACE_BEGIN
 class GPUFence
 {
 public:
-    GPUFence() = default;
+    GPUFence() : m_ref_device(nullptr) {}
     virtual ~GPUFence() = default;
 
-    virtual AResult wait() = 0;
+    virtual void wait() = 0;
+protected:
+    GPUDevice const* m_ref_device;
 };
 
 AMAZING_NAMESPACE_END

@@ -13,7 +13,7 @@ AMAZING_NAMESPACE_BEGIN
 class DX12CommandBuffer final : public GPUCommandBuffer
 {
 public:
-    DX12CommandBuffer(GPUDevice const* device, GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info);
+    DX12CommandBuffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info);
     ~DX12CommandBuffer() override;
 
     void begin_command() override;

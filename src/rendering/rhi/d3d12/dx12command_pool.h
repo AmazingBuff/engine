@@ -13,7 +13,7 @@ AMAZING_NAMESPACE_BEGIN
 class DX12CommandPool final : public GPUCommandPool
 {
 public:
-    DX12CommandPool(GPUDevice const* device, GPUQueue const* queue);
+    DX12CommandPool(GPUQueue const* queue, GPUCommandPoolCreateInfo const& info);
     ~DX12CommandPool() override;
 
     void reset() override;

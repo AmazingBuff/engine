@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(
-    dx12
-    LANGUAGES CXX
+    engine
+    LANGUAGES CXX C
 )
 
 add_subdirectory(ext/eigen)

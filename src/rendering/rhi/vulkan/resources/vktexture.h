@@ -45,6 +45,7 @@ private:
         bool single_tail;
     };
 
+    friend class VKSwapChain;
     friend class VKTextureView;
 };
 

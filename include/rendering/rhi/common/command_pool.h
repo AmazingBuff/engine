@@ -12,11 +12,12 @@ AMAZING_NAMESPACE_BEGIN
 class GPUCommandPool
 {
 public:
-    GPUCommandPool() : m_type(GPUQueueType::e_graphics) {}
+    GPUCommandPool() : m_ref_device(nullptr), m_type(GPUQueueType::e_graphics) {}
     virtual ~GPUCommandPool() = default;
 
     virtual void reset() = 0;
 protected:
+    GPUDevice const* m_ref_device;
     GPUQueueType m_type;
 };
 

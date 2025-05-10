@@ -15,7 +15,7 @@ class GPUAdapter
 public:
     GPUAdapter() : m_adapter_detail{}, m_ref_instance(nullptr) {}
     virtual ~GPUAdapter() = default;
-    virtual void query_memory_usage(uint64_t* total, uint64_t* used) = 0;
+    virtual void query_memory_usage(GPUDevice const* device, uint64_t* total, uint64_t* used) = 0;
 public:
     struct GPUAdapterVendor
     {

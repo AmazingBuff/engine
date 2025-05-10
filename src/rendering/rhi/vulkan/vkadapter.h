@@ -14,7 +14,7 @@ class VKAdapter final : public GPUAdapter
 {
 public:
     ~VKAdapter() override;
-    void query_memory_usage(uint64_t* total, uint64_t* used) override;
+    void query_memory_usage(GPUDevice const* device, uint64_t* total, uint64_t* used) override;
 
 public:
     struct VulkanAdapterDetail
@@ -35,6 +35,8 @@ private:
 
     friend class VKInstance;
     friend class VKDevice;
+    friend class VKCommandPool;
+    friend class VKSwapChain;
 
 
     friend class VKBuffer;

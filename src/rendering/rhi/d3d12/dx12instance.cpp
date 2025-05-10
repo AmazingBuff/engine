@@ -74,6 +74,7 @@ DX12Instance::DX12Instance(GPUInstanceCreateInfo const& info) : m_dxgi_factory(n
         DX12Adapter* dx12_adapter = PLACEMENT_NEW(DX12Adapter, sizeof(DX12Adapter));
         dx12_adapter->m_adapter = adapter_infos[i].adapter;
         dx12_adapter->m_feature_level = adapter_infos[i].feature_level;
+        dx12_adapter->m_ref_instance = this;
         dx12_adapter->record_adapter_detail();
         m_adapters[i] = dx12_adapter;
     }

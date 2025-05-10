@@ -12,13 +12,14 @@ AMAZING_NAMESPACE_BEGIN
 class GPUQueue
 {
 public:
-    GPUQueue() : m_type(GPUQueueType::e_graphics) {}
+    GPUQueue() : m_ref_device(nullptr), m_type(GPUQueueType::e_graphics) {}
     virtual ~GPUQueue() = default;
 
     virtual void submit(GPUQueueSubmitInfo const& info) const = 0;
     virtual void wait_idle() const = 0;
     virtual void present(GPUQueuePresentInfo const& info) const = 0;
 protected:
+    GPUDevice const* m_ref_device;
     GPUQueueType m_type;
 };
 
