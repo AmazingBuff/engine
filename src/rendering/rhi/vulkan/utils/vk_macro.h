@@ -20,7 +20,7 @@
     }																								\
 }
 #else
-#define VK_CHECK_RESULT(expr) (expr)
+#define VK_CHECK_RESULT(expr) {(expr);}
 #endif
 
 #endif //VK_MACRO_H

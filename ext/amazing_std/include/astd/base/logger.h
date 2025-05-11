@@ -50,12 +50,23 @@ void Logger::log(const Level& level, const char* loc, const std::string& message
 #define LOG_ERROR(loc, ...)		Logger::log(Logger::Level::e_error, loc __VA_OPT__(,) __VA_ARGS__)
 
 #define ASSERT(expr, loc, ...)  if (!(expr)) LOG_ERROR(loc, __VA_ARGS__);
-#else
-#define LOG_INFO(loc, message)
-#define LOG_WARNING(loc, message)
-#define LOG_ERROR(loc, message)
 
-#define ASSERT(expr, loc, ...)
+#define CONTAINER_LOG_INFO(...)		LOG_INFO("Container", __VA_ARGS__)
+#define CONTAINER_LOG_WARNING(...)	LOG_WARNING("Container", __VA_ARGS__)
+#define CONTAINER_LOG_ERROR(...)	LOG_ERROR("Container", __VA_ARGS__)
+#define CONTAINER_ASSERT(expr, ...)	ASSERT(expr, "Container", __VA_ARGS__)
+
+
+#define RENDERING_LOG_INFO(...)		LOG_INFO("Rendering", __VA_ARGS__)
+#define RENDERING_LOG_WARNING(...)	LOG_WARNING("Rendering", __VA_ARGS__)
+#define RENDERING_LOG_ERROR(...)	LOG_ERROR("Rendering", __VA_ARGS__)
+#define RENDERING_ASSERT(expr, ...)	ASSERT(expr, "Rendering", __VA_ARGS__)
+#else
+#define LOG_INFO(loc, ...)	reinterpret_cast<void*>(0)
+#define LOG_WARNING(loc, ...) reinterpret_cast<void*>(0)
+#define LOG_ERROR(loc, ...)	reinterpret_cast<void*>(0)
+
+#define ASSERT(expr, loc, ...) (expr)
 #endif
 
 #define CONTAINER_LOG_INFO(...)		LOG_INFO("Container", __VA_ARGS__)
