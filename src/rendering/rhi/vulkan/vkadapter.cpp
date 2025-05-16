@@ -50,13 +50,13 @@ void VKAdapter::record_adapter_detail()
     Vector<VkQueueFamilyProperties> queue_families = enumerate_properties(vkGetPhysicalDeviceQueueFamilyProperties, m_physical_device);
     for (uint32_t j = 0; j < queue_families.size(); j++)
     {
-        if (m_queue_family_indices[to_underlying(GPUQueueType::e_graphics)] != std::numeric_limits<uint32_t>::max() &&
+        if (m_queue_family_indices[to_underlying(GPUQueueType::e_graphics)] == std::numeric_limits<uint32_t>::max() &&
             queue_families[j].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             m_queue_family_indices[to_underlying(GPUQueueType::e_graphics)] = j;
-        else if (m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] != std::numeric_limits<uint32_t>::max() &&
+        else if (m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] == std::numeric_limits<uint32_t>::max() &&
             queue_families[j].queueFlags & VK_QUEUE_COMPUTE_BIT)
             m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] = j;
-        else if (m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] != std::numeric_limits<uint32_t>::max() &&
+        else if (m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] == std::numeric_limits<uint32_t>::max() &&
             queue_families[j].queueFlags & VK_QUEUE_TRANSFER_BIT)
             m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] = j;
     }
@@ -64,10 +64,10 @@ void VKAdapter::record_adapter_detail()
     // format support
     for (uint8_t j = 0; j < GPU_Format_Count; j++)
     {
-        VkFormatProperties format_properties;
         VkFormat format = transfer_format(static_cast<GPUFormat>(j));
         if (format != VK_FORMAT_UNDEFINED)
         {
+            VkFormatProperties format_properties;
             vkGetPhysicalDeviceFormatProperties(m_physical_device, format, &format_properties);
             m_adapter_detail.format_support[j].shader_read = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) != 0;
             m_adapter_detail.format_support[j].shader_write = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT) != 0;

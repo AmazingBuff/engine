@@ -213,7 +213,7 @@ D3D12_TEXTURE_ADDRESS_MODE transfer_address_mode(GPUAddressMode mode)
 
 D3D12_DESCRIPTOR_RANGE_TYPE transfer_resource_type(GPUResourceType type)
 {
-    GPUResourceTypeFlag flag = static_cast<GPUResourceTypeFlag>(to_underlying(std::move(type)));
+    GPUResourceTypeFlag flag = static_cast<GPUResourceTypeFlag>(type);
     switch (flag)
     {
     case GPUResourceTypeFlag::e_uniform_buffer:

@@ -8,4 +8,11 @@
 #include <fstream>
 #include <algorithm>
 
+#ifdef _WIN64
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
+#define VMA_STATIC_VULKAN_FUNCTIONS 0
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
+
 #endif //PCH_H

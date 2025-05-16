@@ -4,6 +4,7 @@
 
 #include "vkshader_library.h"
 #include "rendering/rhi/vulkan/vkdevice.h"
+#include "rendering/rhi/vulkan/utils/vk_macro.h"
 #include "rendering/rhi/vulkan/utils/vk_utils.h"
 #include <spirv_cross.hpp>
 
@@ -31,7 +32,7 @@ static constexpr GPUTextureType Texture_Array_Type_Map[] =
     GPUTextureType::e_undefined,
 };
 
-static GPUShaderStage transfer_shader_stage(spv::ExecutionModel model)
+static GPUShaderStage transfer_execution_model(spv::ExecutionModel model)
 {
     switch (model)
     {
@@ -52,15 +53,19 @@ static GPUShaderStage transfer_shader_stage(spv::ExecutionModel model)
     }
 }
 
-VKShaderLibrary::VKShaderLibrary(GPUShaderLibraryCreateInfo const& info)
+VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreateInfo const& info) : m_shader_module(nullptr)
 {
-    VkShaderModuleCreateInfo shader_module{
+    VKDevice const* vk_device = static_cast<VKDevice const*>(device);
+
+    VkShaderModuleCreateInfo shader_info{
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
         .codeSize = info.code_size,
         .pCode = info.code,
     };
 
-    spirv_cross::Compiler compiler(info.code, info.code_size);
+    VK_CHECK_RESULT(vk_device->m_device_table.vkCreateShaderModule(vk_device->m_device, &shader_info, VK_Allocation_Callbacks_Ptr, &m_shader_module));
+
+    spirv_cross::Compiler compiler(info.code, info.code_size / 4);
     spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
     spirv_cross::SmallVector<spirv_cross::EntryPoint> entry_points = compiler.get_entry_points_and_stages();
@@ -72,7 +77,7 @@ VKShaderLibrary::VKShaderLibrary(GPUShaderLibraryCreateInfo const& info)
 
         GPUShaderReflection& reflection = m_shader_reflections[i];
         reflection.entry_name = entry_point.name.c_str();
-        reflection.stage = transfer_shader_stage(entry_point.execution_model);
+        reflection.stage = transfer_execution_model(entry_point.execution_model);
         if (entry_point.execution_model == spv::ExecutionModel::ExecutionModelGLCompute)
         {
             const spirv_cross::SPIREntryPoint& entry = compiler.get_entry_point(entry_point.name, entry_point.execution_model);
@@ -116,7 +121,7 @@ VKShaderLibrary::VKShaderLibrary(GPUShaderLibraryCreateInfo const& info)
             ref_resource.name_hash = hash_str(uniform.name.c_str(), uniform.name.size(), VK_Hash);
             ref_resource.set = compiler.get_decoration(uniform.id, spv::DecorationDescriptorSet);
             ref_resource.binding = compiler.get_decoration(uniform.id, spv::DecorationBinding);
-            ref_resource.stage = transfer_shader_stage(entry_point.execution_model);
+            ref_resource.stage = transfer_execution_model(entry_point.execution_model);
             ref_resource.resource_type = GPUResourceTypeFlag::e_uniform_buffer;
             ref_resource.size = compiler.get_declared_struct_size(compiler.get_type(uniform.base_type_id));
             ref_resource.texture_type = GPUTextureType::e_undefined;
@@ -135,7 +140,7 @@ VKShaderLibrary::VKShaderLibrary(GPUShaderLibraryCreateInfo const& info)
             ref_resource.name_hash = hash_str(sampled.name.c_str(), sampled.name.size(), VK_Hash);
             ref_resource.set = compiler.get_decoration(sampled.id, spv::DecorationDescriptorSet);
             ref_resource.binding = compiler.get_decoration(sampled.id, spv::DecorationBinding);
-            ref_resource.stage = transfer_shader_stage(entry_point.execution_model);
+            ref_resource.stage = transfer_execution_model(entry_point.execution_model);
             ref_resource.resource_type = GPUResourceTypeFlag::e_texture;
             ref_resource.size = 0;
 
@@ -166,17 +171,20 @@ VKShaderLibrary::VKShaderLibrary(GPUShaderLibraryCreateInfo const& info)
             ref_resource.name_hash = hash_str(push_constant.name.c_str(), push_constant.name.size(), VK_Hash);
             ref_resource.set = 0;
             ref_resource.binding = 0;
-            ref_resource.stage = transfer_shader_stage(entry_point.execution_model);
+            ref_resource.stage = transfer_execution_model(entry_point.execution_model);
             ref_resource.resource_type = GPUResourceTypeFlag::e_push_constant;
             ref_resource.size = compiler.get_declared_struct_size(compiler.get_type(push_constant.base_type_id));
             ref_resource.offset = 0;
         }
     }
+
+    m_ref_device = device;
 }
 
 VKShaderLibrary::~VKShaderLibrary()
 {
-
+    VKDevice const* vk_device = static_cast<VKDevice const*>(m_ref_device);
+    vk_device->m_device_table.vkDestroyShaderModule(vk_device->m_device, m_shader_module, VK_Allocation_Callbacks_Ptr);
 }
 
 AMAZING_NAMESPACE_END

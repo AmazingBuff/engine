@@ -8,6 +8,7 @@
 #include "vksemaphore.h"
 #include "vkcommand_buffer.h"
 #include "vkswapchain.h"
+#include "utils/vk_macro.h"
 #include "utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -47,8 +48,15 @@ void VKQueue::submit(GPUQueueSubmitInfo const& info) const
         .pSignalSemaphores = signal_semaphores
     };
 
-    VK_CHECK_RESULT(vk_device->m_device_table.vkQueueSubmit(m_queue, 1, &submit_info,
-        info.signal_fence ? static_cast<VKFence const*>(info.signal_fence)->m_fence : nullptr));
+    VkFence fence = nullptr;
+    if (info.signal_fence)
+    {
+        VKFence* vk_fence = static_cast<VKFence*>(info.signal_fence);
+        vk_fence->m_is_signaled = true;
+        fence = vk_fence->m_fence;
+    }
+
+    VK_CHECK_RESULT(vk_device->m_device_table.vkQueueSubmit(m_queue, 1, &submit_info, fence));
 }
 
 void VKQueue::wait_idle() const

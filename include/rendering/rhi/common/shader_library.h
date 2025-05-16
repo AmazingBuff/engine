@@ -12,9 +12,10 @@ AMAZING_NAMESPACE_BEGIN
 class GPUShaderLibrary
 {
 public:
-    GPUShaderLibrary() = default;
+    GPUShaderLibrary() : m_ref_device(nullptr) {}
     virtual ~GPUShaderLibrary() = default;
 protected:
+    GPUDevice const* m_ref_device;
     Vector<GPUShaderReflection> m_shader_reflections;
 
     friend class GPURootSignature;

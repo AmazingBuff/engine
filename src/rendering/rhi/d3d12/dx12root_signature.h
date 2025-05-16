@@ -24,7 +24,7 @@ private:
         uint32_t index;
     };
 
-    Vector<D3D12ConstantParameter> m_constant_parameters;
+    D3D12ConstantParameter* m_constant_parameters;
 
     friend class DX12DescriptorSet;
     friend class DX12GraphicsPipeline;

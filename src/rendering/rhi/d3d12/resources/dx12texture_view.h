@@ -13,7 +13,7 @@ AMAZING_NAMESPACE_BEGIN
 class DX12TextureView final : public GPUTextureView
 {
 public:
-    DX12TextureView(GPUDevice const* device, GPUTextureViewCreateInfo const& info);
+    explicit DX12TextureView(GPUTextureViewCreateInfo const& info);
     ~DX12TextureView() override;
 private:
     D3D12_CPU_DESCRIPTOR_HANDLE m_rtv_dsv_handle;

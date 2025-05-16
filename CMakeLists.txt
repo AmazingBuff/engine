@@ -5,10 +5,7 @@ project(
     LANGUAGES CXX C
 )
 
-add_subdirectory(ext/eigen)
-add_subdirectory(ext/assimp)
-add_subdirectory(ext/sdl)
-add_subdirectory(ext/amazing_std)
+add_subdirectory(ext)
 add_subdirectory(3rd)
 
 find_package(Vulkan)
@@ -52,6 +49,7 @@ target_link_libraries(
     SDL3::SDL3
     Eigen3::Eigen
     assimp::assimp
+    spirv-cross-core
 )
 
 target_compile_features(
@@ -71,6 +69,7 @@ if (WIN32)
         ${PROJECT_NAME}
         PUBLIC
         NOMINMAX
+        WIN32_LEAN_AND_MEAN
     )
 endif ()
 

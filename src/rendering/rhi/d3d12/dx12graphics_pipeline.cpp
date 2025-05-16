@@ -14,10 +14,10 @@
 AMAZING_NAMESPACE_BEGIN
 
 
-DX12GraphicsPipeline::DX12GraphicsPipeline(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info) : m_root_signature(nullptr), m_pipeline_state(nullptr), m_pipeline_state_desc{}, m_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED)
+DX12GraphicsPipeline::DX12GraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info) : m_pipeline_state(nullptr), m_pipeline_state_desc{}, m_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED)
 {
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12RootSignature const* dx12_root_signature = static_cast<DX12RootSignature const*>(info.root_signature);
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_root_signature->m_ref_device);
 
     uint32_t input_element_count = 0;
     Vector<D3D12_INPUT_ELEMENT_DESC> input_element_desc;
@@ -125,15 +125,15 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUDevice const* device, GPUGraphicsP
 
             if (rt_blend.SrcBlend != D3D12_BLEND_ONE || rt_blend.DestBlend != D3D12_BLEND_ZERO ||
                 rt_blend.SrcBlendAlpha != D3D12_BLEND_ONE || rt_blend.DestBlendAlpha != D3D12_BLEND_ZERO)
-                rt_blend.BlendEnable = 1;
+                rt_blend.BlendEnable = TRUE;
             else
-                rt_blend.BlendEnable = 0;
+                rt_blend.BlendEnable = FALSE;
 
             rt_blend.RenderTargetWriteMask = blend_state->write_masks[blend_index];
             rt_blend.BlendOp = Blend_Op_Map[to_underlying(blend_state->blend_modes[blend_index])];
             rt_blend.BlendOpAlpha = Blend_Op_Map[to_underlying(blend_state->alpha_blend_modes[blend_index])];
 
-            if (blend_state->independent_blend)
+            if (blend_state->independent_blend && blend_index + 1 < info.render_target_count)
                 blend_index++;
         }
     }
@@ -315,7 +315,7 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUDevice const* device, GPUGraphicsP
         break;
     }
 
-    m_root_signature = dx12_root_signature->m_root_signature;
+    m_ref_root_signature = info.root_signature;
 }
 
 DX12GraphicsPipeline::~DX12GraphicsPipeline()

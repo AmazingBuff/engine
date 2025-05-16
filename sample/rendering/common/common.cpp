@@ -6,6 +6,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <Unknwn.h>
 #include <dxc/dxcapi.h>
 
 #include <filesystem>
@@ -21,12 +22,9 @@ thread_local GPUFence* t_present_fence[Frame_In_Flight] = { nullptr };
 thread_local GPUSemaphore* t_image_semaphore = nullptr;
 thread_local GPUSemaphore* t_present_semaphore = nullptr;
 
+static thread_local GPUBackend t_backend = GPUBackend::e_d3d12;
 
-thread_local GPUQueue* t_transfer_queue = nullptr;
-thread_local GPUCommandPool* t_transfer_pool = nullptr;
-thread_local GPUCommandBuffer* t_transfer_buffer = nullptr;
-
-void create_api_object(HWND hwnd, GPUBackend backend)
+void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
 {
     GPUInstanceCreateInfo instance_create_info{
         .backend = backend,
@@ -45,26 +43,18 @@ void create_api_object(HWND hwnd, GPUBackend backend)
         .queue_type = GPUQueueType::e_graphics,
         .queue_count = 1
     };
-    GPUQueueGroup transfer_queue_group{
-        .queue_type = GPUQueueType::e_transfer,
-        .queue_count = 1
-    };
     GPUDeviceCreateInfo device_create_info{
         .disable_pipeline_cache = false,
-        .queue_groups = {graphics_queue_group, transfer_queue_group},
+        .queue_groups = {graphics_queue_group},
     };
 
     t_device = GPU_create_device(adapter, device_create_info);
 
     t_graphics_queue = (GPUQueue*)t_device->fetch_queue(GPUQueueType::e_graphics, 0);
 
-    t_transfer_queue = (GPUQueue*)t_device->fetch_queue(GPUQueueType::e_transfer, 0);
-
     GPUCommandBufferCreateInfo command_buffer_create_info{};
 
     GPUCommandPoolCreateInfo command_pool_create_info{};
-    t_transfer_pool = GPU_create_command_pool(t_transfer_queue, command_pool_create_info);
-    t_transfer_buffer = GPU_create_command_buffer(t_transfer_pool, command_buffer_create_info);
 
     t_image_semaphore = GPU_create_semaphore(t_device);
     t_present_semaphore = GPU_create_semaphore(t_device);
@@ -76,7 +66,7 @@ void create_api_object(HWND hwnd, GPUBackend backend)
         t_present_fence[i] = GPU_create_fence(t_device);
     }
 
-    t_surface = GPU_create_surface(t_instance, hwnd);
+    t_surface = GPU_create_surface(t_instance, hwnd, hinstance);
 
     GPUSwapChainCreateInfo swap_chain_create_info{
         .width = Width,
@@ -89,13 +79,12 @@ void create_api_object(HWND hwnd, GPUBackend backend)
     };
 
     t_swap_chain = GPU_create_swap_chain(t_device, swap_chain_create_info);
+
+    t_backend = backend;
 }
 
 void destroy_api_object()
 {
-    GPU_destroy_command_buffer(t_transfer_buffer);
-    GPU_destroy_command_pool(t_transfer_pool);
-
     GPU_destroy_semaphore(t_image_semaphore);
     GPU_destroy_semaphore(t_present_semaphore);
 
@@ -127,7 +116,7 @@ ImageInfo load_image(const String& file_path)
     return { width, height, 4, image_data };
 }
 
-Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStageFlag stage, bool spv)
+Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStageFlag stage)
 {
     const wchar_t* shader_model = nullptr;
     switch (stage)
@@ -149,6 +138,9 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
         break;
     case GPUShaderStageFlag::e_tessellation_evaluation:
         shader_model = L"ds_6_0";
+        break;
+    default:
+        shader_model = L"";
         break;
     }
 
@@ -176,7 +168,7 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
         L"-T", shader_model,
         L"-I", inc
     };
-    if (spv)
+    if (t_backend == GPUBackend::e_vulkan)
         arguments.push_back(L"-spirv");
 
     IDxcResult* ret = nullptr;
@@ -185,7 +177,7 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
         IDxcBlobUtf8* errors = nullptr;
         ret->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
         if (errors != nullptr && errors->GetStringLength() > 0)
-            LOG_ERROR("Compile Shader", reinterpret_cast<const char*>(errors->GetBufferPointer()));
+            LOG_ERROR("Compile Shader", static_cast<const char*>(errors->GetBufferPointer()));
         errors->Release();
     }
 

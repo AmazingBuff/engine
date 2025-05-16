@@ -20,6 +20,7 @@ private:
     VkCommandPool m_pool;
 
     friend class VKCommandBuffer;
+    friend class VKGraphicsPassEncoder;
 };
 
 AMAZING_NAMESPACE_END

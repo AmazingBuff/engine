@@ -56,7 +56,7 @@ public:
         Str::m_data[Str::m_size] = '\0';
     }
 
-    StringT(StringT&& str)
+    StringT(StringT&& str) noexcept
     {
         Str::swap(str);
     }
@@ -90,7 +90,7 @@ public:
         return *this;
     }
 
-    StringT& operator=(StringT&& str)
+    StringT& operator=(StringT&& str) noexcept
     {
         Str::swap(str);
 
@@ -317,8 +317,8 @@ StringT<Char> to_str(const Tp& value)
 
 INTERNAL_NAMESPACE_END
 
-using String = Internal::StringT<char, Allocator>;
-using WString = Internal::StringT<wchar_t, Allocator>;
+using String = Internal::StringT<char>;
+using WString = Internal::StringT<wchar_t>;
 
 template <typename Tp>
 String to_str(const Tp& value)
@@ -331,5 +331,33 @@ WString to_wstr(const Tp& value)
 {
     return Internal::to_str<wchar_t>(value);
 }
+
+template <>
+struct Less<const char*>
+{
+    NODISCARD bool operator()(const char* lhs, const char* rhs) const noexcept
+    {
+        size_t l_len = str_length(lhs);
+        size_t r_len = str_length(rhs);
+        int val = str_compare(lhs, rhs, std::min(l_len, r_len));
+        if (val == 0)
+            return l_len < r_len;
+        return val < 0;
+    }
+};
+
+template <>
+struct Less<const wchar_t*>
+{
+    NODISCARD bool operator()(const wchar_t* lhs, const wchar_t* rhs) const noexcept
+    {
+        size_t l_len = str_length(lhs);
+        size_t r_len = str_length(rhs);
+        int val = str_compare(lhs, rhs, std::min(l_len, r_len));
+        if (val == 0)
+            return l_len < r_len;
+        return val < 0;
+    }
+};
 
 AMAZING_NAMESPACE_END

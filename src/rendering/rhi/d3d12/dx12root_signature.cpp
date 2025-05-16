@@ -25,6 +25,7 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
             m_root_signature = pool_root_signature->m_root_signature;
             m_constant_parameters = pool_root_signature->m_constant_parameters;
             m_pool = info.pool;
+            m_ref_device = device;
 
             return;
         }
@@ -53,7 +54,7 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
     for (const auto& [resources, set_index] : m_tables)
         resource_count += resources.size();
 
-    Vector<D3D12_ROOT_PARAMETER1> root_parameters(m_tables.size() + m_push_constants.size());
+    Vector<D3D12_ROOT_PARAMETER1> root_parameters(m_tables.size() + m_push_constant_count);
     Vector<D3D12_DESCRIPTOR_RANGE1> cbv_srv_uav_ranges(resource_count);
 
     uint32_t valid_root_parameter = 0;
@@ -90,8 +91,8 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
 
     // push constant
     // todo: add more push constant support
-    m_constant_parameters.resize(m_push_constants.size());
-    for (uint32_t i = 0; i < m_push_constants.size(); ++i)
+    m_constant_parameters = Allocator<D3D12ConstantParameter>::allocate(m_push_constant_count);
+    for (uint32_t i = 0; i < m_push_constant_count; ++i)
     {
         m_constant_parameters[i].root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         m_constant_parameters[i].root_parameter.Constants.RegisterSpace = m_push_constants[i].set;
@@ -135,7 +136,7 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
     D3D12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_desc{
         .Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
         .Desc_1_1{
-            .NumParameters = static_cast<uint32_t>(valid_root_parameter + m_push_constants.size()),
+            .NumParameters = valid_root_parameter + m_push_constant_count,
             .pParameters = root_parameters.data(),
             .NumStaticSamplers = static_cast<uint32_t>(m_static_samplers.size()),
             .pStaticSamplers = sampler_desc,
@@ -159,12 +160,17 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
             m_pool = info.pool;
         }
     }
+    m_ref_device = device;
 }
 
 DX12RootSignature::~DX12RootSignature()
 {
     if (m_pool)
         m_pool->remove(this);
+
+    if (m_constant_parameters)
+        Allocator<D3D12ConstantParameter>::deallocate(m_constant_parameters);
+    m_constant_parameters = nullptr;
 
     DX_FREE(m_root_signature);
 }

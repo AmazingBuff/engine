@@ -5,6 +5,7 @@
 #include "vksampler.h"
 #include "rendering/rhi/vulkan/vkdevice.h"
 #include "rendering/rhi/vulkan/vkadapter.h"
+#include "rendering/rhi/vulkan/utils/vk_macro.h"
 #include "rendering/rhi/vulkan/utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -31,7 +32,7 @@ VKSampler::VKSampler(GPUDevice const* device, GPUSamplerCreateInfo const& info) 
         .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
         .unnormalizedCoordinates = VK_FALSE,
     };
-    VK_CHECK_RESULT(vk_device->m_device_table.vkCreateSampler(vk_device->m_device, &sampler_info, &VK_Allocation_Callbacks, &m_sampler));
+    VK_CHECK_RESULT(vk_device->m_device_table.vkCreateSampler(vk_device->m_device, &sampler_info, VK_Allocation_Callbacks_Ptr, &m_sampler));
 
     m_ref_device = device;
 }
@@ -39,7 +40,7 @@ VKSampler::VKSampler(GPUDevice const* device, GPUSamplerCreateInfo const& info) 
 VKSampler::~VKSampler()
 {
     VKDevice const* vk_device = static_cast<VKDevice const*>(m_ref_device);
-    vk_device->m_device_table.vkDestroySampler(vk_device->m_device, m_sampler, &VK_Allocation_Callbacks);
+    vk_device->m_device_table.vkDestroySampler(vk_device->m_device, m_sampler, VK_Allocation_Callbacks_Ptr);
 }
 
 AMAZING_NAMESPACE_END

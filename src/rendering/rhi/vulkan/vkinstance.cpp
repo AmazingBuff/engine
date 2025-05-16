@@ -4,6 +4,7 @@
 
 #include "vkinstance.h"
 #include "vkadapter.h"
+#include "utils/vk_macro.h"
 #include "utils/vk_utils.h"
 #include "rendering/rhi/exts/vk_exts.h"
 
@@ -102,17 +103,17 @@ VKInstance::VKInstance(GPUInstanceCreateInfo const& info) : m_instance(nullptr),
 
     Set<const char*> required_layers(instance_layers.begin(), instance_layers.end());
     Vector<VkLayerProperties> available_layers = enumerate_properties(vkEnumerateInstanceLayerProperties);
-    for (auto const& layer : available_layers)
+    for (VkLayerProperties const& layer : available_layers)
         required_layers.erase(layer.layerName);
 
     RENDERING_ASSERT(required_layers.empty(), "required layers are not satisfied!");
 
     Set<const char*> required_extensions(instance_extensions.begin(), instance_extensions.end());
     Vector<VkExtensionProperties> available_extensions = enumerate_properties(vkEnumerateInstanceExtensionProperties, nullptr);
-    for (auto const& extension : available_extensions)
+    for (VkExtensionProperties const& extension : available_extensions)
         required_extensions.erase(extension.extensionName);
 
-    RENDERING_ASSERT(required_layers.empty(), "required extensions are not satisfied!");
+    RENDERING_ASSERT(required_extensions.empty(), "required extensions are not satisfied!");
 
     VkInstanceCreateInfo create_info{
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -137,45 +138,66 @@ VKInstance::VKInstance(GPUInstanceCreateInfo const& info) : m_instance(nullptr),
         create_info.pNext = &validation_features;
     }
 
-    VK_CHECK_RESULT(vkCreateInstance(&create_info, &VK_Allocation_Callbacks, &m_instance));
+    VK_CHECK_RESULT(vkCreateInstance(&create_info, VK_Allocation_Callbacks_Ptr, &m_instance));
 
     volkLoadInstanceOnly(m_instance);
 
     // query device
     Vector<VkPhysicalDevice> adapters = enumerate_properties(vkEnumeratePhysicalDevices, m_instance);
+    m_adapters.resize(adapters.size());
     for (size_t i = 0; i < adapters.size(); i++)
     {
-        // device layers
-        Vector<VkLayerProperties> layer_properties = enumerate_properties(vkEnumerateDeviceLayerProperties, adapters[i]);
-        Set<const char*> required_device_layers(device_layers.begin(), device_layers.end());
-        for (VkLayerProperties const& layer : layer_properties)
-            required_device_layers.erase(layer.layerName);
-        if (!required_device_layers.empty())
-        {
-            RENDERING_LOG_WARNING("required device layers are not satisfied, skip!");
-            continue;
-        }
-
-        // device extensions
-        Vector<VkExtensionProperties> device_extension_properties = enumerate_properties(vkEnumerateDeviceExtensionProperties, adapters[i], nullptr);
-        Set<const char*> required_device_extensions(device_extensions.begin(), device_extensions.end());
-        for (VkExtensionProperties const& extension : device_extension_properties)
-            required_device_extensions.erase(extension.extensionName);
-        if (!required_device_extensions.empty())
-        {
-            RENDERING_LOG_WARNING("required device extensions are not satisfied, skip!");
-            continue;
-        }
-
         // query adapter
         VKAdapter* adapter = PLACEMENT_NEW(VKAdapter, sizeof(VKAdapter));
         adapter->m_physical_device = adapters[i];
-        adapter->m_device_layers = std::move(device_layers);
-        adapter->m_device_extensions = std::move(device_extensions);
+        adapter->m_device_layers.resize(device_layers.size());
+        adapter->m_device_extensions.resize(device_extensions.size());
+
+        // device layers
+        Vector<VkLayerProperties> layer_properties = enumerate_properties(vkEnumerateDeviceLayerProperties, adapters[i]);
+        uint32_t layer_index = 0;
+        for (VkLayerProperties const& layer : layer_properties)
+        {
+            for (const char* layer_name : device_layers)
+            {
+                if (strcmp(layer_name, layer.layerName) == 0)
+                {
+                    adapter->m_device_layers[layer_index] = layer_name;
+                    layer_index++;
+                }
+            }
+        }
+        for (; layer_index < device_layers.size(); layer_index++)
+            adapter->m_device_layers.pop_back();
+
+        if (adapter->m_device_layers.size() != device_layers.size())
+            RENDERING_LOG_WARNING("some required device layers are not satisfied, may cause problem!");
+
+        // device extensions
+        Vector<VkExtensionProperties> device_extension_properties = enumerate_properties(vkEnumerateDeviceExtensionProperties, adapters[i], nullptr);
+        uint32_t extension_index = 0;
+        for (VkExtensionProperties const& extension : device_extension_properties)
+        {
+            for (const char* extension_name : device_extensions)
+            {
+                if (strcmp(extension_name, extension.extensionName) == 0)
+                {
+                    adapter->m_device_extensions[extension_index] = extension_name;
+                    extension_index++;
+                }
+            }
+        }
+        for (; extension_index < device_extensions.size(); extension_index++)
+            adapter->m_device_extensions.pop_back();
+
+        if (adapter->m_device_extensions.size() != device_extensions.size())
+            RENDERING_LOG_WARNING("some required device extensions are not satisfied, may cause problem!");
+
+
         adapter->m_ref_instance = this;
         adapter->record_adapter_detail();
 
-        m_adapters.push_back(adapter);
+        m_adapters[i] = adapter;
     }
 
     //sort by gpu type
@@ -198,15 +220,15 @@ VKInstance::VKInstance(GPUInstanceCreateInfo const& info) : m_instance(nullptr),
             .pUserData = nullptr,
         };
 
-        VK_CHECK_RESULT(vkCreateDebugUtilsMessengerEXT(m_instance, &messenger_create_info, &VK_Allocation_Callbacks, &m_debug_messenger));
+        VK_CHECK_RESULT(vkCreateDebugUtilsMessengerEXT(m_instance, &messenger_create_info, VK_Allocation_Callbacks_Ptr, &m_debug_messenger));
     }
 }
 
 VKInstance::~VKInstance()
 {
     if (m_debug_messenger)
-        vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_messenger, &VK_Allocation_Callbacks);
-    vkDestroyInstance(m_instance, &VK_Allocation_Callbacks);
+        vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_messenger, VK_Allocation_Callbacks_Ptr);
+    vkDestroyInstance(m_instance, VK_Allocation_Callbacks_Ptr);
 }
 
 void VKInstance::enum_adapters(Vector<GPUAdapter*>& adapters) const

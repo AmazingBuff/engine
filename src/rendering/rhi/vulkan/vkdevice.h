@@ -12,6 +12,7 @@ AMAZING_NAMESPACE_BEGIN
 
 class VKQueue;
 class VKDescriptorPool;
+class VKPassTable;
 
 class VKDevice final : public GPUDevice
 {
@@ -28,6 +29,7 @@ private:
     VkPipelineCache m_pipeline_cache;
     VmaAllocator m_allocator;
     VKDescriptorPool* m_descriptor_pool;
+    VKPassTable* m_pass_table;
     VolkDeviceTable m_device_table;
 
     Vector<VKQueue*> m_command_queues[GPU_Queue_Type_Count];
@@ -39,12 +41,22 @@ private:
     friend class VKSwapChain;
     friend class VKFence;
     friend class VKSemaphore;
+    friend class VKRootSignature;
+    friend class VKDescriptorSet;
+    friend class VKGraphicsPipeline;
+    friend class VKGraphicsPassEncoder;
+    friend class VKQueryPool;
 
     friend class VKBuffer;
     friend class VKTexture;
     friend class VKTextureView;
     friend class VKSampler;
+    friend class VKShaderLibrary;
     friend class VKMemoryPool;
+
+    friend class VKDescriptorPool;
+    friend class VKRenderPass;
+    friend class VKFramebuffer;
 };
 
 AMAZING_NAMESPACE_END

@@ -161,7 +161,7 @@ void create_pipeline()
         .base_mip_level = 0,
         .mip_levels = 1,
     };
-    texture_view = GPU_create_texture_view(t_device, texture_view_create_info);
+    texture_view = GPU_create_texture_view(texture_view_create_info);
 
     GPUBufferCreateInfo buffer_create_info{
         .size = image.data.size(),
@@ -225,9 +225,9 @@ void create_pipeline()
         .reflection = true,
     };
 
-    GPUShaderLibrary* vertex_shader = GPU_create_shader_library(vs_desc);
+    GPUShaderLibrary* vertex_shader = GPU_create_shader_library(t_device, vs_desc);
 
-    GPUShaderLibrary* fragment_shader = GPU_create_shader_library(fs_desc);
+    GPUShaderLibrary* fragment_shader = GPU_create_shader_library(t_device, fs_desc);
 
     GPUShaderEntry vertex_shader_entry{
         .library = vertex_shader,
@@ -255,7 +255,7 @@ void create_pipeline()
         .root_signature = root_signature,
         .set_index = 1
     };
-    texture_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
+    texture_set = GPU_create_descriptor_set(descriptor_set_create_info);
 
     GPUDescriptorData texture_set_data;
     texture_set_data.array_count = 1;
@@ -265,7 +265,7 @@ void create_pipeline()
     texture_set->update(&texture_set_data, 1);
 
     descriptor_set_create_info.set_index = 0;
-    buffer_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
+    buffer_set = GPU_create_descriptor_set(descriptor_set_create_info);
 
     GPUDescriptorData buffer_set_data;
     buffer_set_data.array_count = 1;
@@ -277,7 +277,7 @@ void create_pipeline()
     if (!use_static_samplers)
     {
         descriptor_set_create_info.set_index = 2;
-        sampler_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
+        sampler_set = GPU_create_descriptor_set(descriptor_set_create_info);
 
         GPUDescriptorData sampler_set_data;
         sampler_set_data.array_count = 1;
@@ -290,35 +290,35 @@ void create_pipeline()
     GPUFormat backend_format = GPUFormat::e_r8g8b8a8_unorm;
 
     GPUVertexAttribute pos{
-        .semantic_name = "POSITION",
         .array_size = 1,
         .format = GPUFormat::e_r32g32b32_sfloat,
         .slot = 0,
+        .semantic_name = "POSITION",
         .offset = 0,
     };
 
     GPUVertexAttribute tex{
-        .semantic_name = "TEXCOORD",
         .array_size = 1,
         .format = GPUFormat::e_r32g32_sfloat,
         .slot = 0,
+        .semantic_name = "TEXCOORD",
         .offset = 12,
     };
 
     GPUVertexAttribute normal{
-        .semantic_name = "NORMAL",
         .array_size = 1,
         .format = GPUFormat::e_r32g32b32_sfloat,
         .slot = 0,
+        .semantic_name = "NORMAL",
         .offset = 20,
         .rate = GPUVertexInputRate::e_vertex
     };
 
     GPUVertexAttribute tangent{
-        .semantic_name = "TANGENT",
         .array_size = 1,
         .format = GPUFormat::e_r32g32b32_sfloat,
         .slot = 0,
+        .semantic_name = "TANGENT",
         .offset = 32,
     };
 
@@ -332,7 +332,7 @@ void create_pipeline()
         .primitive_topology = GPUPrimitiveTopology::e_triangle_list,
     };
 
-    pipeline = GPU_create_graphics_pipeline(t_device, pipeline_desc);
+    pipeline = GPU_create_graphics_pipeline(pipeline_desc);
 
     GPU_destroy_shader_library(vertex_shader);
     GPU_destroy_shader_library(fragment_shader);
@@ -412,6 +412,7 @@ void draw(SDL_Window* window)
             .name = "triangle",
             .sample_count = GPUSampleCount::e_1,
             .color_attachments = {color_attachment},
+            .color_attachment_count = 1,
             .depth_stencil_attachment = nullptr,
         };
 
@@ -422,7 +423,7 @@ void draw(SDL_Window* window)
             .stride = 44,
             .offset = 0,
         };
-        encoder->bind_vertex_buffers({ binding });
+        encoder->bind_vertex_buffers(&binding, 1);
         binding.buffer = index_buffer;
         binding.stride = 3;
         encoder->bind_index_buffer(binding);

@@ -10,6 +10,7 @@
 #include "vksemaphore.h"
 #include "resources/vktexture.h"
 #include "resources/vktexture_view.h"
+#include "utils/vk_macro.h"
 #include "utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -112,7 +113,7 @@ VKSwapChain::VKSwapChain(GPUDevice const* device, GPUSwapChainCreateInfo const& 
         .oldSwapchain = VK_NULL_HANDLE,
     };
 
-    VK_CHECK_RESULT(vk_device->m_device_table.vkCreateSwapchainKHR(vk_device->m_device, &swap_chain_create_info, &VK_Allocation_Callbacks, &m_swap_chain));
+    VK_CHECK_RESULT(vk_device->m_device_table.vkCreateSwapchainKHR(vk_device->m_device, &swap_chain_create_info, VK_Allocation_Callbacks_Ptr, &m_swap_chain));
 
     Vector<VkImage> swap_chain_images = enumerate_properties(vk_device->m_device_table.vkGetSwapchainImagesKHR, vk_device->m_device, m_swap_chain);
 
@@ -120,9 +121,10 @@ VKSwapChain::VKSwapChain(GPUDevice const* device, GPUSwapChainCreateInfo const& 
     for (uint32_t i = 0; i < swap_chain_images.size(); i++)
     {
         VKTexture* back_texture = PLACEMENT_NEW(VKTexture, sizeof(VKTexture));
+        back_texture->m_image = swap_chain_images[i];
+        back_texture->m_ref_device = device;
         // texture info will be freed automatically in ~VKTexture()
         back_texture->m_info = Allocator<VKTexture::GPUTextureInfo>::allocate(1);
-        back_texture->m_image = swap_chain_images[i];
         back_texture->m_info->is_cube = false;
         back_texture->m_info->array_layers = 1;
         back_texture->m_info->sample_count = GPUSampleCount::e_1; // TODO: ?
@@ -142,9 +144,10 @@ VKSwapChain::VKSwapChain(GPUDevice const* device, GPUSwapChainCreateInfo const& 
             .aspect = GPUTextureViewAspectFlag::e_color,
             .type = GPUTextureType::e_2d,
             .array_layers = 1,
+            .mip_levels = 1
         };
 
-        VKTextureView* back_texture_view = PLACEMENT_NEW(VKTextureView, sizeof(VKTextureView), device, view_info);
+        VKTextureView* back_texture_view = PLACEMENT_NEW(VKTextureView, sizeof(VKTextureView), view_info);
 
         m_back_textures[i] = { back_texture, back_texture_view };
     }
@@ -156,40 +159,41 @@ VKSwapChain::~VKSwapChain()
 {
     VKDevice const* vk_device = static_cast<VKDevice const*>(m_ref_device);
 
-    vk_device->m_device_table.vkDestroySwapchainKHR(vk_device->m_device, m_swap_chain, &VK_Allocation_Callbacks);
+    vk_device->m_device_table.vkDestroySwapchainKHR(vk_device->m_device, m_swap_chain, VK_Allocation_Callbacks_Ptr);
 }
 
-uint32_t VKSwapChain::acquire_next_frame(GPUSemaphore const* semaphore, GPUFence const* fence)
+uint32_t VKSwapChain::acquire_next_frame(GPUSemaphore const* semaphore, GPUFence* fence)
 {
-    VKFence const* vk_fence = static_cast<VKFence const*>(fence);
+    VKFence* vk_fence = static_cast<VKFence*>(fence);
     VKSemaphore const* vk_semaphore = static_cast<VKSemaphore const*>(semaphore);
     VKDevice const* vk_device = static_cast<VKDevice const*>(m_ref_device);
 
-    VkSemaphore single_semaphore = vk_semaphore ? vk_semaphore->m_semaphore : nullptr;
-    VkFence single_fence = vk_fence ? vk_fence->m_fence : nullptr;
+    VkSemaphore signal_semaphore = vk_semaphore ? vk_semaphore->m_semaphore : nullptr;
+    VkFence signal_fence = vk_fence ? vk_fence->m_fence : nullptr;
 
     uint32_t image_index;
     VkResult result = vk_device->m_device_table.vkAcquireNextImageKHR(vk_device->m_device, m_swap_chain,
-        std::numeric_limits<uint64_t>::max(), single_semaphore, single_fence, &image_index);
+        std::numeric_limits<uint64_t>::max(), signal_semaphore, signal_fence, &image_index);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
         return std::numeric_limits<uint32_t>::max();
 
     VK_CHECK_RESULT(result);
 
+    if (vk_fence)
+        vk_fence->m_is_signaled = true;
+
     return image_index;
 }
 
 GPUTexture const* VKSwapChain::fetch_back_texture(uint32_t index) const
 {
-
-    return nullptr;
+    return m_back_textures[index].back_texture;
 }
 
 GPUTextureView const* VKSwapChain::fetch_back_texture_view(uint32_t index) const
 {
-
-    return nullptr;
+    return m_back_textures[index].back_texture_view;
 }
 
 AMAZING_NAMESPACE_END

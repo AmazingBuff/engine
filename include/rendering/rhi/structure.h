@@ -151,13 +151,13 @@ struct GPUDescriptorData
 
 struct GPUVertexAttribute
 {
-    String semantic_name;
     uint32_t array_size;
     GPUFormat format;
-    uint32_t location;  // for vulkan
-    uint32_t slot;      // for d3d12
+    uint32_t slot;          // for d3d12 is slot, while vulkan is binding
+    String semantic_name;   // d3d12 use semantic while vulkan use location
+    uint32_t location;
     uint32_t offset;
-    uint32_t stride;
+    uint32_t size;          // every attribute size
     GPUVertexInputRate rate;
 };
 

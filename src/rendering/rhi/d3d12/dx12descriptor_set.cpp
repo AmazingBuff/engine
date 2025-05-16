@@ -26,10 +26,10 @@ static uint32_t descriptor_count_need(GPUShaderResource const& resource)
 }
 
 
-DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCreateInfo const& info) : m_cbv_srv_uav_handle(0), m_cbv_srv_uav_stride(0), m_sampler_handle(0), m_sampler_stride(0)
+DX12DescriptorSet::DX12DescriptorSet(GPUDescriptorSetCreateInfo const& info) : m_cbv_srv_uav_handle(0), m_cbv_srv_uav_stride(0), m_sampler_handle(0), m_sampler_stride(0)
 {
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12RootSignature const* dx12_root_signature = static_cast<DX12RootSignature const*>(info.root_signature);
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_root_signature->m_ref_device);
 
     DX12DescriptorHeap::D3D12DescriptorHeap* cbv_srv_uav_heap = dx12_device->m_descriptor_heap->m_gpu_cbv_srv_uav_heaps[GPU_Node_Index];
     DX12DescriptorHeap::D3D12DescriptorHeap* sampler_heap = dx12_device->m_descriptor_heap->m_gpu_sampler_heaps[GPU_Node_Index];
@@ -119,7 +119,6 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCr
     // todo: support root descriptors
 
 
-    m_ref_device = device;
     m_ref_root_signature = info.root_signature;
     m_set_index = info.set_index;
 }
@@ -131,8 +130,8 @@ DX12DescriptorSet::~DX12DescriptorSet()
 
 void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_t descriptor_data_count)
 {
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(m_ref_device);
     DX12RootSignature const* dx12_root_signature = static_cast<DX12RootSignature const*>(m_ref_root_signature);
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_root_signature->m_ref_device);
 
     DX12DescriptorHeap::D3D12DescriptorHeap* cbv_srv_uav_heap = dx12_device->m_descriptor_heap->m_gpu_cbv_srv_uav_heaps[GPU_Node_Index];
     DX12DescriptorHeap::D3D12DescriptorHeap* sampler_heap = dx12_device->m_descriptor_heap->m_gpu_sampler_heaps[GPU_Node_Index];
@@ -176,58 +175,58 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
         case GPUResourceTypeFlag::e_sampler:
         {
-            for (uint32_t i = 0; i < data.array_count; i++)
+            for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12Sampler const* dx12_sampler = static_cast<DX12Sampler const*>(data.samplers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, sampler_heap, dx12_sampler->m_handle, m_sampler_handle, i + heap_offset);
+                DX12Sampler const* dx12_sampler = static_cast<DX12Sampler const*>(data.samplers[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, sampler_heap, dx12_sampler->m_handle, m_sampler_handle, j + heap_offset);
             }
         }
         break;
         case GPUResourceTypeFlag::e_texture:
         case GPUResourceTypeFlag::e_texture_cube:
         {
-            for (uint32_t i = 0; i < data.array_count; i++)
+            for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_texture_view->m_srv_uva_handle, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_texture_view->m_srv_uva_handle, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
         break;
         case GPUResourceTypeFlag::e_rw_texture:
         {
-            for (uint32_t i = 0; i < data.array_count; i++)
+            for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_texture_view->m_srv_uva_handle.ptr + dx12_texture_view->m_uav_offset }, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_texture_view->m_srv_uva_handle.ptr + dx12_texture_view->m_uav_offset }, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
         break;
         case GPUResourceTypeFlag::e_uniform_buffer:
         {
-            for (uint32_t i = 0; i < data.array_count; i++)
+            for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_buffer->m_handle, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_buffer->m_handle, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
         break;
         case GPUResourceTypeFlag::e_buffer:
         case GPUResourceTypeFlag::e_buffer_raw:
         {
-            for (uint32_t i = 0; i < data.array_count; i++)
+            for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_srv_offset }, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_srv_offset }, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
         break;
         case GPUResourceTypeFlag::e_rw_buffer:
         case GPUResourceTypeFlag::e_rw_buffer_raw:
         {
-            for (uint32_t i = 0; i < data.array_count; i++)
+            for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[i]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_uav_offset }, m_cbv_srv_uav_handle, i + heap_offset);
+                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_uav_offset }, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
         break;

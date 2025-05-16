@@ -88,9 +88,9 @@ GPURootSignaturePool::GPURootSignatureCharacteristic GPURootSignaturePool::trans
         }
     }
 
-    characteristic.push_constant_count = tables->m_push_constants.size();
+    characteristic.push_constant_count = tables->m_push_constant_count;
     characteristic.push_constant_hash = reinterpret_cast<uint64_t>(this);
-    for (size_t i = 0; i < tables->m_push_constants.size(); i++)
+    for (size_t i = 0; i < tables->m_push_constant_count; i++)
     {
         GPUShaderResource const& resource = tables->m_push_constants[i];
         GPUPushConstantInfo push_constant{

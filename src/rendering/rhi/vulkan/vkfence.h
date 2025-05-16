@@ -18,6 +18,7 @@ public:
     void wait() override;
 private:
     VkFence m_fence;
+    bool m_is_signaled;
 
     friend class VKSwapChain;
     friend class VKQueue;

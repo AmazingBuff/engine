@@ -53,6 +53,9 @@ IMemoryPool::~IMemoryPool()
 
 void* IMemoryPool::allocate(size_t size, size_t alignment, void* data)
 {
+    if (size == 0)
+        return nullptr;
+
     size_t align_size = align_to(size, alignment);
     if (m_current_info)
     {

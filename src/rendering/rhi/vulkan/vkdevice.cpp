@@ -8,6 +8,8 @@
 #include "vkqueue.h"
 #include "vkfence.h"
 #include "internal/vkdescriptor_pool.h"
+#include "internal/vkpass_table.h"
+#include "utils/vk_macro.h"
 #include "utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -19,27 +21,35 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
     VKInstance const* vk_instance = static_cast<VKInstance const*>(vk_adapter->m_ref_instance);
 
     // queue
-    Vector<VkDeviceQueueCreateInfo> queue_create_infos;
-    queue_create_infos.resize(info.queue_groups.size());
-    for (size_t i = 0; i < info.queue_groups.size(); i++)
+    Vector<VkDeviceQueueCreateInfo> queue_create_infos(info.queue_groups.size());
+    uint32_t queue_index = 0;
+    for (GPUQueueGroup const& queue_group : info.queue_groups)
     {
-        const GPUQueueGroup& queue_group = info.queue_groups[i];
-        queue_create_infos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queue_create_infos[i].queueCount = queue_group.queue_count;
-        queue_create_infos[i].queueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(queue_group.queue_type)];
-        queue_create_infos[i].pQueuePriorities = VK_Queue_Priorities;
+        uint32_t queue_family_index = vk_adapter->m_queue_family_indices[to_underlying(queue_group.queue_type)];
+        if (queue_family_index != std::numeric_limits<uint32_t>::max())
+        {
+            queue_create_infos[queue_index].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queue_create_infos[queue_index].queueCount = queue_group.queue_count;
+            queue_create_infos[queue_index].queueFamilyIndex = queue_family_index;
+            queue_create_infos[queue_index].pQueuePriorities = VK_Queue_Priorities;
+            queue_index++;
+        }
+        else
+            RENDERING_LOG_ERROR("not satisfied queue! queue type is {}", to_underlying(queue_group.queue_type));
     }
 
     VkDeviceCreateInfo device_create_info{
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size()),
+        .queueCreateInfoCount = queue_index,
         .pQueueCreateInfos = queue_create_infos.data(),
+        .enabledLayerCount = static_cast<uint32_t>(vk_adapter->m_device_layers.size()),
+        .ppEnabledLayerNames = vk_adapter->m_device_layers.data(),
         .enabledExtensionCount = static_cast<uint32_t>(vk_adapter->m_device_extensions.size()),
         .ppEnabledExtensionNames = vk_adapter->m_device_extensions.data(),
         .pEnabledFeatures = nullptr,
     };
 
-    VK_CHECK_RESULT(vkCreateDevice(vk_adapter->m_physical_device, &device_create_info, &VK_Allocation_Callbacks, &m_device));
+    VK_CHECK_RESULT(vkCreateDevice(vk_adapter->m_physical_device, &device_create_info, VK_Allocation_Callbacks_Ptr, &m_device));
 
     // for signal device
     volkLoadDeviceTable(&m_device_table, m_device);
@@ -48,16 +58,20 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
     for (GPUQueueGroup const& queue_group : info.queue_groups)
     {
         size_t type = to_underlying(queue_group.queue_type);
-        m_command_queues[type].resize(queue_group.queue_count);
-        for (uint32_t j = 0; j < queue_group.queue_count; j++)
+        uint32_t queue_family_index = vk_adapter->m_queue_family_indices[type];
+        if (queue_family_index != std::numeric_limits<uint32_t>::max())
         {
-            VKQueue* queue = PLACEMENT_NEW(VKQueue, sizeof(VKQueue));
-            queue->m_type = queue_group.queue_type;
+            m_command_queues[type].resize(queue_group.queue_count);
+            for (uint32_t j = 0; j < queue_group.queue_count; j++)
+            {
+                VKQueue* queue = PLACEMENT_NEW(VKQueue, sizeof(VKQueue));
+                queue->m_type = queue_group.queue_type;
 
-            m_device_table.vkGetDeviceQueue(m_device, vk_adapter->m_queue_family_indices[type], j, &queue->m_queue);
+                m_device_table.vkGetDeviceQueue(m_device, vk_adapter->m_queue_family_indices[type], j, &queue->m_queue);
 
-            queue->m_ref_device = this;
-            m_command_queues[type][j] = queue;
+                queue->m_ref_device = this;
+                m_command_queues[type][j] = queue;
+            }
         }
     }
 
@@ -70,7 +84,7 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
             .initialDataSize = 0,
             .pInitialData = nullptr
         };
-        VK_CHECK_RESULT(m_device_table.vkCreatePipelineCache(m_device, &pipeline_cache_create_info, &VK_Allocation_Callbacks, &m_pipeline_cache));
+        VK_CHECK_RESULT(m_device_table.vkCreatePipelineCache(m_device, &pipeline_cache_create_info, VK_Allocation_Callbacks_Ptr, &m_pipeline_cache));
     }
 
     // vma
@@ -78,7 +92,7 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
         .flags = VMA_ALLOCATOR_CREATE_EXTERNALLY_SYNCHRONIZED_BIT,
         .physicalDevice = vk_adapter->m_physical_device,
         .device = m_device,
-        .pAllocationCallbacks = &VK_Allocation_Callbacks,
+        .pAllocationCallbacks = VK_Allocation_Callbacks_Ptr,
         .instance = vk_instance->m_instance,
         .vulkanApiVersion = VK_API_VERSION_1_0,
     };
@@ -89,17 +103,19 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
     allocation_info.pVulkanFunctions = &vma_functions;
     VK_CHECK_RESULT(vmaCreateAllocator(&allocation_info, &m_allocator));
 
-    m_descriptor_pool = PLACEMENT_NEW(VKDescriptorPool, sizeof(VKDescriptorPool), m_device, &m_device_table);
+    m_descriptor_pool = PLACEMENT_NEW(VKDescriptorPool, sizeof(VKDescriptorPool), this);
+    m_pass_table = PLACEMENT_NEW(VKPassTable, sizeof(VKPassTable));
 
     m_ref_adapter = adapter;
 }
 
 VKDevice::~VKDevice()
 {
+    PLACEMENT_DELETE(VKPassTable, m_pass_table);
     PLACEMENT_DELETE(VKDescriptorPool, m_descriptor_pool);
     vmaDestroyAllocator(m_allocator);
     if (m_pipeline_cache)
-        m_device_table.vkDestroyPipelineCache(m_device, m_pipeline_cache, &VK_Allocation_Callbacks);
+        m_device_table.vkDestroyPipelineCache(m_device, m_pipeline_cache, VK_Allocation_Callbacks_Ptr);
 
     for (uint8_t i = 0; i < GPU_Queue_Type_Count; i++)
     {
@@ -110,7 +126,7 @@ VKDevice::~VKDevice()
         }
     }
 
-    vkDestroyDevice(m_device, &VK_Allocation_Callbacks);
+    vkDestroyDevice(m_device, VK_Allocation_Callbacks_Ptr);
 }
 
 GPUQueue const* VKDevice::fetch_queue(GPUQueueType type, uint32_t index) const

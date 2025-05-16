@@ -6,11 +6,11 @@
 #include "vkdevice.h"
 #include "vkadapter.h"
 #include "vkqueue.h"
+#include "utils/vk_macro.h"
 #include "utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
-
-VKCommandPool::VKCommandPool(GPUQueue const* queue, GPUCommandPoolCreateInfo const& info) : m_pool(nullptr)
+    VKCommandPool::VKCommandPool(GPUQueue const* queue, GPUCommandPoolCreateInfo const& info) : m_pool(nullptr)
 {
     VKQueue const* vk_queue = static_cast<VKQueue const*>(queue);
     VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
@@ -23,7 +23,7 @@ VKCommandPool::VKCommandPool(GPUQueue const* queue, GPUCommandPoolCreateInfo con
         .queueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)]
     };
 
-    VK_CHECK_RESULT(vk_device->m_device_table.vkCreateCommandPool(vk_device->m_device, &create_info, &VK_Allocation_Callbacks, &m_pool));
+    VK_CHECK_RESULT(vk_device->m_device_table.vkCreateCommandPool(vk_device->m_device, &create_info, VK_Allocation_Callbacks_Ptr, &m_pool));
     if (!info.name.empty())
         vk_device->set_debug_name(reinterpret_cast<size_t>(m_pool), VK_OBJECT_TYPE_COMMAND_POOL, info.name);
 
@@ -33,7 +33,7 @@ VKCommandPool::VKCommandPool(GPUQueue const* queue, GPUCommandPoolCreateInfo con
 VKCommandPool::~VKCommandPool()
 {
     VKDevice const* vk_device = static_cast<VKDevice const*>(m_ref_device);
-    vk_device->m_device_table.vkDestroyCommandPool(vk_device->m_device, m_pool, &VK_Allocation_Callbacks);
+    vk_device->m_device_table.vkDestroyCommandPool(vk_device->m_device, m_pool, VK_Allocation_Callbacks_Ptr);
 }
 
 void VKCommandPool::reset()

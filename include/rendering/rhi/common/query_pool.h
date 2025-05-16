@@ -12,9 +12,11 @@ AMAZING_NAMESPACE_BEGIN
 class GPUQueryPool
 {
 public:
-    GPUQueryPool() = default;
+    GPUQueryPool() : m_ref_device(nullptr), m_query_type(GPUQueryType::e_timestamp) {}
     virtual ~GPUQueryPool() = default;
-
+protected:
+    GPUDevice const* m_ref_device;
+    GPUQueryType m_query_type;
 };
 
 AMAZING_NAMESPACE_END

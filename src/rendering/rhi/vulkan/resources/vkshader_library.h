@@ -14,8 +14,12 @@ AMAZING_NAMESPACE_BEGIN
 class VKShaderLibrary final : public GPUShaderLibrary
 {
 public:
-    explicit VKShaderLibrary(GPUShaderLibraryCreateInfo const& info);
+    VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreateInfo const& info);
     ~VKShaderLibrary() override;
+private:
+    VkShaderModule m_shader_module;
+
+    friend class VKGraphicsPipeline;
 };
 
 

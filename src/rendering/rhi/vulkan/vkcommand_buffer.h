@@ -29,6 +29,7 @@ private:
     VkCommandBuffer m_command_buffer;
 
     friend class VKQueue;
+    friend class VKGraphicsPassEncoder;
 };
 
 AMAZING_NAMESPACE_END

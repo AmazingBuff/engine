@@ -56,7 +56,7 @@ void create_pipeline()
         .base_mip_level = 0,
         .mip_levels = 1,
     };
-    texture_view = GPU_create_texture_view(t_device, texture_view_create_info);
+    texture_view = GPU_create_texture_view(texture_view_create_info);
 
     GPUBufferCreateInfo buffer_create_info{
         .size = image.data.size(),
@@ -129,7 +129,7 @@ void create_pipeline()
         .root_signature = root_signature,
         .set_index = 0
     };
-    texture_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
+    texture_set = GPU_create_descriptor_set(descriptor_set_create_info);
 
     GPUDescriptorData texture_set_data;
     texture_set_data.array_count = 1;
@@ -141,7 +141,7 @@ void create_pipeline()
     if (!use_static_samplers)
     {
         descriptor_set_create_info.set_index = 1;
-        sampler_set = GPU_create_descriptor_set(t_device, descriptor_set_create_info);
+        sampler_set = GPU_create_descriptor_set(descriptor_set_create_info);
 
         GPUDescriptorData sampler_set_data;
         sampler_set_data.array_count = 1;
@@ -162,7 +162,7 @@ void create_pipeline()
         .primitive_topology = GPUPrimitiveTopology::e_triangle_list,
     };
 
-    pipeline = GPU_create_graphics_pipeline(t_device, pipeline_desc);
+    pipeline = GPU_create_graphics_pipeline(pipeline_desc);
 
     GPU_destroy_shader_library(vertex_shader);
     GPU_destroy_shader_library(fragment_shader);

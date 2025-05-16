@@ -67,9 +67,10 @@ DX12SwapChain::DX12SwapChain(GPUDevice const* device, GPUSwapChainCreateInfo con
     for (uint32_t i = 0; i < info.frame_count; i++)
     {
         DX12Texture* back_texture = PLACEMENT_NEW(DX12Texture, sizeof(DX12Texture));
+        back_texture->m_resource = buffers[i];
+        back_texture->m_ref_device = device;
         // texture info will be freed automatically in ~DX12Texture
         back_texture->m_info = Allocator<DX12Texture::GPUTextureInfo>::allocate(1);
-        back_texture->m_resource = buffers[i];
         back_texture->m_info->is_cube = false;
         back_texture->m_info->array_layers = 1;
         back_texture->m_info->sample_count = GPUSampleCount::e_1; // TODO: ?
@@ -91,7 +92,7 @@ DX12SwapChain::DX12SwapChain(GPUDevice const* device, GPUSwapChainCreateInfo con
             .array_layers = 1,
         };
 
-        DX12TextureView* back_texture_view = PLACEMENT_NEW(DX12TextureView, sizeof(DX12TextureView), device, view_info);
+        DX12TextureView* back_texture_view = PLACEMENT_NEW(DX12TextureView, sizeof(DX12TextureView), view_info);
 
         m_back_textures[i] = { back_texture, back_texture_view };
     }
@@ -106,13 +107,13 @@ DX12SwapChain::~DX12SwapChain()
         DX12Texture* back_texture = static_cast<DX12Texture*>(m_back_textures[i].back_texture);
         DX12TextureView* back_texture_view = static_cast<DX12TextureView*>(m_back_textures[i].back_texture_view);
         DX_FREE(back_texture->m_resource);
-        PLACEMENT_DELETE(DX12Texture, back_texture);
         PLACEMENT_DELETE(DX12TextureView, back_texture_view);
+        PLACEMENT_DELETE(DX12Texture, back_texture);
     }
     DX_FREE(m_swap_chain);
 }
 
-uint32_t DX12SwapChain::acquire_next_frame(GPUSemaphore const* semaphore, GPUFence const* fence)
+uint32_t DX12SwapChain::acquire_next_frame(GPUSemaphore const* semaphore, GPUFence* fence)
 {
     return m_swap_chain->GetCurrentBackBufferIndex();
 }

@@ -55,12 +55,6 @@ struct HashNode
 {
     ElementFlag flag;
     Tp val;
-
-    ~HashNode()
-    {
-        if constexpr (std::is_destructible_v<Tp>)
-            val.~Tp();
-    }
 };
 
 
@@ -70,6 +64,7 @@ class Hash
     using key_type = typename Trait::key_type;
     using value_type = typename Trait::value_type;
     using key_hash = typename Trait::key_hash;
+    using key_equal = typename Trait::key_equal;
     using value_hash = typename Trait::value_hash;
     using node_type = typename Trait::node_type;
     using allocator = typename Trait::allocator;
@@ -150,6 +145,28 @@ public:
         deallocate(m_buckets);
         m_bucket_count = 0;
         m_size = 0;
+    }
+
+    void insert(value_type&& value)
+    {
+        size_t probe_group = m_probe(value_hash()(value), m_bucket_count);
+        size_t i = 0;
+        for (; i < max_bucket_size; i++)
+        {
+            if (m_buckets[probe_group * max_bucket_size + i].flag == ElementFlag::e_invalid)
+            {
+                m_buckets[probe_group * max_bucket_size + i].flag = ElementFlag::e_valid;
+                m_buckets[probe_group * max_bucket_size + i].val = value;
+                m_size++;
+                break;
+            }
+        }
+
+        if (i == max_bucket_size)
+        {
+            rehash(m_bucket_count * 2);
+            insert(value);
+        }
     }
 
     void insert(const value_type& value)
@@ -291,11 +308,11 @@ protected:
         size_t probe_group = m_probe(key_hash()(key), m_bucket_count);
         for (size_t i = 0; i < max_bucket_size; i++)
         {
-            if (Trait::key_func(m_buckets[probe_group * max_bucket_size + i].val) == key)
+            if (key_equal()(Trait::key_func(m_buckets[probe_group * max_bucket_size + i].val), key))
                 return m_buckets + probe_group * max_bucket_size + i;
         }
 
-        return nullptr;
+        return m_buckets + m_bucket_count * max_bucket_size + 1;
     }
 
 private:

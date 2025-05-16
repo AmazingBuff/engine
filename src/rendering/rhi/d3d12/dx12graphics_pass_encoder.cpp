@@ -18,10 +18,10 @@ DX12GraphicsPassEncoder::~DX12GraphicsPassEncoder()
 
 }
 
-void DX12GraphicsPassEncoder::bind_vertex_buffers(Vector<GPUBufferBinding> const& bindings)
+void DX12GraphicsPassEncoder::bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t binding_count)
 {
-    Vector<D3D12_VERTEX_BUFFER_VIEW> vertex_buffer_views(bindings.size());
-    for (size_t i = 0; i < bindings.size(); i++)
+    Vector<D3D12_VERTEX_BUFFER_VIEW> vertex_buffer_views(binding_count);
+    for (size_t i = 0; i < binding_count; i++)
     {
         GPUBufferBinding const& binding = bindings[i];
         DX12Buffer const* buffer = static_cast<DX12Buffer const*>(binding.buffer);
@@ -31,7 +31,7 @@ void DX12GraphicsPassEncoder::bind_vertex_buffers(Vector<GPUBufferBinding> const
         vertex_buffer_views[i].SizeInBytes = buffer->m_info->size - binding.offset;
     }
 
-    m_command_buffer->m_command_list->IASetVertexBuffers(0, bindings.size(), vertex_buffer_views.data());
+    m_command_buffer->m_command_list->IASetVertexBuffers(0, binding_count, vertex_buffer_views.data());
 }
 
 void DX12GraphicsPassEncoder::bind_index_buffer(GPUBufferBinding const& binding)
@@ -62,8 +62,9 @@ void DX12GraphicsPassEncoder::bind_descriptor_set(GPUDescriptorSet const* set)
 void DX12GraphicsPassEncoder::bind_pipeline(GPUGraphicsPipeline const* pipeline)
 {
     DX12GraphicsPipeline const* dx12_pipeline = static_cast<DX12GraphicsPipeline const*>(pipeline);
+    DX12RootSignature const* dx12_root_signature = static_cast<DX12RootSignature const*>(dx12_pipeline->m_ref_root_signature);
 
-    m_command_buffer->reset_root_signature(GPUPipelineType::e_graphics, dx12_pipeline->m_root_signature);
+    m_command_buffer->reset_root_signature(GPUPipelineType::e_graphics, dx12_root_signature->m_root_signature);
     m_command_buffer->m_command_list->IASetPrimitiveTopology(dx12_pipeline->m_primitive_topology);
     m_command_buffer->m_command_list->SetPipelineState(dx12_pipeline->m_pipeline_state);
 }

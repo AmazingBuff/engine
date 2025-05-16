@@ -31,9 +31,9 @@ void create_pipeline()
         .reflection = true,
     };
 
-    GPUShaderLibrary* vertex_shader = GPU_create_shader_library(vs_desc);
+    GPUShaderLibrary* vertex_shader = GPU_create_shader_library(t_device, vs_desc);
 
-    GPUShaderLibrary* fragment_shader = GPU_create_shader_library(fs_desc);
+    GPUShaderLibrary* fragment_shader = GPU_create_shader_library(t_device, fs_desc);
 
     GPUShaderEntry vertex_shader_entry{
         .library = vertex_shader,
@@ -64,7 +64,7 @@ void create_pipeline()
         .primitive_topology = GPUPrimitiveTopology::e_triangle_list,
     };
 
-    pipeline = GPU_create_graphics_pipeline(t_device, pipeline_desc);
+    pipeline = GPU_create_graphics_pipeline(pipeline_desc);
 
     GPU_destroy_shader_library(vertex_shader);
     GPU_destroy_shader_library(fragment_shader);
@@ -79,8 +79,9 @@ void destroy_pipeline()
 void draw(SDL_Window* window)
 {
     HWND hwnd = static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
+    HINSTANCE hinstance = static_cast<HINSTANCE>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_INSTANCE_POINTER, nullptr));
 
-    create_api_object(hwnd, GPUBackend::e_d3d12);
+    create_api_object(hwnd, hinstance, GPUBackend::e_vulkan);
     create_pipeline();
 
     bool quit = false;
@@ -128,6 +129,7 @@ void draw(SDL_Window* window)
             .name = "triangle",
             .sample_count = GPUSampleCount::e_1,
             .color_attachments = {color_attachment},
+            .color_attachment_count = 1,
             .depth_stencil_attachment = nullptr,
         };
 

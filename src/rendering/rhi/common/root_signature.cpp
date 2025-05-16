@@ -101,6 +101,13 @@ static void collect_resource(Vector<GPUShaderResource> const& input_resources, G
     }
 }
 
+GPURootSignature::~GPURootSignature()
+{
+    if (m_push_constants)
+        Allocator<GPUShaderResource>::deallocate(m_push_constants);
+    m_push_constants = nullptr;
+    m_push_constant_count = 0;
+}
 
 void GPURootSignature::initialize(GPURootSignatureCreateInfo const& info)
 {
@@ -154,7 +161,8 @@ void GPURootSignature::initialize(GPURootSignatureCreateInfo const& info)
     }
 
     // push constants
-    m_push_constants.resize(push_constant_resources.size());
+    m_push_constant_count = push_constant_resources.size();
+    m_push_constants = Allocator<GPUShaderResource>::allocate(m_push_constant_count);
     index = 0;
     for (auto& push_constant_resource : push_constant_resources)
     {

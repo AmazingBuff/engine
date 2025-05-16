@@ -13,7 +13,7 @@ AMAZING_NAMESPACE_BEGIN
 class VKSurface final
 {
 public:
-    VKSurface(GPUInstance const* instance, void* handle);
+    VKSurface(GPUInstance const* instance, void* handle, void* hinstance);
     ~VKSurface();
 private:
     VkSurfaceKHR m_surface;

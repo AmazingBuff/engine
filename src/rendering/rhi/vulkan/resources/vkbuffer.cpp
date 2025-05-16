@@ -5,6 +5,7 @@
 #include "vkbuffer.h"
 #include "rendering/rhi/vulkan/vkdevice.h"
 #include "rendering/rhi/vulkan/vkadapter.h"
+#include "rendering/rhi/vulkan/utils/vk_macro.h"
 #include "rendering/rhi/vulkan/utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -74,14 +75,14 @@ VKBuffer::VKBuffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
         if (buffer_create_info.usage & VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)
         {
             if (format_properties.bufferFeatures & VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT)
-                VK_CHECK_RESULT(vk_device->m_device_table.vkCreateBufferView(vk_device->m_device, &buffer_view_create_info, &VK_Allocation_Callbacks, &m_uniform_texel_view))
+                VK_CHECK_RESULT(vk_device->m_device_table.vkCreateBufferView(vk_device->m_device, &buffer_view_create_info, VK_Allocation_Callbacks_Ptr, &m_uniform_texel_view))
             else
                 RENDERING_LOG_WARNING("unable to create uniform texel buffer view for format {}!", to_underlying(info.format));
         }
         if (buffer_create_info.usage & VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT)
         {
             if (format_properties.bufferFeatures & VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT)
-                VK_CHECK_RESULT(vk_device->m_device_table.vkCreateBufferView(vk_device->m_device, &buffer_view_create_info, &VK_Allocation_Callbacks, &m_storage_texel_view))
+                VK_CHECK_RESULT(vk_device->m_device_table.vkCreateBufferView(vk_device->m_device, &buffer_view_create_info, VK_Allocation_Callbacks_Ptr, &m_storage_texel_view))
             else
                 RENDERING_LOG_WARNING("unable to create uniform storage buffer view for format {}!", to_underlying(info.format));
         }
@@ -107,12 +108,12 @@ VKBuffer::~VKBuffer()
 
     if (m_uniform_texel_view)
     {
-        vk_device->m_device_table.vkDestroyBufferView(vk_device->m_device, m_uniform_texel_view, &VK_Allocation_Callbacks);
+        vk_device->m_device_table.vkDestroyBufferView(vk_device->m_device, m_uniform_texel_view, VK_Allocation_Callbacks_Ptr);
         m_uniform_texel_view = VK_NULL_HANDLE;
     }
     if (m_storage_texel_view)
     {
-        vk_device->m_device_table.vkDestroyBufferView(vk_device->m_device, m_storage_texel_view, &VK_Allocation_Callbacks);
+        vk_device->m_device_table.vkDestroyBufferView(vk_device->m_device, m_storage_texel_view, VK_Allocation_Callbacks_Ptr);
         m_storage_texel_view = VK_NULL_HANDLE;
     }
     vmaDestroyBuffer(vk_device->m_allocator, m_buffer, m_allocation);

@@ -19,19 +19,16 @@ struct RBTreeNode
         Red,
         Black
     } color;
-
-    ~RBTreeNode()
-    {
-        if constexpr (std::is_destructible_v<Tp>)
-            val.~Tp();
-    }
 };
 
-template <typename Tp>
-RBTreeNode<Tp>* left_rotate(RBTreeNode<Tp>* node)
+template <typename BinaryTreeNode>
+BinaryTreeNode* left_rotate(BinaryTreeNode* node)
 {
-    RBTreeNode<Tp>* right = node->right;
+    BinaryTreeNode* right = node->right;
     node->right = right->left;
+
+    if (right->left)
+        right->left->parent = node;
 
     right->left = node;
     right->parent = node->parent;
@@ -49,11 +46,14 @@ RBTreeNode<Tp>* left_rotate(RBTreeNode<Tp>* node)
     return right;
 }
 
-template <typename Tp>
-RBTreeNode<Tp>* right_rotate(RBTreeNode<Tp>* node)
+template <typename BinaryTreeNode>
+BinaryTreeNode* right_rotate(BinaryTreeNode* node)
 {
-    RBTreeNode<Tp>* left = node->left;
+    BinaryTreeNode* left = node->left;
     node->left = left->right;
+
+    if (left->right)
+        left->right->parent = node;
 
     left->right = node;
     left->parent = node->parent;
@@ -71,14 +71,14 @@ RBTreeNode<Tp>* right_rotate(RBTreeNode<Tp>* node)
     return left;
 }
 
-template <typename Tp>
-void swap(RBTreeNode<Tp>* s1, RBTreeNode<Tp>* s2)
+template <typename BinaryTreeNode>
+void swap(BinaryTreeNode* s1, BinaryTreeNode* s2)
 {
     if (s1 == s2)
         return;
 
-    RBTreeNode<Tp>* s1_parent = s1->parent;
-    RBTreeNode<Tp>* s2_parent = s2->parent;
+    BinaryTreeNode* s1_parent = s1->parent;
+    BinaryTreeNode* s2_parent = s2->parent;
 
     if (s1_parent)
     {
@@ -109,11 +109,11 @@ void swap(RBTreeNode<Tp>* s1, RBTreeNode<Tp>* s2)
     if (s2->right)
         s2->right->parent = s1;
 
-    RBTreeNode<Tp>* left = s1->left;
+    BinaryTreeNode* left = s1->left;
     s1->left = s2->left;
     s2->left = left;
 
-    RBTreeNode<Tp>* right = s1->right;
+    BinaryTreeNode* right = s1->right;
     s1->right = s2->right;
     s2->right = right;
 }
@@ -295,15 +295,17 @@ public:
         m_size++;
     }
 
-    void erase(const key_type& key)
+    bool erase(const key_type& key)
     {
         node_type* node = find_node(key);
 
         if (node == nullptr)
-            return;
+            return false;
 
         erase_adjustment(node);
         m_size--;
+
+        return true;
     }
 
     void erase_range(const key_type& key)
@@ -429,6 +431,116 @@ private:
         node = nullptr;
     }
 
+    // node is parent
+    void ll(node_type* node)
+    {
+        node_type* root = right_rotate(node);
+        root->color = node->color;
+        root->left->color = node_type::Color::Black;
+        root->right->color = node_type::Color::Black;
+    }
+
+    void lr(node_type* node)
+    {
+        node_type* brother = node->left;
+        left_rotate(brother);
+        node_type* root = right_rotate(node);
+        root->color = node->color;
+        root->left->color = node_type::Color::Black;
+        root->right->color = node_type::Color::Black;
+    }
+
+    void rl(node_type* node)
+    {
+        node_type* brother = node->right;
+        right_rotate(brother);
+        node_type* root = left_rotate(node);
+        root->color = node->color;
+        root->left->color = node_type::Color::Black;
+        root->right->color = node_type::Color::Black;
+    }
+
+    void rr(node_type* node)
+    {
+        node_type* root = left_rotate(node);
+        root->color = node->color;
+        root->left->color = node_type::Color::Black;
+        root->right->color = node_type::Color::Black;
+    }
+
+    // double black, node is black, and no child
+    void double_black_adjustment(node_type* node)
+    {
+        if (node->parent == nullptr)
+            return;
+
+        node_type* parent = node->parent;
+        node_type* brother = nullptr;
+        bool left_pos = false;
+        if (node == parent->left)
+        {
+            left_pos = true;
+            brother = parent->right;
+        }
+        else
+        {
+            left_pos = false;
+            brother = parent->left;
+        }
+
+        if (brother->color == node_type::Color::Black)
+        {
+            if (brother->left && brother->left->color == node_type::Color::Red &&
+                brother->right && brother->right->color == node_type::Color::Red)
+            {
+                if (left_pos)
+                    rr(parent);
+                else
+                    ll(parent);
+            }
+            else if (brother->left && brother->left->color == node_type::Color::Red)
+            {
+                if (left_pos)
+                    rl(parent);
+                else
+                    ll(parent);
+            }
+            else if (brother->right && brother->right->color == node_type::Color::Red)
+            {
+                if (left_pos)
+                    rr(parent);
+                else
+                    lr(parent);
+            }
+            else
+            {
+                // no red child
+                brother->color = node_type::Color::Red;
+                if (parent->color == node_type::Color::Red)
+                    parent->color = node_type::Color::Black;
+                else
+                    double_black_adjustment(parent);
+            }
+        }
+        else
+        {
+            brother->color = node_type::Color::Black;
+            parent->color = node_type::Color::Red;
+            if (left_pos)
+            {
+                // brother is right
+                left_rotate(parent);
+                double_black_adjustment(node);
+            }
+            else
+            {
+                // brother is left
+                right_rotate(parent);
+                double_black_adjustment(node);
+            }
+        }
+    }
+
     // node has been found
     void erase_adjustment(node_type* node)
     {
@@ -440,6 +552,9 @@ private:
                 left_most = left_most->left;
 
             swap(node, left_most);
+            Amazing::swap(node->color, left_most->color);
+            if (node == m_root)
+                m_root = left_most;
             erase_adjustment(node);
         }
         else if (node->left != nullptr || node->right != nullptr)
@@ -465,131 +580,38 @@ private:
         }
         else
         {
-            // no child
-            if (node == m_root)
+            if (node->color == node_type::Color::Red)
             {
+                node_type* parent = node->parent;
+                if (node == parent->left)
+                    parent->left = nullptr;
+                else
+                    parent->right = nullptr;
+
                 erase_directly(node);
-                m_root = nullptr;
             }
             else
             {
-                node_type* parent = node->parent;
-                bool left_pos = false;
-                if (node == parent->left)
-                    left_pos = true;
+                // if node is black, it must have a brother exclude root
+                if (node == m_root)
+                    m_root = nullptr;
                 else
-                    left_pos = false;
-
-                if (node->color == node_type::Color::Red)
                 {
-                    erase_directly(node);
+                    double_black_adjustment(node);
+                    node_type* parent = node->parent;
 
-                    if (left_pos)
+                    if (parent->left == node)
                         parent->left = nullptr;
                     else
                         parent->right = nullptr;
+
+                    while (parent->parent != nullptr)
+                        parent = parent->parent;
+
+                    m_root = parent;
                 }
-                else
-                {
-                    // if node is black, it must have a brother exclude root
-                    erase_directly(node);
 
-                    node_type* brother = nullptr;
-                    if (left_pos)
-                        brother = parent->right;
-                    else
-                        brother = parent->left;
-
-                    if (brother->left != nullptr && brother->right != nullptr)
-                    {
-                        if (brother->color == node_type::Color::Black)
-                        {
-                            // both children of brother must be red
-                            brother->color = parent->color;
-                            parent->color = node_type::Color::Black;
-                            if (left_pos)
-                            {
-                                // brother is right
-                                brother->right->color = node_type::Color::Black;
-                                left_rotate(parent);
-                            }
-                            else
-                            {
-                                // brother is left
-                                brother->left->color = node_type::Color::Black;
-                                right_rotate(parent);
-                            }
-                        }
-                        else
-                        {
-                            // both children of brother must be black, parent must be black
-                            if (left_pos)
-                            {
-                                // brother is right
-                                brother->left->color = node_type::Color::Red;
-                                left_rotate(parent);
-                            }
-                            else
-                            {
-                                // brother is left
-                                brother->right->color = node_type::Color::Red;
-                                right_rotate(parent);
-                            }
-                        }
-                    }
-                    else if (brother->left != nullptr)
-                    {
-                        if (left_pos)
-                        {
-                            // brother is right, while the child of brother is left
-                            brother->color = node_type::Color::Red;
-                            brother->left->color = node_type::Color::Black;
-                            brother = right_rotate(brother);
-
-                            brother->color = parent->color;
-                            parent->color = node_type::Color::Black;
-                            brother->right->color = node_type::Color::Black;
-                            left_rotate(parent);
-                        }
-                        else
-                        {
-                            // both brother and the child of brother are left
-                            brother->color = parent->color;
-                            parent->color = node_type::Color::Black;
-                            brother->left->color = node_type::Color::Black;
-                            right_rotate(parent);
-                        }
-                    }
-                    else if (brother->right != nullptr)
-                    {
-                        if (left_pos)
-                        {
-                            // both brother and the child of brother are right
-                            brother->color = parent->color;
-                            parent->color = node_type::Color::Black;
-                            brother->right->color = node_type::Color::Black;
-                            left_rotate(parent);
-                        }
-                        else
-                        {
-                            // brother is left, while the child of brother is right
-                            brother->color = node_type::Color::Red;
-                            brother->right->color = node_type::Color::Black;
-                            brother = left_rotate(brother);
-
-                            brother->color = parent->color;
-                            parent->color = node_type::Color::Black;
-                            brother->left->color = node_type::Color::Black;
-                            left_rotate(parent);
-                        }
-                    }
-                    else
-                    {
-                        // brother has no child, so the color of it must be black
-                        brother->color = node_type::Color::Red;
-                        parent->color = node_type::Color::Black;
-                    }
-                }
+                erase_directly(node);
             }
         }
     }

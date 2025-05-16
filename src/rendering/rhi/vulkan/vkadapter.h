@@ -37,6 +37,7 @@ private:
     friend class VKDevice;
     friend class VKCommandPool;
     friend class VKSwapChain;
+    friend class VKCommandBuffer;
 
 
     friend class VKBuffer;

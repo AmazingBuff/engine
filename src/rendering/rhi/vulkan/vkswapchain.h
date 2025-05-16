@@ -15,7 +15,7 @@ public:
     VKSwapChain(GPUDevice const* device, GPUSwapChainCreateInfo const& info);
     ~VKSwapChain() override;
 
-    uint32_t acquire_next_frame(GPUSemaphore const* semaphore, GPUFence const* fence) override;
+    uint32_t acquire_next_frame(GPUSemaphore const* semaphore, GPUFence* fence) override;
     GPUTexture const* fetch_back_texture(uint32_t index) const override;
     GPUTextureView const* fetch_back_texture_view(uint32_t index) const override;
 

@@ -10,10 +10,10 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateInfo const& info) : m_rtv_dsv_handle{}, m_srv_uva_handle{}, m_uav_offset(0)
+DX12TextureView::DX12TextureView(GPUTextureViewCreateInfo const& info) : m_rtv_dsv_handle{}, m_srv_uva_handle{}, m_uav_offset(0)
 {
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
     DX12Texture* dx12_texture = static_cast<DX12Texture*>(info.texture);
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_texture->m_ref_device);
 
     const GPUTextureViewUsage usage = info.usage;
     uint32_t handle_count = ((usage & GPUTextureViewUsageFlag::e_srv) ? 1 : 0) + ((usage & GPUTextureViewUsageFlag::e_uav) ? 1 : 0);
@@ -291,14 +291,15 @@ DX12TextureView::DX12TextureView(GPUDevice const* device, GPUTextureViewCreateIn
         }
     }
 
-    m_ref_device = device;
+    m_ref_texture = dx12_texture;
     m_usage = info.usage;
     m_format = info.format;
 }
 
 DX12TextureView::~DX12TextureView()
 {
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(m_ref_device);
+    DX12Texture const* dx12_texture = static_cast<DX12Texture const*>(m_ref_texture);
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_texture->m_ref_device);
 
     if (m_rtv_dsv_handle.ptr != 0 && m_usage & GPUTextureViewUsageFlag::e_rtv_dsv)
     {

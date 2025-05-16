@@ -370,6 +370,12 @@ enum class GPUResourceTypeFlag : uint32_t
     e_render_target_array_slices = 1 << 16,
     e_render_target_depth_slices = 1 << 17,
     e_ray_tracing = 1 << 18,
+
+    // only valid in vulkan
+    e_input_attachment = 1 << 24,
+    e_texel_buffer = 1 << 25,
+    e_rw_texel_buffer = 1 << 26,
+    e_combined_image_sampler = 1 << 27,
 };
 using GPUResourceType = BitFlag<GPUResourceTypeFlag>;
 

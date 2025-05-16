@@ -78,12 +78,12 @@ void DX12CommandBuffer::begin_query(GPUQueryPool const* pool, GPUQueryInfo const
 {
     DX12QueryPool const* dx12_query_pool = static_cast<DX12QueryPool const*>(pool);
 
-    switch (dx12_query_pool->m_type)
+    switch (dx12_query_pool->m_query_type)
     {
-    case D3D12_QUERY_TYPE_TIMESTAMP:
+    case GPUQueryType::e_timestamp:
         break;
     default:
-        m_command_list->BeginQuery(dx12_query_pool->m_query_heap, dx12_query_pool->m_type, info.index);
+        m_command_list->BeginQuery(dx12_query_pool->m_query_heap, Query_Type_Map[to_underlying(dx12_query_pool->m_query_type)], info.index);
         break;
     }
 }
@@ -92,14 +92,14 @@ void DX12CommandBuffer::end_query(GPUQueryPool const* pool, GPUQueryInfo const& 
 {
     DX12QueryPool const* dx12_query_pool = static_cast<DX12QueryPool const*>(pool);
 
-    m_command_list->EndQuery(dx12_query_pool->m_query_heap, dx12_query_pool->m_type, info.index);
+    m_command_list->EndQuery(dx12_query_pool->m_query_heap, Query_Type_Map[to_underlying(dx12_query_pool->m_query_type)], info.index);
 }
 
 GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCreateInfo const& info)
 {
     D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS sub_resolve_subresource[GPU_Max_Render_Target]{};
     D3D12_RENDER_PASS_RENDER_TARGET_DESC render_target_desc[GPU_Max_Render_Target]{};
-    for (size_t i = 0; i < info.color_attachments.size(); i++)
+    for (size_t i = 0; i < info.color_attachment_count; i++)
     {
         GPUColorAttachment const& color_attachment = info.color_attachments[i];
         DX12TextureView const* texture_view = static_cast<DX12TextureView const*>(color_attachment.texture_view);
@@ -173,7 +173,7 @@ GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCr
         depth_stencil_desc = &depth_stencil;
     }
 
-    m_command_list->BeginRenderPass(info.color_attachments.size(), render_target_desc, depth_stencil_desc, D3D12_RENDER_PASS_FLAG_NONE);
+    m_command_list->BeginRenderPass(info.color_attachment_count, render_target_desc, depth_stencil_desc, D3D12_RENDER_PASS_FLAG_NONE);
 
     DX12GraphicsPassEncoder* encoder = PLACEMENT_NEW(DX12GraphicsPassEncoder, sizeof(DX12GraphicsPassEncoder));
     encoder->m_command_buffer = this;

@@ -4,6 +4,7 @@
 
 #include "vkmemory_pool.h"
 #include "rendering/rhi/vulkan/vkdevice.h"
+#include "rendering/rhi/vulkan/utils/vk_macro.h"
 #include "rendering/rhi/vulkan/utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN

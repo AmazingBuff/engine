@@ -12,16 +12,20 @@ AMAZING_NAMESPACE_BEGIN
 class GPURootSignature
 {
 public:
-    GPURootSignature() : m_pipeline_type(GPUPipelineType::e_graphics), m_pool(nullptr) {}
-    virtual ~GPURootSignature() = default;
+    GPURootSignature() : m_ref_device(nullptr), m_pool(nullptr), m_push_constants(nullptr), m_push_constant_count(0), m_pipeline_type(GPUPipelineType::e_graphics) {}
+    virtual ~GPURootSignature();
 protected:
     void initialize(GPURootSignatureCreateInfo const& info);
 protected:
-    Vector<GPUParameterTable> m_tables;
-    Vector<GPUShaderResource> m_push_constants;
-    Vector<GPUShaderResource> m_static_samplers;
-    GPUPipelineType m_pipeline_type;
+    GPUDevice const* m_ref_device;
     GPURootSignaturePool* m_pool;
+
+    Vector<GPUParameterTable> m_tables;
+    Vector<GPUShaderResource> m_static_samplers;
+    // for derived
+    GPUShaderResource* m_push_constants;
+    uint32_t m_push_constant_count;
+    GPUPipelineType m_pipeline_type;
 private:
     friend class GPURootSignaturePool;
 };

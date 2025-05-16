@@ -15,7 +15,7 @@ public:
     GPUGraphicsPassEncoder() = default;
     virtual ~GPUGraphicsPassEncoder() = default;
 
-    virtual void bind_vertex_buffers(Vector<GPUBufferBinding> const& bindings) = 0;
+    virtual void bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t binding_count) = 0;
     virtual void bind_index_buffer(GPUBufferBinding const& binding) = 0;
     virtual void bind_descriptor_set(GPUDescriptorSet const* set) = 0;
     virtual void bind_pipeline(GPUGraphicsPipeline const* pipeline) = 0;

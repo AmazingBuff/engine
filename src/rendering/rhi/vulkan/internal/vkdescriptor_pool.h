@@ -11,16 +11,18 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+class VKDevice;
+
 class VKDescriptorPool
 {
 public:
-    VKDescriptorPool(VkDevice device, const VolkDeviceTable* table);
+    explicit VKDescriptorPool(VKDevice const* device);
     ~VKDescriptorPool();
-
+    VkDescriptorSet consume_descriptor_set(VkDescriptorSetLayout const* layouts, uint32_t count) const;
+    void return_descriptor_set(VkDescriptorSet const* sets, uint32_t count) const;
 private:
     VkDescriptorPool m_pool;
-    VkDevice m_ref_device;
-    VolkDeviceTable const* m_ref_table;
+    VKDevice const* m_ref_device;
 };
 
 AMAZING_NAMESPACE_END

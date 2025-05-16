@@ -36,13 +36,14 @@ public:
 
 
 
-template <typename Key, typename Tp, typename Hash, template <typename> typename Alloc, bool Multi>
+template <typename Key, typename Tp, typename Hash, typename Equal, template <typename> typename Alloc, bool Multi>
 class HashMapTrait
 {
 public:
     using key_type      =   Key;
     using value_type    =   Pair<Key, Tp>;
     using key_hash      =   Hash;
+    using key_equal     =   Equal;
     using node_type     =   HashNode<value_type>;
     using allocator     =   Alloc<node_type>;
 
@@ -124,10 +125,10 @@ public:
 
 
 // hash map
-template <typename Key, typename Tp, typename Hasher = std::hash<Key>, template <typename> typename Alloc = Allocator>
-class HashMap : public Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Alloc, false>>
+template <typename Key, typename Tp, typename Hasher = std::hash<Key>, typename Equal = Equal<Key>, template <typename> typename Alloc = Allocator>
+class HashMap : public Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Equal, Alloc, false>>
 {
-    using Hash = Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Alloc, false>>;
+    using Hash = Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Equal, Alloc, false>>;
     using Iterator = typename Hash::Iterator;
 public:
     Tp& operator[](const Key& key)
@@ -158,10 +159,10 @@ public:
     }
 };
 
-template <typename Key, typename Tp, typename Hasher = std::hash<Key>, template <typename> typename Alloc = Allocator>
-class MultiHashMap : public Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Alloc, true>>
+template <typename Key, typename Tp, typename Hasher = std::hash<Key>, typename Equal = Equal<Key>, template <typename> typename Alloc = Allocator>
+class MultiHashMap : public Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Equal, Alloc, true>>
 {
-    using Hash = Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Alloc, true>>;
+    using Hash = Internal::Hash<Internal::HashMapTrait<Key, Tp, Hasher, Equal, Alloc, true>>;
     using Iterator = typename Hash::Iterator;
 public:
     Iterator find(const Key& key)

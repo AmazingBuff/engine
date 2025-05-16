@@ -23,6 +23,10 @@ private:
     VkBufferView m_storage_texel_view;
     VkBufferView m_uniform_texel_view;
     VmaAllocation m_allocation;
+
+    friend class VKDescriptorSet;
+    friend class VKCommandBuffer;
+    friend class VKGraphicsPassEncoder;
 };
 
 AMAZING_NAMESPACE_END

@@ -35,23 +35,23 @@
 AMAZING_NAMESPACE_BEGIN
 
 GPUInstance* GPU_create_instance(GPUInstanceCreateInfo const& info);
-GPUSurface* GPU_create_surface(GPUInstance const* instance, void* handle); // for windows, handle is a HWND
+GPUSurface* GPU_create_surface(GPUInstance const* instance, void* handle, void* hinstance); // for windows, handle is a HWND
 GPUDevice* GPU_create_device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info);
 GPUCommandPool* GPU_create_command_pool(GPUQueue const* queue, GPUCommandPoolCreateInfo const& info);
 GPUCommandBuffer* GPU_create_command_buffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info);
 GPUSwapChain* GPU_create_swap_chain(GPUDevice const* device, GPUSwapChainCreateInfo const& info);
-GPUGraphicsPipeline* GPU_create_graphics_pipeline(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info);
+GPUGraphicsPipeline* GPU_create_graphics_pipeline(GPUGraphicsPipelineCreateInfo const& info);
 GPUFence* GPU_create_fence(GPUDevice const* device);
 GPUSemaphore* GPU_create_semaphore(GPUDevice const* device);
 GPURootSignature* GPU_create_root_signature(GPUDevice const* device, GPURootSignatureCreateInfo const& info);
-GPUDescriptorSet* GPU_create_descriptor_set(GPUDevice const* device, GPUDescriptorSetCreateInfo const& info);
+GPUDescriptorSet* GPU_create_descriptor_set(GPUDescriptorSetCreateInfo const& info);
 GPUQueryPool* GPU_create_query_pool(GPUDevice const* device, GPUQueryPoolCreateInfo const& info);
-GPUTextureView* GPU_create_texture_view(GPUDevice const* device, GPUTextureViewCreateInfo const& info);
+GPUTextureView* GPU_create_texture_view(GPUTextureViewCreateInfo const& info);
 GPUTexture* GPU_create_texture(GPUDevice const* device, GPUTextureCreateInfo const& info);
 GPUBuffer* GPU_create_buffer(GPUDevice const* device, GPUBufferCreateInfo const& info);
 GPUMemoryPool* GPU_create_memory_pool(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info);
 GPUSampler* GPU_create_sampler(GPUDevice const* device, GPUSamplerCreateInfo const& info);
-GPUShaderLibrary* GPU_create_shader_library(GPUShaderLibraryCreateInfo const& info);
+GPUShaderLibrary* GPU_create_shader_library(GPUDevice const* device, GPUShaderLibraryCreateInfo const& info);
 GPURootSignaturePool* GPU_create_root_signature_pool(GPURootSignatureCreateInfo const& info);
 
 

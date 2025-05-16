@@ -12,8 +12,8 @@ AMAZING_NAMESPACE_BEGIN
 class DX12DescriptorSet final : public GPUDescriptorSet
 {
 public:
-    DX12DescriptorSet(GPUDevice const* device, GPUDescriptorSetCreateInfo const& info);
-    ~DX12DescriptorSet();
+    explicit DX12DescriptorSet(GPUDescriptorSetCreateInfo const& info);
+    ~DX12DescriptorSet() override;
 
     void update(GPUDescriptorData const* descriptor_data, uint32_t descriptor_data_count) override;
 private:

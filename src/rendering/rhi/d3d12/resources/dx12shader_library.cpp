@@ -65,7 +65,7 @@ static constexpr GPUFormat Format_Map[] =
     GPUFormat::e_r32g32b32a32_sfloat,
 };
 
-DX12ShaderLibrary::DX12ShaderLibrary(GPUShaderLibraryCreateInfo const& info) : m_blob_encoding(nullptr)
+DX12ShaderLibrary::DX12ShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreateInfo const& info) : m_blob_encoding(nullptr)
 {
     IDxcUtils* dxc_utils;
     DX_CHECK_RESULT(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxc_utils)));
@@ -148,6 +148,8 @@ DX12ShaderLibrary::DX12ShaderLibrary(GPUShaderLibraryCreateInfo const& info) : m
     dx12_reflection->Release();
     dxc_reflection->Release();
     dxc_utils->Release();
+
+    m_ref_device = device;
 }
 
 DX12ShaderLibrary::~DX12ShaderLibrary()

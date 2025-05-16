@@ -101,7 +101,8 @@ struct GPUGraphicsPassCreateInfo
 {
     String name;
     GPUSampleCount sample_count;
-    Vector<GPUColorAttachment> color_attachments;
+    GPUColorAttachment color_attachments[GPU_Max_Render_Target];
+    uint32_t color_attachment_count;
     GPUDepthStencilAttachment const* depth_stencil_attachment;
 };
 

@@ -3,8 +3,11 @@
 //
 
 #include "vk_utils.h"
+#include "rendering/rhi/common/adapter.h"
 
 AMAZING_NAMESPACE_BEGIN
+
+#define BIT_IDENTITY(v, flag) (v & flag) == flag
 
 const char* transfer_result(VkResult result)
 {
@@ -457,9 +460,9 @@ VkSampleCountFlagBits transfer_sample_count(GPUSampleCount sample_count)
 VkImageUsageFlags transfer_image_usage(GPUResourceType type)
 {
 	VkImageUsageFlags usage = 0;
-	if ((type & GPUResourceTypeFlag::e_texture) == GPUResourceTypeFlag::e_texture)
+	if (BIT_IDENTITY(type, GPUResourceTypeFlag::e_texture))
 		usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-	if ((type & GPUResourceTypeFlag::e_rw_buffer) == GPUResourceTypeFlag::e_rw_buffer)
+	if (BIT_IDENTITY(type, GPUResourceTypeFlag::e_rw_buffer))
 		usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 	return usage;
 }
@@ -527,4 +530,173 @@ VkSamplerAddressMode transfer_address_mode(GPUAddressMode mode)
 	}
 }
 
+VkShaderStageFlags transfer_shader_stage(GPUShaderStage stage)
+{
+	if (BIT_IDENTITY(stage, GPUShaderStageFlag::e_all_graphics))
+		return VK_SHADER_STAGE_ALL_GRAPHICS;
+	else if (BIT_IDENTITY(stage, GPUShaderStageFlag::e_vertex))
+		return VK_SHADER_STAGE_VERTEX_BIT;
+	else if (BIT_IDENTITY(stage, GPUShaderStageFlag::e_tessellation_control))
+		return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+	else if (BIT_IDENTITY(stage, GPUShaderStageFlag::e_tessellation_evaluation))
+		return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+	else if (BIT_IDENTITY(stage, GPUShaderStageFlag::e_geometry))
+		return VK_SHADER_STAGE_GEOMETRY_BIT;
+	else if (BIT_IDENTITY(stage, GPUShaderStageFlag::e_fragment))
+		return VK_SHADER_STAGE_FRAGMENT_BIT;
+	else if (BIT_IDENTITY(stage, GPUShaderStageFlag::e_compute))
+		return VK_SHADER_STAGE_COMPUTE_BIT;
+	else
+		return VK_SHADER_STAGE_ALL;
+}
+
+VkDescriptorType transfer_resource_type(GPUResourceType type)
+{
+	GPUResourceTypeFlag flag = static_cast<GPUResourceTypeFlag>(type);
+	switch (flag)
+	{
+	case GPUResourceTypeFlag::e_sampler: return VK_DESCRIPTOR_TYPE_SAMPLER;
+	case GPUResourceTypeFlag::e_texture: return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	case GPUResourceTypeFlag::e_uniform_buffer: return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	case GPUResourceTypeFlag::e_rw_texture: return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	case GPUResourceTypeFlag::e_buffer:
+	case GPUResourceTypeFlag::e_rw_buffer: return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	case GPUResourceTypeFlag::e_input_attachment: return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+	case GPUResourceTypeFlag::e_texel_buffer: return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+	case GPUResourceTypeFlag::e_rw_texel_buffer: return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+	case GPUResourceTypeFlag::e_combined_image_sampler: return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	case GPUResourceTypeFlag::e_ray_tracing: return VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+	default: return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+	}
+}
+
+VkPrimitiveTopology transfer_primitive_topology(GPUPrimitiveTopology topology)
+{
+	switch (topology)
+	{
+	case GPUPrimitiveTopology::e_point_list: return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+	case GPUPrimitiveTopology::e_line_list: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+	case GPUPrimitiveTopology::e_line_strip: return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+	case GPUPrimitiveTopology::e_triangle_list: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	case GPUPrimitiveTopology::e_triangle_strip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	case GPUPrimitiveTopology::e_patch_list: return VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+	default: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	}
+}
+
+VkAccessFlags transfer_access_state(GPUResourceState state)
+{
+	VkAccessFlags ret = VK_ACCESS_NONE;
+	if (state & GPUResourceStateFlag::e_copy_source)
+		ret |= VK_ACCESS_TRANSFER_READ_BIT;
+	if (state & GPUResourceStateFlag::e_copy_destination)
+		ret |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	if (state & GPUResourceStateFlag::e_vertex_and_constant_buffer)
+		ret |= VK_ACCESS_UNIFORM_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+	if (state & GPUResourceStateFlag::e_index_buffer)
+		ret |= VK_ACCESS_INDEX_READ_BIT;
+	if (state & GPUResourceStateFlag::e_unordered_access)
+		ret |= VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+	if (state & GPUResourceStateFlag::e_indirect_argument)
+		ret |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+	if (state & GPUResourceStateFlag::e_render_target)
+		ret |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	if (state & GPUResourceStateFlag::e_resolve_destination)
+		ret |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	if (state & GPUResourceStateFlag::e_depth_write)
+		ret |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	if (state & GPUResourceStateFlag::e_shader_resource)
+		ret |= VK_ACCESS_SHADER_READ_BIT;
+	if (state & GPUResourceStateFlag::e_present)
+		ret |= VK_ACCESS_NONE;
+	if (state & GPUResourceStateFlag::e_acceleration_structure)
+		ret |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV;
+	return ret;
+}
+
+VkImageLayout transfer_image_layout(GPUResourceState state)
+{
+	if (state & GPUResourceStateFlag::e_copy_source)
+        return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	if (state & GPUResourceStateFlag::e_copy_destination)
+        return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	if (state & GPUResourceStateFlag::e_unordered_access)
+        return VK_IMAGE_LAYOUT_GENERAL;
+	if (state & GPUResourceStateFlag::e_render_target)
+        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	if (state & GPUResourceStateFlag::e_resolve_destination)
+        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	if (state & GPUResourceStateFlag::e_depth_write)
+        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	if (state & GPUResourceStateFlag::e_shader_resource)
+        return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	if (state & GPUResourceStateFlag::e_present)
+        return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	if (state & GPUResourceStateFlag::e_shading_rate_source)
+		return VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT;
+	if (state & GPUResourceStateFlag::e_common)
+		return VK_IMAGE_LAYOUT_GENERAL;
+
+	return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
+VkPipelineStageFlags transfer_pipeline_stage(GPUAdapter const* adapter, VkAccessFlags access_flags, GPUQueueType queue_type)
+{
+	VkPipelineStageFlags flags = VK_PIPELINE_STAGE_NONE;
+	switch (queue_type)
+	{
+	case GPUQueueType::e_graphics:
+	{
+		if (access_flags & (VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT))
+			flags |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+		if (access_flags & (VK_ACCESS_UNIFORM_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT))
+		{
+			flags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+			flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			if (adapter->m_adapter_detail.support_geom_shader)
+				flags |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+			if (adapter->m_adapter_detail.support_tessellation)
+			{
+				flags |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+				flags |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
+			}
+			flags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		}
+		if (access_flags & VK_ACCESS_INPUT_ATTACHMENT_READ_BIT)
+			flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		if (access_flags & (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT))
+			flags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		if (access_flags & (VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT))
+			flags |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		break;
+	}
+	case GPUQueueType::e_compute:
+	{
+		if (access_flags & (VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+			VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT))
+			return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+		if (access_flags & (VK_ACCESS_UNIFORM_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT))
+			flags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		break;
+	}
+	case GPUQueueType::e_transfer: return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+	default: break;
+	}
+
+	if (access_flags & VK_ACCESS_INDIRECT_COMMAND_READ_BIT)
+		flags |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
+	if (access_flags & (VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT))
+		flags |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+	if (access_flags & (VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT))
+		flags |= VK_PIPELINE_STAGE_HOST_BIT;
+
+	if (flags == VK_ACCESS_NONE)
+		flags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+	return flags;
+}
+
+#undef BIT_IDENTITY
 AMAZING_NAMESPACE_END

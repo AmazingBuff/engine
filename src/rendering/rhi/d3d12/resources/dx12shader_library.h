@@ -13,7 +13,7 @@ AMAZING_NAMESPACE_BEGIN
 class DX12ShaderLibrary final : public GPUShaderLibrary
 {
 public:
-    explicit DX12ShaderLibrary(GPUShaderLibraryCreateInfo const& info);
+    DX12ShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreateInfo const& info);
     ~DX12ShaderLibrary() override;
 private:
     IDxcBlobEncoding* m_blob_encoding;

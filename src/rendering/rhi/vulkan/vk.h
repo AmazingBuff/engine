@@ -5,16 +5,9 @@
 #ifndef VK_H
 #define VK_H
 
-#ifdef _WIN64
-#define VK_USE_PLATFORM_WIN32_KHR
-#endif
-
 #include "volk/volk.h"
-#include "rendering/rhi/create_info.h"
-
-#define VMA_STATIC_VULKAN_FUNCTIONS 0
-#define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
 #include "vma/vk_mem_alloc.h"
+#include "rendering/rhi/create_info.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -55,8 +48,8 @@ static constexpr const char* VK_Instance_Extensions[] =
     /************************************************************************/
     // VR Extensions
     /************************************************************************/
-    VK_KHR_DISPLAY_EXTENSION_NAME,
-    VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME,
+    // VK_KHR_DISPLAY_EXTENSION_NAME,
+    // VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME,
 /************************************************************************/
 // Multi GPU Extensions
 /************************************************************************/
@@ -114,10 +107,6 @@ static constexpr const char* VK_Device_Extensions[] =
     VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME,
     VK_KHR_EXTERNAL_FENCE_WIN32_EXTENSION_NAME,
     #endif
-#endif
-
-#if VK_EXT_shader_object
-    VK_EXT_SHADER_OBJECT_EXTENSION_NAME,
 #endif
 
 // Debug marker extension in case debug utils is not supported
@@ -241,6 +230,15 @@ static constexpr VkDescriptorPoolSize VK_Descriptor_Pool_Sizes[] =
 static constexpr uint32_t VK_Descriptor_Pool_Size_Count = array_size(VK_Descriptor_Pool_Sizes);
 static constexpr uint32_t VK_Descriptor_Pool_Max_Sets = 8192;
 static constexpr uint32_t VK_Sparse_Page_Standard_Size = 65535;
+static constexpr VkDynamicState VK_Dynamic_States[] =
+{
+    VK_DYNAMIC_STATE_VIEWPORT,
+    VK_DYNAMIC_STATE_SCISSOR,
+    VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+    VK_DYNAMIC_STATE_DEPTH_BOUNDS,
+    VK_DYNAMIC_STATE_STENCIL_REFERENCE
+};
+
 
 
 // allocate func
@@ -296,7 +294,46 @@ static constexpr VkAllocationCallbacks VK_Allocation_Callbacks = {
     .pfnInternalAllocation = &vulkan_internal_alloc_notify,
     .pfnInternalFree = &vulkan_internal_free_notify,
 };
+static constexpr const VkAllocationCallbacks* VK_Allocation_Callbacks_Ptr = nullptr;
 
+union VulkanDescriptorUpdateData
+{
+    VkDescriptorImageInfo image_info;
+    VkDescriptorBufferInfo buffer_info;
+    VkBufferView buffer_view;
+};
+
+struct VulkanRenderPassCreateInfo
+{
+    uint32_t color_attachment_count;
+    struct VulkanColorAttachment
+    {
+        GPUFormat format;
+        GPULoadAction load_action;
+        GPUStoreAction store_action;
+        bool resolve_enable;
+        GPULoadAction resolve_load_action;
+        GPUStoreAction resolve_store_action;
+    } color_attachment[GPU_Max_Render_Target];
+
+    GPUSampleCount sample_count;
+    struct VulkanDepthStencilAttachment
+    {
+        GPUFormat depth_stencil_format;
+        GPULoadAction depth_load_action;
+        GPUStoreAction depth_store_action;
+        GPULoadAction stencil_load_action;
+        GPUStoreAction stencil_store_action;
+    } depth_stencil_attachment;
+};
+
+struct VulkanFramebufferCreateInfo
+{
+    VkRenderPass render_pass;
+    VkImageView attachments[GPU_Max_Render_Target * 2 + 1]; // color, resolve and depth
+    uint32_t attachment_count;
+    uint32_t width, height, layers;
+};
 
 AMAZING_NAMESPACE_END
 #endif //VK_H

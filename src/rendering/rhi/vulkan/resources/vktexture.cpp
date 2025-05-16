@@ -5,10 +5,10 @@
 #include "vktexture.h"
 #include "rendering/rhi/vulkan/vkdevice.h"
 #include "rendering/rhi/vulkan/vkadapter.h"
+#include "rendering/rhi/vulkan/utils/vk_macro.h"
 #include "rendering/rhi/vulkan/utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
-
 
 VkImageType VKTexture::transfer_image_type(GPUTextureCreateInfo const& info)
 {
@@ -96,7 +96,7 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
     bool is_allocation_dedicated = false;
     bool can_alias_alloc = false;
     if (info.flags & GPUTextureFlagsFlag::e_aliasing_resource || info.flags & GPUTextureFlagsFlag::e_tiled_resource)
-        VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImage(vk_device->m_device, &image_create_info, &VK_Allocation_Callbacks, &m_image))
+        VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImage(vk_device->m_device, &image_create_info, VK_Allocation_Callbacks_Ptr, &m_image))
     else
     {
         VmaAllocationCreateInfo allocation_create_info{
@@ -223,7 +223,7 @@ VKTexture::~VKTexture()
     VKDevice const* device = reinterpret_cast<VKDevice const*>(m_ref_device);
     if (m_info->is_tiled)
     {
-        device->m_device_table.vkDestroyImage(device->m_device, m_image, &VK_Allocation_Callbacks);
+        device->m_device_table.vkDestroyImage(device->m_device, m_image, VK_Allocation_Callbacks_Ptr);
         Allocator<VulkanTiledTextureInfo>::deallocate(static_cast<VulkanTiledTextureInfo*>(m_info));
     }
     else

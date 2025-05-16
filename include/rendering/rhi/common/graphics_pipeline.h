@@ -12,11 +12,10 @@ AMAZING_NAMESPACE_BEGIN
 class GPUGraphicsPipeline
 {
 public:
-    GPUGraphicsPipeline() : m_ref_device(nullptr), m_ref_root_signature(nullptr) {}
+    GPUGraphicsPipeline() : m_ref_root_signature(nullptr) {}
     virtual ~GPUGraphicsPipeline() = default;
 
 protected:
-    GPUDevice const* m_ref_device;
     GPURootSignature const* m_ref_root_signature;
 };
 

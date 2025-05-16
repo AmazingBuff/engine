@@ -47,6 +47,7 @@ private:
 
     friend class VKSwapChain;
     friend class VKTextureView;
+    friend class VKCommandBuffer;
 };
 
 AMAZING_NAMESPACE_END

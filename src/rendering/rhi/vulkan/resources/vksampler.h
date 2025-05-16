@@ -17,6 +17,9 @@ public:
     ~VKSampler() override;
 private:
     VkSampler m_sampler;
+
+    friend class VKRootSignature;
+    friend class VKDescriptorSet;
 };
 
 AMAZING_NAMESPACE_END

@@ -6,16 +6,16 @@
 #include "vktexture.h"
 #include "rendering/rhi/vulkan/vkdevice.h"
 #include "rendering/rhi/vulkan/vkadapter.h"
+#include "rendering/rhi/vulkan/utils/vk_macro.h"
 #include "rendering/rhi/vulkan/utils/vk_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
 
-VKTextureView::VKTextureView(GPUDevice const* device, GPUTextureViewCreateInfo const& info) : m_rtv_dsv_view(nullptr), m_srv_view(nullptr), m_uav_view(nullptr)
+VKTextureView::VKTextureView(GPUTextureViewCreateInfo const& info) : m_rtv_dsv_view(nullptr), m_srv_view(nullptr), m_uav_view(nullptr)
 {
-    VKDevice const* vk_device = static_cast<VKDevice const*>(device);
-    VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
-
     VKTexture const* texture = static_cast<VKTexture const*>(info.texture);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(texture->m_ref_device);
+    VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
 
     VkImageViewType view_type = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
     VkImageType image_type = texture->m_info->depth > 1 ? VK_IMAGE_TYPE_3D : texture->m_info->height > 1 ? VK_IMAGE_TYPE_2D : VK_IMAGE_TYPE_1D;
@@ -68,33 +68,34 @@ VKTextureView::VKTextureView(GPUDevice const* device, GPUTextureViewCreateInfo c
     };
     // srv
     if (info.usage & GPUTextureViewUsageFlag::e_srv)
-        VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImageView(vk_device->m_device, &view_create_info, &VK_Allocation_Callbacks, &m_srv_view));
+        VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImageView(vk_device->m_device, &view_create_info, VK_Allocation_Callbacks_Ptr, &m_srv_view));
 
     // rtv & dsv
     if (info.usage & GPUTextureViewUsageFlag::e_rtv_dsv)
-        VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImageView(vk_device->m_device, &view_create_info, &VK_Allocation_Callbacks, &m_rtv_dsv_view));
+        VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImageView(vk_device->m_device, &view_create_info, VK_Allocation_Callbacks_Ptr, &m_rtv_dsv_view));
 
     if (info.usage & GPUTextureViewUsageFlag::e_uav)
     {
         // all cube map will be used as image 2d array for image load / store ops
         if (view_create_info.viewType == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY || view_create_info.viewType == VK_IMAGE_VIEW_TYPE_CUBE)
             view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-        VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImageView(vk_device->m_device, &view_create_info, &VK_Allocation_Callbacks, &m_uav_view));
+        VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImageView(vk_device->m_device, &view_create_info, VK_Allocation_Callbacks_Ptr, &m_uav_view));
     }
 
-    m_ref_device = device;
+    m_ref_texture = texture;
 }
 
 VKTextureView::~VKTextureView()
 {
-    VKDevice const* vk_device = static_cast<VKDevice const*>(m_ref_device);
+    VKTexture const* texture = static_cast<VKTexture const*>(m_ref_texture);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(texture->m_ref_device);
 
     if (m_rtv_dsv_view)
-        vk_device->m_device_table.vkDestroyImageView(vk_device->m_device, m_rtv_dsv_view, &VK_Allocation_Callbacks);
+        vk_device->m_device_table.vkDestroyImageView(vk_device->m_device, m_rtv_dsv_view, VK_Allocation_Callbacks_Ptr);
     if (m_srv_view)
-        vk_device->m_device_table.vkDestroyImageView(vk_device->m_device, m_srv_view, &VK_Allocation_Callbacks);
+        vk_device->m_device_table.vkDestroyImageView(vk_device->m_device, m_srv_view, VK_Allocation_Callbacks_Ptr);
     if (m_uav_view)
-        vk_device->m_device_table.vkDestroyImageView(vk_device->m_device, m_uav_view, &VK_Allocation_Callbacks);
+        vk_device->m_device_table.vkDestroyImageView(vk_device->m_device, m_uav_view, VK_Allocation_Callbacks_Ptr);
 }
 
 

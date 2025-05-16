@@ -18,7 +18,6 @@ public:
 
 private:
     ID3D12QueryHeap* m_query_heap;
-    D3D12_QUERY_TYPE m_type;
 
     friend class DX12CommandBuffer;
 };

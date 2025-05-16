@@ -10,7 +10,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-DX12QueryPool::DX12QueryPool(GPUDevice const* device, GPUQueryPoolCreateInfo const& info) : m_query_heap(nullptr), m_type(D3D12_QUERY_TYPE_TIMESTAMP)
+DX12QueryPool::DX12QueryPool(GPUDevice const* device, GPUQueryPoolCreateInfo const& info) : m_query_heap(nullptr)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
 
@@ -21,7 +21,7 @@ DX12QueryPool::DX12QueryPool(GPUDevice const* device, GPUQueryPoolCreateInfo con
     };
 
     DX_CHECK_RESULT(dx12_device->m_device->CreateQueryHeap(&desc, IID_PPV_ARGS(&m_query_heap)));
-    m_type = Query_Type_Map[to_underlying(info.query_type)];
+    m_query_type = info.query_type;
 }
 
 DX12QueryPool::~DX12QueryPool()

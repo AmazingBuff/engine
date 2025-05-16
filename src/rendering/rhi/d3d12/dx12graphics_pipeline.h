@@ -13,10 +13,9 @@ AMAZING_NAMESPACE_BEGIN
 class DX12GraphicsPipeline final : public GPUGraphicsPipeline
 {
 public:
-    DX12GraphicsPipeline(GPUDevice const* device, GPUGraphicsPipelineCreateInfo const& info);
+    explicit DX12GraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info);
     ~DX12GraphicsPipeline() override;
 private:
-    ID3D12RootSignature* m_root_signature;
     ID3D12PipelineState* m_pipeline_state;
     D3D12_GRAPHICS_PIPELINE_STATE_DESC m_pipeline_state_desc;
     D3D_PRIMITIVE_TOPOLOGY m_primitive_topology;

@@ -16,7 +16,7 @@ class DX12GraphicsPassEncoder final : public GPUGraphicsPassEncoder
 public:
     ~DX12GraphicsPassEncoder() override;
 
-    void bind_vertex_buffers(Vector<GPUBufferBinding> const& bindings) override;
+    void bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t binding_count) override;
     void bind_index_buffer(GPUBufferBinding const& binding) override;
     void bind_descriptor_set(GPUDescriptorSet const* set) override;
     void set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;

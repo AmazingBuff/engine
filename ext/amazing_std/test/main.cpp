@@ -44,6 +44,20 @@ void just()
     no_dtor->m.emplace(4, "four");
     no_dtor->m.emplace(5, "five");
 
+
+    uint32_t* v = nullptr;
+    if (!no_dtor->v.empty())
+    {
+        v = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * no_dtor->v.size()));
+        for (int i = 0; i < no_dtor->v.size(); i++)
+        {
+            v[i] = no_dtor->v[i];
+        }
+    }
+
+    for (int i = 0; i < no_dtor->v.size(); i++)
+        v[i] = no_dtor->v[i];
+
     Amazing::Allocator<NoDtor>::deallocate(no_dtor);
 }
 
