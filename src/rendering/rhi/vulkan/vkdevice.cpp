@@ -46,7 +46,7 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
         .ppEnabledLayerNames = vk_adapter->m_device_layers.data(),
         .enabledExtensionCount = static_cast<uint32_t>(vk_adapter->m_device_extensions.size()),
         .ppEnabledExtensionNames = vk_adapter->m_device_extensions.data(),
-        .pEnabledFeatures = nullptr,
+        .pEnabledFeatures = &vk_adapter->m_vulkan_detail.device_features,
     };
 
     VK_CHECK_RESULT(vkCreateDevice(vk_adapter->m_physical_device, &device_create_info, VK_Allocation_Callbacks_Ptr, &m_device));
@@ -126,7 +126,7 @@ VKDevice::~VKDevice()
         }
     }
 
-    vkDestroyDevice(m_device, VK_Allocation_Callbacks_Ptr);
+    m_device_table.vkDestroyDevice(m_device, VK_Allocation_Callbacks_Ptr);
 }
 
 GPUQueue const* VKDevice::fetch_queue(GPUQueueType type, uint32_t index) const

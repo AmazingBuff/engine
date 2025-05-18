@@ -158,7 +158,7 @@ void* allocate(size_t size, size_t alignment, void* data)
 
 void* reallocate(void* p, size_t size, size_t alignment, void* data)
 {
-    return t_local_pool.reallocate(p, size, alignment,  data);
+    return t_local_pool.reallocate(p, size, alignment, data);
 }
 
 void deallocate(void* p)

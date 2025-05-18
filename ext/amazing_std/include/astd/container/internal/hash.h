@@ -299,11 +299,11 @@ public:
 
     Iterator end()
     {
-        return Iterator(m_buckets + m_bucket_count * max_bucket_size + 1);
+        return Iterator(m_buckets + m_bucket_count * max_bucket_size);
     }
 
 protected:
-    node_type* find_node(const key_type& key)
+    node_type* find_node(const key_type& key) const
     {
         size_t probe_group = m_probe(key_hash()(key), m_bucket_count);
         for (size_t i = 0; i < max_bucket_size; i++)
@@ -312,7 +312,7 @@ protected:
                 return m_buckets + probe_group * max_bucket_size + i;
         }
 
-        return m_buckets + m_bucket_count * max_bucket_size + 1;
+        return m_buckets + m_bucket_count * max_bucket_size;
     }
 
 private:

@@ -67,8 +67,8 @@ static constexpr const char* VK_Device_Extensions[] =
 {
     "VK_KHR_portability_subset",
 #if defined(VK_VERSION_1_3)
-// VK_GOOGLE_USER_TYPE_EXTENSION_NAME,
-// VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME,
+    VK_GOOGLE_USER_TYPE_EXTENSION_NAME,
+    VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME,
 #endif
 
 #if VK_KHR_depth_stencil_resolve
@@ -91,12 +91,7 @@ static constexpr const char* VK_Device_Extensions[] =
 #endif
 
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_KHR_MAINTENANCE1_EXTENSION_NAME,
-    VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,
     VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME,
-    VK_EXT_SHADER_SUBGROUP_VOTE_EXTENSION_NAME,
-    VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
-    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
 
 #ifdef USE_EXTERNAL_MEMORY_EXTENSIONS
     VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
@@ -109,100 +104,109 @@ static constexpr const char* VK_Device_Extensions[] =
     #endif
 #endif
 
-// Debug marker extension in case debug utils is not supported
-#ifndef ENABLE_DEBUG_UTILS_EXTENSION
-    VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
-#endif
-#if defined(VK_USE_PLATFORM_GGP)
-    VK_GGP_FRAME_TOKEN_EXTENSION_NAME,
-#endif
+    // Debug marker extension in case debug utils is not supported
+    #ifndef ENABLE_DEBUG_UTILS_EXTENSION
+        VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
+    #endif
+    #if defined(VK_USE_PLATFORM_GGP)
+        VK_GGP_FRAME_TOKEN_EXTENSION_NAME,
+    #endif
 
-#if VK_KHR_draw_indirect_count
-    VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME,
-#endif
-// Fragment shader interlock extension to be used for ROV type functionality in Vulkan
-#if VK_EXT_fragment_shader_interlock
-    VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME,
-#endif
-/************************************************************************/
-// NVIDIA Specific Extensions
-/************************************************************************/
-#ifdef USE_NV_EXTENSIONS
-    VK_NVX_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME,
-#endif
-    /************************************************************************/
-    // AMD Specific Extensions
-    /************************************************************************/
-    VK_AMD_DRAW_INDIRECT_COUNT_EXTENSION_NAME,
-    VK_AMD_SHADER_BALLOT_EXTENSION_NAME,
-    VK_AMD_GCN_SHADER_EXTENSION_NAME,
-/************************************************************************/
-// Multi GPU Extensions
-/************************************************************************/
-#if VK_KHR_device_group
-    VK_KHR_DEVICE_GROUP_EXTENSION_NAME,
-#endif
-    /************************************************************************/
-    // Bindless & None Uniform access Extensions
-    /************************************************************************/
-    VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-#if VK_KHR_maintenance3 // descriptor indexing depends on this
-    VK_KHR_MAINTENANCE3_EXTENSION_NAME,
-#endif
-#if VK_KHR_buffer_device_address
-    VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
-#endif
-#if VK_KHR_synchronization2
-    VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
-#endif
-#if VK_EXT_descriptor_buffer
-    VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
-#endif
+    #if VK_KHR_draw_indirect_count
+        VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME,
+    #endif
+        // Fragment shader interlock extension to be used for ROV type functionality in Vulkan
+        #if VK_EXT_fragment_shader_interlock
+            VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME,
+        #endif
+            /************************************************************************/
+            // NVIDIA Specific Extensions
+            /************************************************************************/
+            #ifdef USE_NV_EXTENSIONS
+                VK_NVX_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME,
+            #endif
+                /************************************************************************/
+                // AMD Specific Extensions
+                /************************************************************************/
+                VK_AMD_SHADER_BALLOT_EXTENSION_NAME,
+                VK_AMD_GCN_SHADER_EXTENSION_NAME,
 
-    /************************************************************************/
-    // Descriptor Update Template Extension for efficient descriptor set updates
-    /************************************************************************/
-    VK_KHR_DESCRIPTOR_UPDATE_TEMPLATE_EXTENSION_NAME,
-    /************************************************************************/
-    // RDNA2 Extensions
-    /************************************************************************/
-#if VK_KHR_create_renderpass2
-    VK_KHR_MULTIVIEW_EXTENSION_NAME,
-    VK_KHR_MAINTENANCE_2_EXTENSION_NAME,
-    VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
-#endif
-#if VK_KHR_fragment_shading_rate
-    VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME,
-#endif
-/************************************************************************/
-// Raytracing
-/************************************************************************/
-#ifdef ENABLE_RAYTRACING
-    VK_NV_RAY_TRACING_EXTENSION_NAME,
-#endif
-/************************************************************************/
-// YCbCr format support
-/************************************************************************/
-#if VK_KHR_bind_memory2
-    // Requirement for VK_KHR_sampler_ycbcr_conversion
-    VK_KHR_BIND_MEMORY_2_EXTENSION_NAME,
-#endif
-#if VK_KHR_sampler_ycbcr_conversion
-    VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME,
-#endif
-/************************************************************************/
-// Nsight Aftermath
-/************************************************************************/
-#if defined(VK_CAN_USE_NSIGHT_AFTERMATH) && defined(ENABLE_NSIGHT_AFTERMATH)
-    VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME,
-    VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME,
-#endif
-    /************************************************************************/
-    // PCRTC format support
-    /************************************************************************/
-#if VK_IMG_format_pvrtc
-    VK_IMG_FORMAT_PVRTC_EXTENSION_NAME,
-#endif
+                /************************************************************************/
+                // Bindless & None Uniform access Extensions
+                /************************************************************************/
+                VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+
+            #if VK_KHR_buffer_device_address
+                VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+            #endif
+            #if VK_KHR_synchronization2
+                VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+            #endif
+            #if VK_EXT_descriptor_buffer
+                VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
+            #endif
+
+                /************************************************************************/
+                // RDNA2 Extensions
+                /************************************************************************/
+            #if VK_KHR_create_renderpass2
+                VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+            #endif
+            #if VK_KHR_fragment_shading_rate
+                VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME,
+            #endif
+                /************************************************************************/
+                // Raytracing
+                /************************************************************************/
+                #ifdef ENABLE_RAYTRACING
+                    VK_NV_RAY_TRACING_EXTENSION_NAME,
+                #endif
+
+                #if !defined(VK_VERSION_1_1)
+                    VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
+                    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
+                    VK_KHR_MULTIVIEW_EXTENSION_NAME,
+                    VK_KHR_MAINTENANCE_1_EXTENSION_NAME,
+                    VK_KHR_MAINTENANCE_2_EXTENSION_NAME,
+                    VK_KHR_MAINTENANCE_3_EXTENSION_NAME,
+                    VK_EXT_SHADER_SUBGROUP_VOTE_EXTENSION_NAME,
+                    VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,
+
+                    /************************************************************************/
+                    // Descriptor Update Template Extension for efficient descriptor set updates
+                    /************************************************************************/
+                    VK_KHR_DESCRIPTOR_UPDATE_TEMPLATE_EXTENSION_NAME,
+                    /************************************************************************/
+                    // YCbCr format support
+                    /************************************************************************/
+                #if VK_KHR_bind_memory2
+                    // Requirement for VK_KHR_sampler_ycbcr_conversion
+                    VK_KHR_BIND_MEMORY_2_EXTENSION_NAME,
+                #endif
+                #if VK_KHR_sampler_ycbcr_conversion
+                    VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME,
+                #endif
+                    /************************************************************************/
+                    // Multi GPU Extensions
+                    /************************************************************************/
+                #if VK_KHR_device_group
+                    VK_KHR_DEVICE_GROUP_EXTENSION_NAME,
+                #endif
+                #endif
+
+                    /************************************************************************/
+                    // Nsight Aftermath
+                    /************************************************************************/
+                    #if defined(VK_CAN_USE_NSIGHT_AFTERMATH) && defined(ENABLE_NSIGHT_AFTERMATH)
+                        VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME,
+                        VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME,
+                    #endif
+                        /************************************************************************/
+                        // PCRTC format support
+                        /************************************************************************/
+                    #if VK_IMG_format_pvrtc
+                        VK_IMG_FORMAT_PVRTC_EXTENSION_NAME,
+                    #endif
 };
 
 static constexpr float VK_Queue_Priorities[] =
@@ -243,7 +247,7 @@ static constexpr VkDynamicState VK_Dynamic_States[] =
 
 // allocate func
 static void vulkan_internal_alloc_notify(
-    void*                                       data,
+    void* data,
     size_t                                      size,
     VkInternalAllocationType                    allocation_type,
     VkSystemAllocationScope                     allocation_scope)
@@ -252,7 +256,7 @@ static void vulkan_internal_alloc_notify(
 }
 
 static void vulkan_internal_free_notify(
-    void*                                       data,
+    void* data,
     size_t                                      size,
     VkInternalAllocationType                    allocation_type,
     VkSystemAllocationScope                     allocation_scope)
@@ -261,7 +265,7 @@ static void vulkan_internal_free_notify(
 }
 
 static void* vulkan_alloc(
-    void*                                       data,
+    void* data,
     size_t                                      size,
     size_t                                      alignment,
     VkSystemAllocationScope                     allocation_scope)
@@ -270,15 +274,15 @@ static void* vulkan_alloc(
 }
 
 static void vulkan_free(
-    void*                                       data,
-    void*                                       memory)
+    void* data,
+    void* memory)
 {
     deallocate(memory);
 }
 
 static void* vulkan_realloc(
-    void*                                       data,
-    void*                                       p,
+    void* data,
+    void* p,
     size_t                                      size,
     size_t                                      alignment,
     VkSystemAllocationScope                     allocation_scope)
@@ -332,7 +336,9 @@ struct VulkanFramebufferCreateInfo
     VkRenderPass render_pass;
     VkImageView attachments[GPU_Max_Render_Target * 2 + 1]; // color, resolve and depth
     uint32_t attachment_count;
-    uint32_t width, height, layers;
+    uint32_t width;
+    uint32_t height;
+    uint32_t layers;
 };
 
 AMAZING_NAMESPACE_END

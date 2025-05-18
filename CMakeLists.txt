@@ -5,6 +5,10 @@ project(
     LANGUAGES CXX C
 )
 
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    add_compile_options(-Wno-nontrivial-memcall)
+endif ()
+
 add_subdirectory(ext)
 add_subdirectory(3rd)
 
@@ -70,19 +74,6 @@ if (WIN32)
         PUBLIC
         NOMINMAX
         WIN32_LEAN_AND_MEAN
-    )
-endif ()
-
-if (MSVC)
-    target_compile_options(
-        ${PROJECT_NAME}
-        PRIVATE
-        # make __VA_OPT__ valid in msvc
-        /Zc:preprocessor
-        # disable alternative tokens
-        /Za
-        # utf-8 source and execution character sets
-        /utf-8
     )
 endif ()
 

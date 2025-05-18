@@ -345,10 +345,10 @@ namespace Trait
 			static constexpr bool value = std::is_invocable_r_v<Ret, F, Args...> || std::is_nothrow_invocable_r_v<Ret, F, Args...>;
 		};
 
-		template<typename T, typename U>
+		template<typename... T>
 		struct concat_types
 		{
-			using type = type_list<T, U>;
+			using type = type_list<T...>;
 		};
 
 		template<typename... T, typename... U>

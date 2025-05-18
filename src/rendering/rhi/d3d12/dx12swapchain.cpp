@@ -106,7 +106,6 @@ DX12SwapChain::~DX12SwapChain()
     {
         DX12Texture* back_texture = static_cast<DX12Texture*>(m_back_textures[i].back_texture);
         DX12TextureView* back_texture_view = static_cast<DX12TextureView*>(m_back_textures[i].back_texture_view);
-        DX_FREE(back_texture->m_resource);
         PLACEMENT_DELETE(DX12TextureView, back_texture_view);
         PLACEMENT_DELETE(DX12Texture, back_texture);
     }

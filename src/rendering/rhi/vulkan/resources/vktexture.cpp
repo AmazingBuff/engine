@@ -228,7 +228,8 @@ VKTexture::~VKTexture()
     }
     else
     {
-        vmaDestroyImage(device->m_allocator, m_image, m_allocation);
+        if (m_allocation)
+            vmaDestroyImage(device->m_allocator, m_image, m_allocation);
         Allocator<GPUTextureInfo>::deallocate(m_info);
     }
 }

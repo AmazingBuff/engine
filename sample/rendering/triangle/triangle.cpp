@@ -72,8 +72,8 @@ void create_pipeline()
 
 void destroy_pipeline()
 {
-    GPU_destroy_root_signature(root_signature);
     GPU_destroy_graphics_pipeline(pipeline);
+    GPU_destroy_root_signature(root_signature);
 }
 
 void draw(SDL_Window* window)
@@ -100,6 +100,9 @@ void draw(SDL_Window* window)
 
         // draw
         uint32_t index = t_swap_chain->acquire_next_frame(t_image_semaphore, nullptr);
+        if (index == std::numeric_limits<uint32_t>::max())
+            continue;
+
         GPUTexture const* texture = t_swap_chain->fetch_back_texture(index);
         GPUTextureView const* texture_view = t_swap_chain->fetch_back_texture_view(index);
 
@@ -192,5 +195,6 @@ int main()
 
     draw(window);
 
+    int* p = Allocator<int>::allocate(1);
     return 0;
 }

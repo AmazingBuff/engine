@@ -26,7 +26,7 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
     if (!info.vertex_inputs.empty())
     {
         Map<uint32_t, VkVertexInputBindingDescription> input_bindings;
-        for (GPUVertexAttribute const& vertex_input: info.vertex_inputs)
+        for (GPUVertexAttribute const& vertex_input : info.vertex_inputs)
         {
             input_bindings.emplace(vertex_input.slot, VkVertexInputBindingDescription{});
             input_attribute_count += vertex_input.array_size;
@@ -35,7 +35,7 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         input_attribute_descriptions = STACK_NEW(VkVertexInputAttributeDescription, input_attribute_count);
 
         uint32_t attribute_index = 0;
-        for (GPUVertexAttribute const& vertex_input: info.vertex_inputs)
+        for (GPUVertexAttribute const& vertex_input : info.vertex_inputs)
         {
             VkVertexInputBindingDescription& input_binding_description = input_bindings[vertex_input.slot];
             input_binding_description.binding = vertex_input.slot;
@@ -86,19 +86,19 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
     }
 
     SHADER_STAGE(vertex_shader, VK_SHADER_STAGE_VERTEX_BIT)
-    SHADER_STAGE(tessellation_control_shader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
-    SHADER_STAGE(tessellation_evaluation_shader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
-    SHADER_STAGE(geometry_shader, VK_SHADER_STAGE_GEOMETRY_BIT)
-    SHADER_STAGE(fragment_shader, VK_SHADER_STAGE_FRAGMENT_BIT)
+        SHADER_STAGE(tessellation_control_shader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
+        SHADER_STAGE(tessellation_evaluation_shader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
+        SHADER_STAGE(geometry_shader, VK_SHADER_STAGE_GEOMETRY_BIT)
+        SHADER_STAGE(fragment_shader, VK_SHADER_STAGE_FRAGMENT_BIT)
 #undef SHADER_STAGE
 
-    // viewport
-    VkPipelineViewportStateCreateInfo viewport_state_info{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .viewportCount = 1,
-        .pViewports = nullptr,
-        .scissorCount = 1,
-        .pScissors = nullptr,
+        // viewport
+        VkPipelineViewportStateCreateInfo viewport_state_info{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+            .viewportCount = 1,
+            .pViewports = nullptr,
+            .scissorCount = 1,
+            .pScissors = nullptr,
     };
 
     // dynamic states
@@ -138,6 +138,8 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         .depthWriteEnable = VK_FALSE,
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable = VK_FALSE,
+        .minDepthBounds = 0.0f,
+        .maxDepthBounds = 1.0f,
     };
     if (info.depth_stencil_state)
     {
@@ -164,9 +166,6 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         depth_stencil_state_info.back.compareMask = depth_stencil_state->stencil_read_mask;
         depth_stencil_state_info.back.writeMask = depth_stencil_state->stencil_write_mask;
         depth_stencil_state_info.back.reference = 0;
-
-        depth_stencil_state_info.minDepthBounds = 0;
-        depth_stencil_state_info.maxDepthBounds = 1;
     }
 
     // rasterizer state

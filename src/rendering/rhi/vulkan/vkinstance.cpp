@@ -226,6 +226,11 @@ VKInstance::VKInstance(GPUInstanceCreateInfo const& info) : m_instance(nullptr),
 
 VKInstance::~VKInstance()
 {
+    for (VKAdapter* adapter : m_adapters)
+    {
+        PLACEMENT_DELETE(VKAdapter, adapter);
+    }
+
     if (m_debug_messenger)
         vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_messenger, VK_Allocation_Callbacks_Ptr);
     vkDestroyInstance(m_instance, VK_Allocation_Callbacks_Ptr);

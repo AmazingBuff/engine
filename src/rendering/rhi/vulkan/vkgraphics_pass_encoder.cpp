@@ -40,7 +40,7 @@ void VKGraphicsPassEncoder::bind_index_buffer(GPUBufferBinding const& binding)
     VKBuffer const* buffer = static_cast<VKBuffer const*>(binding.buffer);
 
     VkIndexType index_type = sizeof(uint16_t) == binding.stride ? VK_INDEX_TYPE_UINT16 :
-    sizeof(uint8_t) == binding.stride ? VK_INDEX_TYPE_UINT8_EXT : VK_INDEX_TYPE_UINT32;
+        sizeof(uint8_t) == binding.stride ? VK_INDEX_TYPE_UINT8_EXT : VK_INDEX_TYPE_UINT32;
 
     vk_device->m_device_table.vkCmdBindIndexBuffer(m_command->m_command_buffer, buffer->m_buffer, binding.offset, index_type);
 }

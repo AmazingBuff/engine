@@ -20,6 +20,7 @@ public:
     struct VulkanAdapterDetail
     {
         VkPhysicalDeviceProperties device_properties;
+        VkPhysicalDeviceFeatures device_features;
     };
     VulkanAdapterDetail m_vulkan_detail;
 private:

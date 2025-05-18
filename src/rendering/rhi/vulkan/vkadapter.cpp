@@ -180,6 +180,7 @@ void VKAdapter::record_adapter_detail()
     const VkPhysicalDeviceProperties& properties = properties_2.properties;
     const VkPhysicalDeviceFeatures& features = features_2.features;
     m_vulkan_detail.device_properties = properties;
+    m_vulkan_detail.device_features = features;
 
     m_adapter_detail.is_cpu = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU;
     m_adapter_detail.is_virtual = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
