@@ -5,6 +5,7 @@
 #include "dx12command_buffer.h"
 #include "dx12device.h"
 #include "dx12command_pool.h"
+#include "dx12queue.h"
 #include "dx12query_pool.h"
 #include "dx12graphics_pass_encoder.h"
 #include "resources/dx12buffer.h"
@@ -26,13 +27,14 @@ static constexpr D3D12_COMMAND_LIST_TYPE Command_List_Map[GPU_Queue_Type_Count] 
 DX12CommandBuffer::DX12CommandBuffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info) : m_command_list(nullptr), m_bound_descriptor_heaps{}, m_bound_heap_index(0), m_bound_root_signature(nullptr)
 {
     DX12CommandPool const* dx12_command_pool = static_cast<DX12CommandPool const*>(pool);
-    DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_command_pool->m_ref_device);
+    DX12Queue const* dx12_queue = static_cast<DX12Queue const*>(dx12_command_pool->m_ref_queue);
+    DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_queue->m_ref_device);
 
     m_bound_heap_index = GPU_Node_Index;
 
     ID3D12GraphicsCommandList* command = nullptr;
     DX_CHECK_RESULT(dx12_device->m_device->CreateCommandList(m_bound_heap_index,
-        Command_List_Map[to_underlying(dx12_command_pool->m_type)], dx12_command_pool->m_command_allocator,
+        Command_List_Map[to_underlying(dx12_queue->m_type)], dx12_command_pool->m_command_allocator,
         nullptr, IID_PPV_ARGS(&command)));
     DX_CHECK_RESULT(command->Close());
 
@@ -54,10 +56,11 @@ DX12CommandBuffer::~DX12CommandBuffer()
 void DX12CommandBuffer::begin_command()
 {
     DX12CommandPool const* dx12_command_pool = static_cast<DX12CommandPool const*>(m_ref_pool);
+    DX12Queue const* dx12_queue = static_cast<DX12Queue const*>(dx12_command_pool->m_ref_queue);
 
     DX_CHECK_RESULT(m_command_list->Reset(dx12_command_pool->m_command_allocator, nullptr));
 
-    if (dx12_command_pool->m_type != GPUQueueType::e_transfer)
+    if (dx12_queue->m_type != GPUQueueType::e_transfer)
     {
         ID3D12DescriptorHeap* heaps[] = {
             m_bound_descriptor_heaps[0]->descriptor_heap,
@@ -189,7 +192,8 @@ void DX12CommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
 void DX12CommandBuffer::transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
 {
     DX12CommandPool const* command_pool = static_cast<DX12CommandPool const*>(m_ref_pool);
-    DX12Device const* device = static_cast<DX12Device const*>(command_pool->m_ref_device);
+    DX12Queue const* queue = static_cast<DX12Queue const*>(command_pool->m_ref_queue);
+    DX12Device const* device = static_cast<DX12Device const*>(queue->m_ref_device);
     DX12Buffer const* buffer = static_cast<DX12Buffer const*>(info.src_buffer);
     DX12Texture const* texture = static_cast<DX12Texture const*>(info.dst_texture);
 

@@ -41,7 +41,7 @@ public:
 
     static constexpr bool is_multi = Multi;
 
-    static constexpr size_t max_bucket_size = 8;
+    static constexpr size_t max_bucket_size = 4;
     static constexpr size_t max_load_factor_numerator = 7;
     static constexpr size_t max_load_factor_denominator = 8;
 

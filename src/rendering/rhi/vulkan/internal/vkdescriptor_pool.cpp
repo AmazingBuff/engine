@@ -14,6 +14,7 @@ VKDescriptorPool::VKDescriptorPool(VKDevice const* device) : m_pool(nullptr)
     VkDescriptorPoolCreateInfo descriptor_info{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = VK_Descriptor_Pool_Max_Sets,
         .poolSizeCount = VK_Descriptor_Pool_Size_Count,
         .pPoolSizes = VK_Descriptor_Pool_Sizes,

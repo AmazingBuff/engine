@@ -10,7 +10,7 @@
 AMAZING_NAMESPACE_BEGIN
 
 static constexpr uint32_t GPU_Max_Render_Target = 8;
-
+static constexpr uint32_t GPU_Max_Push_Constant_Size = 128;
 
 class GPUSurface;
 class GPUInstance;

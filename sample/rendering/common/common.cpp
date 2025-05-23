@@ -8,7 +8,6 @@
 #include "stb_image.h"
 #include <Unknwn.h>
 #include <dxc/dxcapi.h>
-
 #include <filesystem>
 
 thread_local GPUInstance* t_instance = nullptr;
@@ -72,7 +71,7 @@ void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
         .width = Width,
         .height = Height,
         .frame_count = Frame_In_Flight,
-        .format = GPUFormat::e_r8g8b8a8_unorm,
+        .format = Backend_Format,
         .enable_vsync = true,
         .surface = t_surface,
         .present_queues = { t_graphics_queue }
@@ -166,7 +165,8 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
     Vector<LPCWSTR> arguments = {
         L"-E", entry,
         L"-T", shader_model,
-        L"-I", inc
+        L"-I", inc,
+        L"-Wno-ignored-attributes"
     };
     if (t_backend == GPUBackend::e_vulkan)
         arguments.push_back(L"-spirv");
@@ -198,6 +198,7 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
 
 void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
 {
+    t_command_pool[0]->reset();
     t_command_buffer[0]->begin_command();
     t_command_buffer[0]->transfer_buffer_to_texture(info);
     GPUTextureBarrier barrier{

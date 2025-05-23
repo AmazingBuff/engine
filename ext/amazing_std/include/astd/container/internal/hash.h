@@ -11,7 +11,7 @@ AMAZING_NAMESPACE_BEGIN
 
 INTERNAL_NAMESPACE_BEGIN
 
-static constexpr size_t Bucket_Count = 16;
+static constexpr size_t Bucket_Count = 8;
 
 class Probe
 {
@@ -127,24 +127,77 @@ public:
 
         friend class Hash;
     };
-
-    explicit Hash() : m_size(0)
+public:
+    Hash() : m_size(0)
     {
         m_bucket_count = Bucket_Count;
         size_t element_size = m_bucket_count * max_bucket_size + 1;
         m_buckets = allocator::allocate(element_size * sizeof(node_type));
+        for (size_t i = 0; i < element_size; i++)
+            new (m_buckets + i) node_type();
+
         // end flag
         m_buckets[element_size - 1].flag = ElementFlag::e_end;
     }
 
+    Hash(const Hash& other) : m_bucket_count(other.m_bucket_count), m_size(other.m_size), m_probe(other.m_probe)
+    {
+        size_t element_size = m_bucket_count * max_bucket_size + 1;
+        m_buckets = allocator::allocate(element_size * sizeof(node_type));
+        for (size_t i = 0; i < element_size; i++)
+            new (m_buckets + i) node_type();
+
+        for (size_t i = 0; i < element_size; i++)
+            m_buckets[i] = other.m_buckets[i];
+
+        // end flag
+        m_buckets[element_size - 1].flag = ElementFlag::e_end;
+    }
+
+    Hash(Hash&& other) noexcept : m_bucket_count(other.m_bucket_count), m_size(other.m_size)
+    {
+        swap(other);
+    }
+
     ~Hash()
     {
-        for (size_t i = 0; i < m_bucket_count * max_bucket_size + 1; i++)
+        for (size_t i = 0; i <  m_bucket_count * max_bucket_size + 1; i++)
             m_buckets[i].~node_type();
-
         deallocate(m_buckets);
         m_bucket_count = 0;
         m_size = 0;
+    }
+
+    Hash& operator=(const Hash& other)
+    {
+        if (this != &other)
+        {
+            for (size_t i = 0; i <  m_bucket_count * max_bucket_size + 1; i++)
+                m_buckets[i].~node_type();
+            deallocate(m_buckets);
+
+            m_bucket_count = other.m_bucket_count;
+            m_size = other.m_size;
+            m_probe = other.m_probe;
+            size_t element_size = m_bucket_count * max_bucket_size + 1;
+            m_buckets = allocator::allocate(element_size * sizeof(node_type));
+            for (size_t i = 0; i < element_size; i++)
+                new (m_buckets + i) node_type();
+
+            for (size_t i = 0; i < element_size; i++)
+                m_buckets[i] = other.m_buckets[i];
+
+            // end flag
+            m_buckets[element_size - 1].flag = ElementFlag::e_end;
+        }
+
+        return *this;
+    }
+
+    Hash& operator=(Hash&& other) noexcept
+    {
+        swap(other);
+        return *this;
     }
 
     void insert(value_type&& value)
@@ -300,6 +353,14 @@ public:
     Iterator end()
     {
         return Iterator(m_buckets + m_bucket_count * max_bucket_size);
+    }
+
+    void swap(Hash& other) noexcept
+    {
+        Amazing::swap(m_buckets, other.m_buckets);
+        Amazing::swap(m_bucket_count, other.m_bucket_count);
+        Amazing::swap(m_probe, other.m_probe);
+        Amazing::swap(m_size, other.m_size);
     }
 
 protected:

@@ -375,7 +375,7 @@ enum class GPUResourceTypeFlag : uint32_t
     e_input_attachment = 1 << 24,
     e_texel_buffer = 1 << 25,
     e_rw_texel_buffer = 1 << 26,
-    e_combined_image_sampler = 1 << 27,
+    e_combined_image_sampler = 1 << 27, // sampler 2d
 };
 using GPUResourceType = BitFlag<GPUResourceTypeFlag>;
 

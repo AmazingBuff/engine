@@ -44,6 +44,8 @@ void just()
     no_dtor->m.emplace(4, "four");
     no_dtor->m.emplace(5, "five");
 
+    int32_t val[10] = { 1, 5, 7, 4, 9, 2, 3, 8, 6 };
+    Amazing::heap_sort(val);
 
     uint32_t* v = nullptr;
     if (!no_dtor->v.empty())
@@ -63,6 +65,9 @@ void just()
 
 int main()
 {
+    Amazing::Pair<int, NoDtor> pt;
+    Amazing::Pair<int, NoDtor> qt(std::move(pt));
+
     just();
     int* pi = Amazing::Allocator<int>::allocate(1);
     // std::thread producer(&produce);

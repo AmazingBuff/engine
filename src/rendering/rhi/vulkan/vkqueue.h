@@ -26,6 +26,8 @@ private:
 
     friend class VKDevice;
     friend class VKCommandPool;
+    friend class VKCommandBuffer;
+    friend class VKGraphicsPassEncoder;
 };
 
 AMAZING_NAMESPACE_END

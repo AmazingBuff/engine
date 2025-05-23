@@ -13,6 +13,8 @@ AMAZING_NAMESPACE_BEGIN
 class VKQueue;
 class VKDescriptorPool;
 class VKPassTable;
+class VKCommandPool;
+class VKCommandBuffer;
 
 class VKDevice final : public GPUDevice
 {
@@ -33,6 +35,10 @@ private:
     VolkDeviceTable m_device_table;
 
     Vector<VKQueue*> m_command_queues[GPU_Queue_Type_Count];
+
+    // internal command pool and command buffer for transfer
+    VKCommandPool* m_internal_command_pool;
+    VKCommandBuffer* m_internal_command_buffer;
 
     friend class VKAdapter;
     friend class VKQueue;

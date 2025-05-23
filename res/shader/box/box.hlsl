@@ -1,26 +1,20 @@
 
 #include "common.hlsl"
 
-//[[vk::push_constant]]
+[[vk::push_constant]]
 ConstantBuffer<PassInfo> b_push_constant : register(b0, space0);
 
-//[[vk::binding(0, 0)]]
-cbuffer Object : register(b1, space0)
-{
-    ObjectInfo b_object;
-};
+[[vk::binding(1, 0)]]
+ConstantBuffer<ObjectInfo> b_object : register(b1, space0);
 
-//[[vk::binding(1, 0)]]
+[[vk::binding(0, 1)]]
 Texture2D<float4> t_texture : register(t0, space1);
 
-//[[vk::binding(2, 0)]]
+[[vk::binding(0, 2)]]
 SamplerState s_sampler : register(s0, space2);
 
-//[[vk::binding(1, 1)]]
-cbuffer Light : register(b2, space0)
-{
-    LightInfo b_light;
-};
+[[vk::binding(2, 0)]]
+ConstantBuffer<LightInfo> b_light : register(b2, space0);
 
 VertexOutput vs(VertexAttribute attribute, out float4 position : SV_Position)
 {

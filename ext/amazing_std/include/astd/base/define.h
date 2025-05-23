@@ -37,6 +37,8 @@ template <typename Tp, typename Up>
 class Pair
 {
 public:
+    Pair() : first(Tp()), second(Up()) {}
+
     template<typename OtherT, typename OtherU>
         requires(std::is_convertible_v<OtherT, Tp>&& std::is_convertible_v<OtherU, Up>)
     Pair(OtherT&& f, OtherU&& s) : first(std::forward<OtherT>(f)), second(std::forward<OtherU>(s)) {}

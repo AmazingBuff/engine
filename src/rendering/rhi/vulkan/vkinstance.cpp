@@ -20,16 +20,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
     switch (message_type)
     {
     case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
-        type = "general";
+        type = "General";
         break;
     case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
-        type = "validation";
+        type = "Validation";
         break;
     case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
-        type = "performance";
+        type = "Performance";
         break;
     case VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT:
-        type = "device address binding";
+        type = "Device Address Binding";
         break;
     default:
         break;
@@ -39,16 +39,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
     switch (message_severity)
     {
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-        std::cout << "[vulkan, verbose, " << type << "]: " << callback_data->pMessage << std::endl;
+        std::cout << "[Vulkan, Verbose, " << type << "]: " << callback_data->pMessage << std::endl;
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-        std::cout << "[vulkan, info, " << type << "]: " << callback_data->pMessage << std::endl;
+        std::cout << "[Vulkan, Info, " << type << "]: " << callback_data->pMessage << std::endl;
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-        std::cerr << "[vulkan, warning, " << type << "]: " << callback_data->pMessage << std::endl;
+        std::cerr << "[Vulkan, Warning, " << type << "]: " << callback_data->pMessage << std::endl;
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        std::cerr << "[vulkan, error, " << type << "]: " << callback_data->pMessage << std::endl;
+        std::cerr << "[Vulkan, Error, " << type << "]: " << callback_data->pMessage << std::endl;
         break;
     default:
         return VK_TRUE;
@@ -68,7 +68,7 @@ VKInstance::VKInstance(GPUInstanceCreateInfo const& info) : m_instance(nullptr),
         .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
         .pEngineName = "Amazing Engine",
         .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-        .apiVersion = VK_API_VERSION_1_0,
+        .apiVersion = VK_API_VERSION_1_1,
     };
 
     Vector<const char*> instance_layers;
@@ -201,11 +201,11 @@ VKInstance::VKInstance(GPUInstanceCreateInfo const& info) : m_instance(nullptr),
     }
 
     //sort by gpu type
-    //std::sort(m_adapters.begin(), m_adapters.end(), [](const VKAdapter* a, const VKAdapter* b)
-    //{
-    //    const uint32_t orders[] = {4, 1, 0, 2, 3};
-    //    return orders[a->m_vulkan_detail.device_properties.deviceType] < orders[b->m_vulkan_detail.device_properties.deviceType];
-    //});
+    sort(m_adapters.begin(), m_adapters.end(), [](const VKAdapter* a, const VKAdapter* b)
+    {
+        const uint32_t orders[] = {4, 1, 0, 2, 3};
+        return orders[a->m_vulkan_detail.device_properties.deviceType] < orders[b->m_vulkan_detail.device_properties.deviceType];
+    });
 
     // debug util
     if (info.enable_debug_layer)

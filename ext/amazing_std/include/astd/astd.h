@@ -15,6 +15,7 @@
 
 #include "memory/pointer.h"
 
+#include "algorithm/sort.h"
 
 AMAZING_NAMESPACE_BEGIN
 

@@ -101,9 +101,9 @@ constexpr size_t count_bits(const Tp value)
 template<typename Tp>
 void swap(Tp& l, Tp& r) noexcept
 {
-    Tp tmp = l;
-    l = r;
-    r = tmp;
+    Tp tmp = std::move(l);
+    l = std::move(r);
+    r = std::move(tmp);
 }
 
 AMAZING_NAMESPACE_END

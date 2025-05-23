@@ -21,6 +21,10 @@ using Mat4f = Eigen::Matrix<Float, 4, 4>;
 
 using Affine3f = Eigen::Affine3f;
 
+static constexpr Float Pi = EIGEN_PI;
+static constexpr Float PiOver2 = EIGEN_PI / 2;
+static constexpr Float PiOver4 = EIGEN_PI / 4;
+
 AMAZING_NAMESPACE_END
 
 template <typename Scalar, int Rows, int Cols>

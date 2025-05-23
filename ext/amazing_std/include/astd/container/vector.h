@@ -8,6 +8,8 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+static constexpr size_t Min_Vector_Alloc_Size = 2;
+
 template <typename Tp, template <typename> typename Alloc = Allocator>
 class Vector
 {
@@ -52,9 +54,14 @@ public:
             return m_ptr;
         }
 
-        size_t operator-(const Iterator& other) const
+        NODISCARD int64_t operator-(const Iterator& other) const
         {
             return m_ptr - other.m_ptr;
+        }
+
+        NODISCARD Iterator operator+(int64_t offset) const
+        {
+            return m_ptr + offset;
         }
 
         NODISCARD bool operator==(const Iterator& other) const
@@ -160,7 +167,7 @@ public:
     void emplace_back(Args&&... args)
     {
         if (m_size >= m_capacity)
-            reserve(m_capacity == 0 ? 4 : (m_capacity * 3 / 2));
+            reserve(m_capacity == 0 ? Min_Vector_Alloc_Size : m_capacity * 3 / 2);
 
         m_data[m_size] = Tp(std::forward<Args>(args)...);
         m_size++;
@@ -169,7 +176,7 @@ public:
     void push_back(Tp&& value)
     {
         if (m_size >= m_capacity)
-            reserve(m_capacity == 0 ? 4 : (m_capacity * 3 / 2));
+            reserve(m_capacity == 0 ? Min_Vector_Alloc_Size : m_capacity * 3 / 2);
 
         m_data[m_size] = value;
         m_size++;
@@ -178,7 +185,7 @@ public:
     void push_back(const Tp& value)
     {
         if (m_size >= m_capacity)
-            reserve(m_capacity == 0 ? 4 : (m_capacity * 3 / 2));
+            reserve(m_capacity == 0 ? Min_Vector_Alloc_Size : m_capacity * 3 / 2);
 
         m_data[m_size] = value;
         m_size++;
@@ -257,12 +264,9 @@ public:
 
     void swap(Vector& other) noexcept
     {
-        if (this != &other)
-        {
-            Amazing::swap(m_data, other.m_data);
-            Amazing::swap(m_size, other.m_size);
-            Amazing::swap(m_capacity, other.m_capacity);
-        }
+        Amazing::swap(m_data, other.m_data);
+        Amazing::swap(m_size, other.m_size);
+        Amazing::swap(m_capacity, other.m_capacity);
     }
 
     void clear()

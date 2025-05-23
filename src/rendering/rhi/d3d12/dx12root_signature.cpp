@@ -90,7 +90,6 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
     }
 
     // push constant
-    // todo: add more push constant support
     m_constant_parameters = Allocator<D3D12ConstantParameter>::allocate(m_push_constant_count);
     for (uint32_t i = 0; i < m_push_constant_count; ++i)
     {

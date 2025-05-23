@@ -556,10 +556,10 @@ VkDescriptorType transfer_resource_type(GPUResourceType type)
 	switch (flag)
 	{
 	case GPUResourceTypeFlag::e_sampler: return VK_DESCRIPTOR_TYPE_SAMPLER;
+	case GPUResourceTypeFlag::e_buffer:
 	case GPUResourceTypeFlag::e_texture: return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 	case GPUResourceTypeFlag::e_uniform_buffer: return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	case GPUResourceTypeFlag::e_rw_texture: return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	case GPUResourceTypeFlag::e_buffer:
+	case GPUResourceTypeFlag::e_rw_texture:
 	case GPUResourceTypeFlag::e_rw_buffer: return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	case GPUResourceTypeFlag::e_input_attachment: return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 	case GPUResourceTypeFlag::e_texel_buffer: return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;

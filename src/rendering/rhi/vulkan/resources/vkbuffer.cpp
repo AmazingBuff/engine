@@ -106,16 +106,12 @@ VKBuffer::~VKBuffer()
 {
     VKDevice const* vk_device = static_cast<VKDevice const*>(m_ref_device);
 
+    Allocator<GPUBufferInfo>::deallocate(m_info);
     if (m_uniform_texel_view)
-    {
         vk_device->m_device_table.vkDestroyBufferView(vk_device->m_device, m_uniform_texel_view, VK_Allocation_Callbacks_Ptr);
-        m_uniform_texel_view = VK_NULL_HANDLE;
-    }
     if (m_storage_texel_view)
-    {
         vk_device->m_device_table.vkDestroyBufferView(vk_device->m_device, m_storage_texel_view, VK_Allocation_Callbacks_Ptr);
-        m_storage_texel_view = VK_NULL_HANDLE;
-    }
+
     vmaDestroyBuffer(vk_device->m_allocator, m_buffer, m_allocation);
 }
 

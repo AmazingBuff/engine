@@ -3,8 +3,12 @@
 //
 
 #include "vktexture.h"
+
+#include "rendering/rhi/common/queue.h"
 #include "rendering/rhi/vulkan/vkdevice.h"
 #include "rendering/rhi/vulkan/vkadapter.h"
+#include "rendering/rhi/vulkan/vkcommand_buffer.h"
+#include "rendering/rhi/vulkan/vkcommand_pool.h"
 #include "rendering/rhi/vulkan/utils/vk_macro.h"
 #include "rendering/rhi/vulkan/utils/vk_utils.h"
 
@@ -214,6 +218,27 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
     m_info->array_layers = info.array_layers;
     m_info->is_cube = (info.type & GPUResourceTypeFlag::e_texture_cube) == GPUResourceTypeFlag::e_texture_cube;
     m_info->format = info.format;
+
+    // transfer image layout
+    vk_device->m_internal_command_pool->reset();
+    vk_device->m_internal_command_buffer->begin_command();
+    GPUTextureBarrier barrier{
+        .texture = this,
+        .src_state = GPUResourceStateFlag::e_undefined,
+        .dst_state = info.state,
+    };
+    GPUResourceBarrierInfo barrier_info{
+        .texture_barriers = {barrier}
+    };
+    vk_device->m_internal_command_buffer->resource_barrier(barrier_info);
+
+    vk_device->m_internal_command_buffer->end_command();
+
+    GPUQueueSubmitInfo submit_info{
+        .command_buffers = {vk_device->m_internal_command_buffer},
+    };
+    vk_device->m_internal_command_pool->m_ref_queue->submit(submit_info);
+    vk_device->m_internal_command_pool->m_ref_queue->wait_idle();
 
     m_ref_device = device;
 }

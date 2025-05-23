@@ -109,9 +109,9 @@ DX12ShaderLibrary::DX12ShaderLibrary(GPUDevice const* device, GPUShaderLibraryCr
 
         if (shader_desc.ConstantBuffers && input_bind_desc.Type == D3D_SIT_CBUFFER)
         {
-            ID3D12ShaderReflectionConstantBuffer* cbuffer = dx12_reflection->GetConstantBufferByName(input_bind_desc.Name);
+            ID3D12ShaderReflectionConstantBuffer* constant_buffer = dx12_reflection->GetConstantBufferByName(input_bind_desc.Name);
             D3D12_SHADER_BUFFER_DESC buffer_desc;
-            DX_CHECK_RESULT(cbuffer->GetDesc(&buffer_desc));
+            DX_CHECK_RESULT(constant_buffer->GetDesc(&buffer_desc));
             shader_resource.size = buffer_desc.Size;
         }
         if (input_bind_desc.Type == D3D_SIT_UAV_RWTYPED && input_bind_desc.Dimension == D3D_SRV_DIMENSION_BUFFER)

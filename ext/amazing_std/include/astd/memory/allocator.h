@@ -10,41 +10,24 @@ constexpr static size_t k_cache_alignment = 64;
 
 
 void* allocate(size_t size, size_t alignment = k_cache_alignment, void* data = nullptr);
-
-// recompute
 void* reallocate(void* p, size_t size, size_t alignment = k_cache_alignment, void* data = nullptr);
-
 void deallocate(void* p);
-
-template<typename Tp>
-    requires(!std::has_virtual_destructor_v<Tp>)
-Tp* allocate(size_t count, size_t alignment = k_cache_alignment, void* data = nullptr)
-{
-    return static_cast<Tp*>(allocate(sizeof(Tp) * count, alignment, data));
-}
-
-template<typename Tp>
-    requires(!std::has_virtual_destructor_v<Tp>)
-Tp* reallocate(void* p, size_t count, size_t alignment = k_cache_alignment, void* data = nullptr)
-{
-    return static_cast<Tp*>(reallocate(p, sizeof(Tp) * count, alignment, data));
-}
 
 
 template <typename Tp>
-    requires(!std::has_virtual_destructor_v<Tp>)
 class Allocator
 {
 public:
+    // only allocate memory, but not initialize
     static Tp* allocate(size_t count, size_t alignment = k_cache_alignment, void* data = nullptr)
     {
-        return Amazing::allocate<Tp>(count, alignment, data);
+        return static_cast<Tp*>(Amazing::allocate(sizeof(Tp) * count, alignment, data));
     }
 
-    // allocate memory near p with count
+    // allocate memory near p with count, only allocate memory, but not initialize
     static Tp* reallocate(void* p, size_t count, size_t alignment = k_cache_alignment, void* data = nullptr)
     {
-        return Amazing::reallocate<Tp>(p, count, alignment, data);
+        return static_cast<Tp*>(Amazing::reallocate(p, sizeof(Tp) * count, alignment, data));
     }
 
     static void deallocate(Tp* p)

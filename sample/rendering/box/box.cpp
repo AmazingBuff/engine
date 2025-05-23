@@ -4,6 +4,8 @@
 
 #include <common.h>
 
+#include "assimp/Vertex.h"
+
 thread_local GPURootSignature* root_signature = nullptr;
 thread_local GPUGraphicsPipeline* pipeline = nullptr;
 thread_local GPUDescriptorSet* texture_set = nullptr;
@@ -16,7 +18,7 @@ thread_local GPUBuffer* buffer = nullptr;
 thread_local GPUBuffer* vertex_buffer = nullptr;
 thread_local GPUBuffer* index_buffer = nullptr;
 
-thread_local bool use_static_samplers = true;
+thread_local bool use_static_samplers = false;
 
 
 struct ObjectInfo
@@ -24,7 +26,7 @@ struct ObjectInfo
     Affine3f model;
     Affine3f model_inv;
 };
-thread_local ObjectInfo world;
+thread_local ObjectInfo world[2];
 
 struct PassInfo
 {
@@ -114,18 +116,24 @@ void set_scene()
     model.rotate(Eigen::AngleAxisf(180, Vec3f::UnitZ()));
     model.translate(Vec3f(3.0, 0.0, -6.0));
 
-    world.model = model;
-    world.model_inv = model.inverse();
+    world[0].model = model;
+    world[0].model_inv = model.inverse();
+
+    model.translate(Vec3f(1.0, 0.0, 0.0));
+    world[1].model = model;
+    world[1].model_inv = model.inverse();
 
     GPUBufferCreateInfo buffer_ci{
-    .size = sizeof(vertices),
-    .usage = GPUMemoryUsage::e_cpu_to_gpu,
-    .flags = GPUBufferFlagsFlag::e_persistent_map,
+        .size = sizeof(vertices),
+        .usage = GPUMemoryUsage::e_cpu_to_gpu,
+        .type = GPUResourceTypeFlag::e_vertex_buffer,
+        .flags = GPUBufferFlagsFlag::e_persistent_map,
     };
     vertex_buffer = GPU_create_buffer(t_device, buffer_ci);
     vertex_buffer->map(0, sizeof(vertices), vertices);
 
     buffer_ci.size = sizeof(indices);
+    buffer_ci.type = GPUResourceTypeFlag::e_index_buffer;
     index_buffer = GPU_create_buffer(t_device, buffer_ci);
     index_buffer->map(0, sizeof(indices), indices);
 }
@@ -201,14 +209,13 @@ void create_pipeline()
         .flags = GPUBufferFlagsFlag::e_persistent_map,
     };
     buffer = GPU_create_buffer(t_device, buffer_ci);
-    buffer->map(0, sizeof(ObjectInfo), &world);
+    buffer->map(0, sizeof(ObjectInfo), world);
 
     // graphics pipeline
-    Vector<char> vs = read_file(RES_DIR"shader/box/box.hlsl");
-    Vector<char> fs = read_file(RES_DIR"shader/box/box.hlsl");
+    Vector<char> shader = read_file(RES_DIR"shader/box/box.hlsl");
 
-    Vector<char> vs_compile = compile_shader(vs, L"vs", GPUShaderStageFlag::e_vertex);
-    Vector<char> fs_compile = compile_shader(fs, L"ps", GPUShaderStageFlag::e_fragment);
+    Vector<char> vs_compile = compile_shader(shader, L"vs", GPUShaderStageFlag::e_vertex);
+    Vector<char> fs_compile = compile_shader(shader, L"ps", GPUShaderStageFlag::e_fragment);
 
     GPUShaderLibraryCreateInfo vs_desc{
         .name = "VertexShaderLibrary",
@@ -231,13 +238,13 @@ void create_pipeline()
 
     GPUShaderEntry vertex_shader_entry{
         .library = vertex_shader,
-        .entry = "main",
+        .entry = "vs",
         .stage = GPUShaderStageFlag::e_vertex,
     };
 
     GPUShaderEntry fragment_shader_entry{
         .library = fragment_shader,
-        .entry = "main",
+        .entry = "ps",
         .stage = GPUShaderStageFlag::e_fragment,
     };
 
@@ -287,14 +294,14 @@ void create_pipeline()
         sampler_set->update(&sampler_set_data, 1);
     }
 
-    GPUFormat backend_format = GPUFormat::e_r8g8b8a8_unorm;
-
     GPUVertexAttribute pos{
         .array_size = 1,
         .format = GPUFormat::e_r32g32b32_sfloat,
         .slot = 0,
         .semantic_name = "POSITION",
+        .location = 0,
         .offset = 0,
+        .size = 12,
     };
 
     GPUVertexAttribute tex{
@@ -302,7 +309,9 @@ void create_pipeline()
         .format = GPUFormat::e_r32g32_sfloat,
         .slot = 0,
         .semantic_name = "TEXCOORD",
+        .location = 1,
         .offset = 12,
+        .size = 8,
     };
 
     GPUVertexAttribute normal{
@@ -310,7 +319,9 @@ void create_pipeline()
         .format = GPUFormat::e_r32g32b32_sfloat,
         .slot = 0,
         .semantic_name = "NORMAL",
+        .location = 2,
         .offset = 20,
+        .size = 12,
         .rate = GPUVertexInputRate::e_vertex
     };
 
@@ -319,7 +330,9 @@ void create_pipeline()
         .format = GPUFormat::e_r32g32b32_sfloat,
         .slot = 0,
         .semantic_name = "TANGENT",
+        .location = 3,
         .offset = 32,
+        .size = 12,
     };
 
     GPUGraphicsPipelineCreateInfo pipeline_desc{
@@ -327,7 +340,7 @@ void create_pipeline()
         .vertex_shader = &vertex_shader_entry,
         .fragment_shader = &fragment_shader_entry,
         .vertex_inputs = { pos, tex, normal, tangent },
-        .color_format = &backend_format,
+        .color_format = &Backend_Format,
         .render_target_count = 1,
         .primitive_topology = GPUPrimitiveTopology::e_triangle_list,
     };
@@ -362,9 +375,25 @@ void destroy_pipeline()
 void draw(SDL_Window* window)
 {
     HWND hwnd = static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
+    HINSTANCE hinstance = static_cast<HINSTANCE>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_INSTANCE_POINTER, nullptr));
 
-    create_api_object(hwnd, GPUBackend::e_d3d12);
+    create_api_object(hwnd, hinstance, GPUBackend::e_d3d12);
     create_pipeline();
+
+    SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_MOTION, EventUserDataType::e_orbital_camera, [](const SDL_Event& event, void* user_data)
+    {
+        if (event.motion.state == SDL_BUTTON_LMASK)
+        {
+            OrbitalCamera* camera = static_cast<OrbitalCamera*>(user_data);
+            camera->on_mouse_move(event.motion.xrel, event.motion.yrel);
+        }
+    });
+
+    SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_WHEEL, EventUserDataType::e_orbital_camera, [](const SDL_Event& event, void* user_data)
+    {
+        OrbitalCamera* camera = static_cast<OrbitalCamera*>(user_data);
+        camera->on_mouse_scroll(event.wheel.y * event.wheel.mouse_y);
+    });
 
     bool quit = false;
     while (!quit)
@@ -372,6 +401,7 @@ void draw(SDL_Window* window)
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            SDL_Event_Callback_Handler.call(event.type, EventUserDataType::e_orbital_camera, event, &Orbital_Camera);
             switch (event.type)
             {
             case SDL_EVENT_QUIT:
@@ -380,12 +410,13 @@ void draw(SDL_Window* window)
             }
         }
 
+        Orbital_Camera.update_view_matrix(push_constant.view);
+
         // draw
         uint32_t index = t_swap_chain->acquire_next_frame(t_image_semaphore, nullptr);
         GPUTexture const* texture = t_swap_chain->fetch_back_texture(index);
         GPUTextureView const* texture_view = t_swap_chain->fetch_back_texture_view(index);
 
-        t_present_fence[index]->wait();
         t_command_pool[index]->reset();
         t_command_buffer[index]->begin_command();
 
@@ -425,7 +456,7 @@ void draw(SDL_Window* window)
         };
         encoder->bind_vertex_buffers(&binding, 1);
         binding.buffer = index_buffer;
-        binding.stride = 3;
+        binding.stride = 4;
         encoder->bind_index_buffer(binding);
 
 
@@ -462,15 +493,14 @@ void draw(SDL_Window* window)
         };
         t_graphics_queue->submit(queue_submit_info);
 
-        // present
-        t_graphics_queue->wait_idle();
-
         GPUQueuePresentInfo queue_present_info{
             .swap_chain = t_swap_chain,
             .wait_semaphores = {t_present_semaphore},
             .index = static_cast<uint8_t>(index),
         };
         t_graphics_queue->present(queue_present_info);
+
+        t_present_fence[index]->wait();
     }
 
     t_graphics_queue->wait_idle();
@@ -490,8 +520,6 @@ int main()
     SDL_Window* window = SDL_CreateWindow("Amazing Rendering", Width, Height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 
     draw(window);
-
-    int* p = Allocator<int>::allocate(1);
 
     return 0;
 }

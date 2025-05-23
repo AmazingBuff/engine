@@ -10,11 +10,10 @@ GPUGraphicsPipeline* pipeline = nullptr;
 void create_pipeline()
 {
     // graphics pipeline
-    Vector<char> vs = read_file(RES_DIR"shader/triangle/vertex_shader.hlsl");
-    Vector<char> fs = read_file(RES_DIR"shader/triangle/fragment_shader.hlsl");
+    Vector<char> shader = read_file(RES_DIR"shader/triangle/triangle.hlsl");
 
-    Vector<char> vs_compile = compile_shader(vs, L"main", GPUShaderStageFlag::e_vertex);
-    Vector<char> fs_compile = compile_shader(fs, L"main", GPUShaderStageFlag::e_fragment);
+    Vector<char> vs_compile = compile_shader(shader, L"vs", GPUShaderStageFlag::e_vertex);
+    Vector<char> fs_compile = compile_shader(shader, L"ps", GPUShaderStageFlag::e_fragment);
 
     GPUShaderLibraryCreateInfo vs_desc{
         .name = "VertexShaderLibrary",
@@ -37,13 +36,13 @@ void create_pipeline()
 
     GPUShaderEntry vertex_shader_entry{
         .library = vertex_shader,
-        .entry = "main",
+        .entry = "vs",
         .stage = GPUShaderStageFlag::e_vertex,
     };
 
     GPUShaderEntry fragment_shader_entry{
         .library = fragment_shader,
-        .entry = "main",
+        .entry = "ps",
         .stage = GPUShaderStageFlag::e_fragment,
     };
 
@@ -53,13 +52,11 @@ void create_pipeline()
 
     root_signature = GPU_create_root_signature(t_device, rs_desc);
 
-    GPUFormat backend_format = GPUFormat::e_r8g8b8a8_unorm;
-
     GPUGraphicsPipelineCreateInfo pipeline_desc{
         .root_signature = root_signature,
         .vertex_shader = &vertex_shader_entry,
         .fragment_shader = &fragment_shader_entry,
-        .color_format = &backend_format,
+        .color_format = &Backend_Format,
         .render_target_count = 1,
         .primitive_topology = GPUPrimitiveTopology::e_triangle_list,
     };
@@ -95,6 +92,8 @@ void draw(SDL_Window* window)
             case SDL_EVENT_QUIT:
                 quit = true;
                 break;
+            default:
+                break;
             }
         }
 
@@ -106,7 +105,6 @@ void draw(SDL_Window* window)
         GPUTexture const* texture = t_swap_chain->fetch_back_texture(index);
         GPUTextureView const* texture_view = t_swap_chain->fetch_back_texture_view(index);
 
-        t_present_fence[index]->wait();
         t_command_pool[index]->reset();
         t_command_buffer[index]->begin_command();
 
@@ -138,7 +136,7 @@ void draw(SDL_Window* window)
 
         GPUGraphicsPassEncoder* encoder = t_command_buffer[index]->begin_graphics_pass(graphics_pass_create_info);
 
-        encoder->set_viewport(Width / 4, 0, Width / 2, Height, 0, 1);
+        encoder->set_viewport(0, 0, Width, Height, 0, 1);
         encoder->set_scissor(0, 0, Width, Height);
         encoder->bind_pipeline(pipeline);
         encoder->draw(3, 0);
@@ -166,15 +164,14 @@ void draw(SDL_Window* window)
         };
         t_graphics_queue->submit(queue_submit_info);
 
-        // present
-        t_graphics_queue->wait_idle();
-
         GPUQueuePresentInfo queue_present_info{
             .swap_chain = t_swap_chain,
             .wait_semaphores = {t_present_semaphore},
             .index = static_cast<uint8_t>(index),
         };
         t_graphics_queue->present(queue_present_info);
+
+        t_present_fence[index]->wait();
     }
 
     t_graphics_queue->wait_idle();

@@ -18,8 +18,7 @@ DX12CommandPool::DX12CommandPool(GPUQueue const* queue, GPUCommandPoolCreateInfo
     (dx12_queue->m_type == GPUQueueType::e_compute ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
 
     DX_CHECK_RESULT(dx12_device->m_device->CreateCommandAllocator(type, IID_PPV_ARGS(&m_command_allocator)));
-    m_type = dx12_queue->m_type;
-    m_ref_device = dx12_device;
+    m_ref_queue = queue;
 }
 
 DX12CommandPool::~DX12CommandPool()

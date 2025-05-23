@@ -54,6 +54,7 @@ static void collect_resource(Vector<GPUShaderResource> const& input_resources, G
         if (is_push_constant(resource, info))
         {
             bool identity = false;
+            uint32_t push_constant_size = 0;
             for (auto& push_constant : output_push_constants)
             {
                 if (resource.name_hash == push_constant.name_hash &&
@@ -63,9 +64,16 @@ static void collect_resource(Vector<GPUShaderResource> const& input_resources, G
                     push_constant.stage |= resource.stage;
                     identity = true;
                 }
+                push_constant_size += push_constant.size;
             }
             if (!identity)
-                sort_set_binding(resource, output_push_constants);
+            {
+                push_constant_size += resource.size;
+                if (push_constant_size > GPU_Max_Push_Constant_Size)
+                    RENDERING_LOG_ERROR("push constant size {} exceeds max size 128 bytes!", push_constant_size);
+                else
+                    sort_set_binding(resource, output_push_constants);
+            }
         }
         else if (is_static_sampler(resource, info))
         {

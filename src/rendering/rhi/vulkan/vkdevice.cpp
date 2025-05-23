@@ -6,6 +6,8 @@
 #include "vkadapter.h"
 #include "vkinstance.h"
 #include "vkqueue.h"
+#include "vkcommand_pool.h"
+#include "vkcommand_buffer.h"
 #include "vkfence.h"
 #include "internal/vkdescriptor_pool.h"
 #include "internal/vkpass_table.h"
@@ -50,6 +52,7 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
     };
 
     VK_CHECK_RESULT(vkCreateDevice(vk_adapter->m_physical_device, &device_create_info, VK_Allocation_Callbacks_Ptr, &m_device));
+    m_ref_adapter = adapter;
 
     // for signal device
     volkLoadDeviceTable(&m_device_table, m_device);
@@ -94,7 +97,7 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
         .device = m_device,
         .pAllocationCallbacks = VK_Allocation_Callbacks_Ptr,
         .instance = vk_instance->m_instance,
-        .vulkanApiVersion = VK_API_VERSION_1_0,
+        .vulkanApiVersion = VK_API_VERSION_1_1,
     };
 
     VmaVulkanFunctions vma_functions;
@@ -106,11 +109,22 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
     m_descriptor_pool = PLACEMENT_NEW(VKDescriptorPool, sizeof(VKDescriptorPool), this);
     m_pass_table = PLACEMENT_NEW(VKPassTable, sizeof(VKPassTable));
 
-    m_ref_adapter = adapter;
+    VKQueue* internal_queue = nullptr;
+    if (m_command_queues[to_underlying(GPUQueueType::e_transfer)].empty())
+        internal_queue = m_command_queues[to_underlying(GPUQueueType::e_graphics)][0];
+    else
+        internal_queue = m_command_queues[to_underlying(GPUQueueType::e_transfer)][0];
+
+    GPUCommandPoolCreateInfo command_pool_create_info{.name = "internal command pool"};
+    m_internal_command_pool = PLACEMENT_NEW(VKCommandPool, sizeof(VKCommandPool), internal_queue, command_pool_create_info);
+    GPUCommandBufferCreateInfo command_buffer_create_info{};
+    m_internal_command_buffer = PLACEMENT_NEW(VKCommandBuffer, sizeof(VKCommandBuffer), m_internal_command_pool, command_buffer_create_info);
 }
 
 VKDevice::~VKDevice()
 {
+    PLACEMENT_DELETE(VKCommandBuffer, m_internal_command_buffer);
+    PLACEMENT_DELETE(VKCommandPool, m_internal_command_pool);
     PLACEMENT_DELETE(VKPassTable, m_pass_table);
     PLACEMENT_DELETE(VKDescriptorPool, m_descriptor_pool);
     vmaDestroyAllocator(m_allocator);

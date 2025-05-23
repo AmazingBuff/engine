@@ -232,6 +232,8 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         {
             VkPipelineColorBlendAttachmentState& rt_blend = color_blend_state[i];
             rt_blend.blendEnable = VK_FALSE;
+            rt_blend.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                   VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         }
     }
     VkPipelineColorBlendStateCreateInfo blend_state_info{

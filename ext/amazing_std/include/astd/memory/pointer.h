@@ -43,7 +43,7 @@ protected:
 INTERNAL_NAMESPACE_END
 
 template<typename Tp, template <typename> typename Alloc = Allocator>
-class SharedPtr : public Internal::Ptr<Tp, Alloc>
+class SharedPtr final : public Internal::Ptr<Tp, Alloc>
 {
     using Ptr = Internal::Ptr<Tp, Alloc>;
     using allocator = Alloc<Tp>;

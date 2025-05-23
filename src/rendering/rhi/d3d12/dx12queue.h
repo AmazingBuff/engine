@@ -29,6 +29,8 @@ private:
     friend class DX12Device;
     friend class DX12SwapChain;
     friend class DX12CommandPool;
+    friend class DX12CommandBuffer;
+    friend class DX12GraphicsPassEncoder;
 };
 
 AMAZING_NAMESPACE_END

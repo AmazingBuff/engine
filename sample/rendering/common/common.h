@@ -4,17 +4,21 @@
 
 #pragma once
 
+#include <SDL3/SDL.h>
 #include <rendering/rhi/wrapper.h>
 #include <io/read.h>
-#include <SDL3/SDL.h>
-#include <core/math/algebra.h>
+#include <event/sdl_event.h>
+#include <camera/orbital_camera.h>
 
 using namespace Amazing;
 
 static constexpr uint32_t Width = 960;
 static constexpr uint32_t Height = 540;
-static constexpr uint32_t Frame_In_Flight = 2;
+static constexpr uint32_t Frame_In_Flight = 3;
+static constexpr GPUFormat Backend_Format = GPUFormat::e_r8g8b8a8_unorm;
 
+static thread_local SDLEventCallbackHandler SDL_Event_Callback_Handler;
+static thread_local OrbitalCamera Orbital_Camera(Vec3f(0.0f, 0.0f, 0.0f));
 
 extern thread_local GPUInstance* t_instance;
 extern thread_local GPUDevice* t_device;

@@ -147,23 +147,27 @@ void IMemoryPool::deallocate(void* p)
         header->offset = 0;
 }
 
-
-static thread_local IMemoryPool t_local_pool;
+// for undefined initialization order
+static IMemoryPool& local_memory_pool()
+{
+    thread_local IMemoryPool t_local_pool;
+    return t_local_pool;
+}
 
 
 void* allocate(size_t size, size_t alignment, void* data)
 {
-    return t_local_pool.allocate(size, alignment, data);
+    return local_memory_pool().allocate(size, alignment, data);
 }
 
 void* reallocate(void* p, size_t size, size_t alignment, void* data)
 {
-    return t_local_pool.reallocate(p, size, alignment, data);
+    return local_memory_pool().reallocate(p, size, alignment, data);
 }
 
 void deallocate(void* p)
 {
-    t_local_pool.deallocate(p);
+    local_memory_pool().deallocate(p);
 }
 
 

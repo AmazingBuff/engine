@@ -7,6 +7,7 @@
 #include "vkadapter.h"
 #include "vkcommand_pool.h"
 #include "vkquery_pool.h"
+#include "vkqueue.h"
 #include "vkgraphics_pass_encoder.h"
 #include "resources/vkbuffer.h"
 #include "resources/vktexture.h"
@@ -20,7 +21,8 @@ AMAZING_NAMESPACE_BEGIN
 VKCommandBuffer::VKCommandBuffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
 
     VkCommandBufferAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -36,15 +38,16 @@ VKCommandBuffer::VKCommandBuffer(GPUCommandPool const* pool, GPUCommandBufferCre
 VKCommandBuffer::~VKCommandBuffer()
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     vk_device->m_device_table.vkFreeCommandBuffers(vk_device->m_device, vk_command_pool->m_pool, 1, &m_command_buffer);
 }
 
 void VKCommandBuffer::begin_command()
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
-
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     VkCommandBufferBeginInfo begin_info{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
@@ -55,16 +58,16 @@ void VKCommandBuffer::begin_command()
 void VKCommandBuffer::end_command()
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
-
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     VK_CHECK_RESULT(vk_device->m_device_table.vkEndCommandBuffer(m_command_buffer));
 }
 
 GPUGraphicsPassEncoder* VKCommandBuffer::begin_graphics_pass(GPUGraphicsPassCreateInfo const& info)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
-
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     uint32_t width = 0, height = 0;
     VkRenderPass render_pass = nullptr;
     {
@@ -210,8 +213,8 @@ GPUGraphicsPassEncoder* VKCommandBuffer::begin_graphics_pass(GPUGraphicsPassCrea
 void VKCommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
-
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     PLACEMENT_DELETE(VKGraphicsPassEncoder, static_cast<VKGraphicsPassEncoder*>(encoder));
     vk_device->m_device_table.vkCmdEndRenderPass(m_command_buffer);
 }
@@ -219,7 +222,8 @@ void VKCommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
 void VKCommandBuffer::begin_query(GPUQueryPool const* pool, GPUQueryInfo const& info)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     VKQueryPool const* vk_query_pool = static_cast<VKQueryPool const*>(pool);
 
     VkPipelineStageFlagBits pipeline_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -258,7 +262,8 @@ void VKCommandBuffer::end_query(GPUQueryPool const* pool, GPUQueryInfo const& in
 void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
 
     VkAccessFlags src_access_flags = 0;
@@ -277,11 +282,11 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         if (barrier.queue_acquire)
         {
             buffer_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
-            buffer_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_command_pool->m_type)];
+            buffer_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
         }
         else if (barrier.queue_release)
         {
-            buffer_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_command_pool->m_type)];
+            buffer_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
             buffer_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
         }
         else
@@ -321,11 +326,11 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         if (barrier.queue_acquire && barrier.src_state != GPUResourceStateFlag::e_undefined)
         {
             image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
-            image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_command_pool->m_type)];
+            image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
         }
         else if (barrier.queue_release && barrier.src_state != GPUResourceStateFlag::e_undefined)
         {
-            image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_command_pool->m_type)];
+            image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
             image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
         }
         else
@@ -357,8 +362,8 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
     if (buffer_barrier || image_barrier)
     {
         vk_device->m_device_table.vkCmdPipelineBarrier(m_command_buffer,
-            transfer_pipeline_stage(vk_adapter, src_access_flags, vk_command_pool->m_type),
-            transfer_pipeline_stage(vk_adapter, dst_access_flags, vk_command_pool->m_type),
+            transfer_pipeline_stage(vk_adapter, src_access_flags, vk_queue->m_type),
+            transfer_pipeline_stage(vk_adapter, dst_access_flags, vk_queue->m_type),
             0, 0, nullptr, info.buffer_barriers.size(), buffer_barrier, info.texture_barriers.size(), image_barrier);
     }
 }
@@ -366,8 +371,8 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
 void VKCommandBuffer::transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
-    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_command_pool->m_ref_device);
-
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     VKBuffer const* buffer = static_cast<VKBuffer const*>(info.src_buffer);
     VKTexture const* texture = static_cast<VKTexture const*>(info.dst_texture);
 

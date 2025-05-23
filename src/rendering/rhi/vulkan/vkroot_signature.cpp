@@ -42,7 +42,7 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
     // binding
     for (auto const& [set, count] : set_count_map)
     {
-        VkDescriptorSetLayoutBinding* bindings = static_cast<VkDescriptorSetLayoutBinding*>(alloca(count * sizeof(VkDescriptorSetLayoutBinding)));
+        VkDescriptorSetLayoutBinding* bindings = STACK_NEW(VkDescriptorSetLayoutBinding, count);
         uint32_t binding_count = 0;
         for (GPUParameterTable const& table : m_tables)
         {
@@ -54,11 +54,13 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
                     bindings[binding_count].stageFlags = transfer_shader_stage(resource.stage);
                     bindings[binding_count].descriptorType = transfer_resource_type(resource.resource_type);
                     bindings[binding_count].descriptorCount = resource.array_count;
+                    bindings[binding_count].pImmutableSamplers = nullptr;
                     binding_count++;
                 }
                 break;
             }
         }
+        // todo: static sampler adjustment
         for (size_t i = 0; i < info.static_samplers.size(); i++)
         {
             if (m_static_samplers[i].set == set)
@@ -77,7 +79,7 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
             .pBindings = bindings,
         };
 
-        VulkanDescriptorLayout descriptor_layout;
+        VulkanDescriptorLayout descriptor_layout{};
         VK_CHECK_RESULT(vk_device->m_device_table.vkCreateDescriptorSetLayout(vk_device->m_device, &set_layout_info, VK_Allocation_Callbacks_Ptr, &descriptor_layout.set_layout));
         descriptor_layout.set = vk_device->m_descriptor_pool->consume_descriptor_set(&descriptor_layout.set_layout, 1);
         m_descriptor_layouts.emplace(set, descriptor_layout);
@@ -170,6 +172,7 @@ VKRootSignature::~VKRootSignature()
 
     for (auto const& [set, layout]: m_descriptor_layouts)
     {
+        vk_device->m_descriptor_pool->return_descriptor_set(&layout.set, 1);
         vk_device->m_device_table.vkDestroyDescriptorSetLayout(vk_device->m_device, layout.set_layout, VK_Allocation_Callbacks_Ptr);
         vk_device->m_device_table.vkDestroyDescriptorUpdateTemplate(vk_device->m_device, layout.update_template, VK_Allocation_Callbacks_Ptr);
     }

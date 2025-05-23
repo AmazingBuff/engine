@@ -98,8 +98,15 @@ void DX12GraphicsPassEncoder::set_push_constant(GPURootSignature const* root_sig
     DX12RootSignature const* dx12_root_signature = static_cast<DX12RootSignature const*>(root_signature);
 
     m_command_buffer->reset_root_signature(GPUPipelineType::e_graphics, dx12_root_signature->m_root_signature);
-    m_command_buffer->m_command_list->SetGraphicsRoot32BitConstants(dx12_root_signature->m_constant_parameters[0].index,
-        dx12_root_signature->m_constant_parameters[0].root_parameter.Constants.Num32BitValues, data, 0);
+
+    for (uint32_t i = 0; i < dx12_root_signature->m_push_constant_count; i++)
+    {
+        if (name == dx12_root_signature->m_push_constants[i].name)
+        {
+            m_command_buffer->m_command_list->SetGraphicsRoot32BitConstants(dx12_root_signature->m_constant_parameters[i].index,
+        dx12_root_signature->m_constant_parameters[i].root_parameter.Constants.Num32BitValues, data, 0);
+        }
+    }
 }
 
 void DX12GraphicsPassEncoder::draw(uint32_t vertex_count, uint32_t first_vertex)

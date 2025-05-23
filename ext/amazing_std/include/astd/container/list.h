@@ -92,7 +92,7 @@ public:
         node->val = value;
 
         Internal::ListNode<Tp>* p = m_head;
-        if (index <= m_size / 2)
+        if (index <= m_size / 2 + 1)
         {
             while (index != 0)
             {
@@ -102,7 +102,7 @@ public:
         }
         else
         {
-            index = m_size - index;
+            index = m_size - index + 1;
             while (index != 0)
             {
                 p = p->prev;
