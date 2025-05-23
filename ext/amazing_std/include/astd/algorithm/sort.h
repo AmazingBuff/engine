@@ -71,7 +71,7 @@ template <typename Iter, typename Pred>
 void sort_unchecked(Iter first, Iter last, Pred pred)
 {
     Iter prev_last = iter_move(last, -1);
-    if (first == prev_last)
+    if (first == prev_last || first == last)
         return;
 
     Iter mid = median_of_three(first, last, pred);
@@ -145,13 +145,13 @@ typename Container::Iterator end(Container& container)
 }
 
 template <typename Tp, size_t N>
-Tp* begin(Tp (&arr)[N])
+Tp* begin(Tp(&arr)[N])
 {
     return arr;
 }
 
 template <typename Tp, size_t N>
-Tp* end(Tp (&arr)[N])
+Tp* end(Tp(&arr)[N])
 {
     return arr + N;
 }
@@ -175,7 +175,7 @@ void sort(Container& container)
 }
 
 template <typename Tp, size_t N>
-void sort(Tp (&arr)[N])
+void sort(Tp(&arr)[N])
 {
     sort(begin(arr), end(arr), Less<Tp>());
 }
@@ -201,7 +201,7 @@ void heap_sort(Container& container)
 }
 
 template <typename Tp, size_t N>
-void heap_sort(Tp (&arr)[N])
+void heap_sort(Tp(&arr)[N])
 {
     heap_sort(begin(arr), end(arr), Less<Tp>());
 }
