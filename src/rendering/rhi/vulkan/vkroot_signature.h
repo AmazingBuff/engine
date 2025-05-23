@@ -27,7 +27,8 @@ private:
     };
 
     // set <---> layout
-    Map<uint32_t, VulkanDescriptorLayout> m_descriptor_layouts;
+    HashMap<uint32_t, VulkanDescriptorLayout> m_descriptor_layouts;
+    HashMap<uint32_t, VulkanDescriptorLayout> m_static_sampler_descriptors;
     VkPushConstantRange* m_push_constant_ranges;
 
     friend class VKDescriptorSet;

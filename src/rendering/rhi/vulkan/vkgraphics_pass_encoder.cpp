@@ -54,6 +54,12 @@ void VKGraphicsPassEncoder::bind_pipeline(GPUGraphicsPipeline const* pipeline)
     VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
     VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     VKGraphicsPipeline const* vk_graphics_pipeline = static_cast<VKGraphicsPipeline const*>(pipeline);
+    VKRootSignature const* vk_root_signature = static_cast<VKRootSignature const*>(vk_graphics_pipeline->m_ref_root_signature);
+
+    // static sampler
+    for (auto const& [set, layout] : vk_root_signature->m_static_sampler_descriptors)
+        vk_device->m_device_table.vkCmdBindDescriptorSets(m_command->m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+            vk_root_signature->m_pipeline_layout, set, 1, &layout.set, 0, nullptr);
 
     vk_device->m_device_table.vkCmdBindPipeline(m_command->m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_graphics_pipeline->m_pipeline);
 }

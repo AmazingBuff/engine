@@ -60,7 +60,8 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
                 break;
             }
         }
-        // todo: static sampler adjustment
+        uint32_t dynamic_binding_count = binding_count;
+
         for (size_t i = 0; i < info.static_samplers.size(); i++)
         {
             if (m_static_samplers[i].set == set)
@@ -82,7 +83,12 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
         VulkanDescriptorLayout descriptor_layout{};
         VK_CHECK_RESULT(vk_device->m_device_table.vkCreateDescriptorSetLayout(vk_device->m_device, &set_layout_info, VK_Allocation_Callbacks_Ptr, &descriptor_layout.set_layout));
         descriptor_layout.set = vk_device->m_descriptor_pool->consume_descriptor_set(&descriptor_layout.set_layout, 1);
-        m_descriptor_layouts.emplace(set, descriptor_layout);
+
+        if (dynamic_binding_count > 0)
+            m_descriptor_layouts.emplace(set, descriptor_layout);
+        else
+            // only static samplers
+            m_static_sampler_descriptors.emplace(set, descriptor_layout);
     }
 
     // push constant
@@ -95,13 +101,20 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
     }
 
     // layout set
-    VkDescriptorSetLayout* layouts = m_descriptor_layouts.empty() ? nullptr : static_cast<VkDescriptorSetLayout*>(alloca(sizeof(VkDescriptorSetLayout) * m_descriptor_layouts.size()));
+    VkDescriptorSetLayout* layouts = m_descriptor_layouts.empty() && m_static_sampler_descriptors.empty() ? nullptr : STACK_NEW(VkDescriptorSetLayout, m_descriptor_layouts.size() + m_static_sampler_descriptors.size());
     uint32_t set_layout_count = 0;
-    for (auto const& [set, layout]: m_descriptor_layouts)
+    for (auto const& [set, layout] : m_descriptor_layouts)
     {
         layouts[set_layout_count] = layout.set_layout;
         set_layout_count++;
     }
+
+    for (auto const& [set, layout] : m_static_sampler_descriptors)
+    {
+        layouts[set_layout_count] = layout.set_layout;
+        set_layout_count++;
+    }
+
     // pipeline layout
     VkPipelineLayoutCreateInfo pipeline_info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -170,7 +183,13 @@ VKRootSignature::~VKRootSignature()
         Allocator<VkPushConstantRange>::deallocate(m_push_constant_ranges);
     m_push_constant_ranges = nullptr;
 
-    for (auto const& [set, layout]: m_descriptor_layouts)
+    for (auto const& [set, layout] : m_static_sampler_descriptors)
+    {
+        vk_device->m_descriptor_pool->return_descriptor_set(&layout.set, 1);
+        vk_device->m_device_table.vkDestroyDescriptorSetLayout(vk_device->m_device, layout.set_layout, VK_Allocation_Callbacks_Ptr);
+    }
+
+    for (auto const& [set, layout] : m_descriptor_layouts)
     {
         vk_device->m_descriptor_pool->return_descriptor_set(&layout.set, 1);
         vk_device->m_device_table.vkDestroyDescriptorSetLayout(vk_device->m_device, layout.set_layout, VK_Allocation_Callbacks_Ptr);

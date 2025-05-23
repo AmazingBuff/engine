@@ -161,7 +161,7 @@ public:
 
     ~Hash()
     {
-        for (size_t i = 0; i <  m_bucket_count * max_bucket_size + 1; i++)
+        for (size_t i = 0; i < m_bucket_count * max_bucket_size + 1; i++)
             m_buckets[i].~node_type();
         deallocate(m_buckets);
         m_bucket_count = 0;
@@ -172,7 +172,7 @@ public:
     {
         if (this != &other)
         {
-            for (size_t i = 0; i <  m_bucket_count * max_bucket_size + 1; i++)
+            for (size_t i = 0; i < m_bucket_count * max_bucket_size + 1; i++)
                 m_buckets[i].~node_type();
             deallocate(m_buckets);
 
@@ -345,12 +345,38 @@ public:
         }
     }
 
+    bool empty() const
+    {
+        return m_size == 0;
+    }
+
+    size_t size() const
+    {
+        return m_size;
+    }
+
     Iterator begin()
     {
-        return Iterator(m_buckets);
+        for (size_t i = 0; i < m_bucket_count * max_bucket_size + 1; i++)
+            if (m_buckets[i].flag == ElementFlag::e_valid)
+                return Iterator(m_buckets + i);
+        return end();
+    }
+
+    Iterator const begin() const
+    {
+        for (size_t i = 0; i < m_bucket_count * max_bucket_size + 1; i++)
+            if (m_buckets[i].flag == ElementFlag::e_valid)
+                return Iterator(m_buckets + i);
+        return end();
     }
 
     Iterator end()
+    {
+        return Iterator(m_buckets + m_bucket_count * max_bucket_size);
+    }
+
+    Iterator const end() const
     {
         return Iterator(m_buckets + m_bucket_count * max_bucket_size);
     }
