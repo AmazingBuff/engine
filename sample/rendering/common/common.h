@@ -16,6 +16,7 @@ static constexpr uint32_t Width = 960;
 static constexpr uint32_t Height = 540;
 static constexpr uint32_t Frame_In_Flight = 3;
 static constexpr GPUFormat Backend_Format = GPUFormat::e_r8g8b8a8_unorm;
+static constexpr GPUFormat Backend_Depth_Stencil_Format = GPUFormat::e_d32_sfloat_s8_uint;
 
 static thread_local SDLEventCallbackHandler SDL_Event_Callback_Handler;
 static thread_local OrbitalCamera Orbital_Camera(Vec3f(0.0f, 0.0f, 0.0f));
@@ -30,6 +31,10 @@ extern thread_local GPUSwapChain* t_swap_chain;
 extern thread_local GPUFence* t_present_fence[Frame_In_Flight];
 extern thread_local GPUSemaphore* t_image_semaphore;
 extern thread_local GPUSemaphore* t_present_semaphore;
+
+// for depth stencil
+extern thread_local GPUTexture* t_depth_texture;
+extern thread_local GPUTextureView* t_depth_texture_view;
 
 
 struct ImageInfo

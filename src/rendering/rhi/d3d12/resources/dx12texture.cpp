@@ -10,6 +10,14 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+void check_format_support(D3D12_RESOURCE_FLAGS usage, GPUAdapter::GPUFormatSupport format_support)
+{
+    if (usage & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)
+        RENDERING_ASSERT(format_support.render_target_write, "gpu can't write this format to render target image!");
+    if (usage & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+        RENDERING_ASSERT(format_support.depth_stencil_write, "gpu can't write this format to depth stencil image!");
+}
+
 D3D12_RESOURCE_DIMENSION DX12Texture::transfer_resource_dimension(GPUTextureCreateInfo const& info)
 {
     if (info.flags & GPUTextureFlagsFlag::e_force_2d)
@@ -128,6 +136,8 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
         .Layout = transfer_resource_layout(info),
         .Flags = transfer_resource_flags(info)
     };
+
+    check_format_support(desc.Flags, dx12_adapter->m_adapter_detail.format_support[to_underlying(info.format)]);
 
     GPUResourceState state = info.state;
     state |= transfer_states(info);

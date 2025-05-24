@@ -67,6 +67,7 @@ VKRenderPass::VKRenderPass(VKDevice const* device, VulkanRenderPassCreateInfo co
         attachments[attachment_count].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         depth_stencil_attachment_ref[0].attachment = attachment_count;
         depth_stencil_attachment_ref[0].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        attachment_count++;
     }
 
     VkSubpassDescription subpass{

@@ -151,18 +151,18 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         depth_stencil_state_info.depthBoundsTestEnable = VK_FALSE;
         depth_stencil_state_info.stencilTestEnable = depth_stencil_state->stencil_test ? VK_TRUE : VK_FALSE;
 
-        depth_stencil_state_info.front.failOp = Stencil_Op_Map[to_underlying(depth_stencil_state->stencil_front_fail)];
-        depth_stencil_state_info.front.passOp = Stencil_Op_Map[to_underlying(depth_stencil_state->stencil_front_pass)];
-        depth_stencil_state_info.front.depthFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->depth_front_fail)];
-        depth_stencil_state_info.front.compareOp = Compare_Mode_Map[to_underlying(depth_stencil_state->stencil_front_compare)];
+        depth_stencil_state_info.front.failOp = Stencil_Op_Map[to_underlying(depth_stencil_state->front.stencil_fail)];
+        depth_stencil_state_info.front.passOp = Stencil_Op_Map[to_underlying(depth_stencil_state->front.stencil_pass)];
+        depth_stencil_state_info.front.depthFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->front.depth_fail)];
+        depth_stencil_state_info.front.compareOp = Compare_Mode_Map[to_underlying(depth_stencil_state->front.stencil_compare)];
         depth_stencil_state_info.front.compareMask = depth_stencil_state->stencil_read_mask;
         depth_stencil_state_info.front.writeMask = depth_stencil_state->stencil_write_mask;
         depth_stencil_state_info.front.reference = 0;
 
-        depth_stencil_state_info.back.failOp = Stencil_Op_Map[to_underlying(depth_stencil_state->stencil_back_fail)];
-        depth_stencil_state_info.back.passOp = Stencil_Op_Map[to_underlying(depth_stencil_state->stencil_back_pass)];
-        depth_stencil_state_info.back.depthFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->depth_back_fail)];
-        depth_stencil_state_info.back.compareOp = Compare_Mode_Map[to_underlying(depth_stencil_state->stencil_back_compare)];
+        depth_stencil_state_info.back.failOp = Stencil_Op_Map[to_underlying(depth_stencil_state->back.stencil_fail)];
+        depth_stencil_state_info.back.passOp = Stencil_Op_Map[to_underlying(depth_stencil_state->back.stencil_pass)];
+        depth_stencil_state_info.back.depthFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->back.depth_fail)];
+        depth_stencil_state_info.back.compareOp = Compare_Mode_Map[to_underlying(depth_stencil_state->back.stencil_compare)];
         depth_stencil_state_info.back.compareMask = depth_stencil_state->stencil_read_mask;
         depth_stencil_state_info.back.writeMask = depth_stencil_state->stencil_write_mask;
         depth_stencil_state_info.back.reference = 0;
@@ -191,8 +191,8 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         rasterization_state_info.polygonMode = Polygon_Mode_Map[to_underlying(rasterizer_state->fill_mode)];
         rasterization_state_info.cullMode = Cull_Mode_Map[to_underlying(rasterizer_state->cull_mode)];
         rasterization_state_info.frontFace = Front_Face_Map[to_underlying(rasterizer_state->front_face)];
-        rasterization_state_info.depthBiasEnable = rasterizer_state->depth_bias != 0.0f ? VK_TRUE : VK_FALSE;
-        rasterization_state_info.depthBiasConstantFactor = rasterizer_state->depth_bias;
+        rasterization_state_info.depthBiasEnable = rasterizer_state->depth_bias != 0 ? VK_TRUE : VK_FALSE;
+        rasterization_state_info.depthBiasConstantFactor = static_cast<float>(rasterizer_state->depth_bias);
         rasterization_state_info.depthBiasSlopeFactor = rasterizer_state->slope_scaled_depth_bias;
     }
 

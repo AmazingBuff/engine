@@ -71,13 +71,15 @@ void VKAdapter::record_adapter_detail()
             vkGetPhysicalDeviceFormatProperties(m_physical_device, format, &format_properties);
             m_adapter_detail.format_support[j].shader_read = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) != 0;
             m_adapter_detail.format_support[j].shader_write = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT) != 0;
-            m_adapter_detail.format_support[j].render_target_write = (format_properties.optimalTilingFeatures & (VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)) != 0;
+            m_adapter_detail.format_support[j].render_target_write = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT) != 0;
+            m_adapter_detail.format_support[j].depth_stencil_write = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0;
         }
         else
         {
             m_adapter_detail.format_support[j].shader_read = 0;
             m_adapter_detail.format_support[j].shader_write = 0;
             m_adapter_detail.format_support[j].render_target_write = 0;
+            m_adapter_detail.format_support[j].depth_stencil_write = 0;
         }
     }
 

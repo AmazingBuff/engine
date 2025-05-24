@@ -115,7 +115,7 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUGraphicsPipelineCreateInfo const& 
         blend_desc.AlphaToCoverageEnable = static_cast<uint32_t>(info.blend_state->alpha_to_coverage);
 
         uint32_t blend_index = 0;
-        for (uint32_t i = 0; i < GPU_Max_Render_Target; i++)
+        for (uint32_t i = 0; i < info.render_target_count; i++)
         {
             D3D12_RENDER_TARGET_BLEND_DESC& rt_blend = blend_desc.RenderTarget[i];
             rt_blend.SrcBlend = Blend_Constant_Map[to_underlying(blend_state->src_factors[blend_index])];
@@ -141,7 +141,7 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUGraphicsPipelineCreateInfo const& 
     {
         blend_desc.AlphaToCoverageEnable = FALSE;
 
-        for (uint32_t i = 0; i < GPU_Max_Render_Target; i++)
+        for (uint32_t i = 0; i < info.render_target_count; i++)
         {
             D3D12_RENDER_TARGET_BLEND_DESC& rt_blend = blend_desc.RenderTarget[i];
             rt_blend.BlendEnable = FALSE;
@@ -193,8 +193,8 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUGraphicsPipelineCreateInfo const& 
         .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
         .DepthFunc = D3D12_COMPARISON_FUNC_NEVER,
         .StencilEnable = FALSE,
-        .StencilReadMask = 0,
-        .StencilWriteMask = 0,
+        .StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK,
+        .StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK,
         .FrontFace {
             .StencilFailOp = D3D12_STENCIL_OP_KEEP,
             .StencilDepthFailOp = D3D12_STENCIL_OP_KEEP,
@@ -217,14 +217,14 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUGraphicsPipelineCreateInfo const& 
         depth_stencil_desc.StencilEnable = depth_stencil_state->stencil_test;
         depth_stencil_desc.StencilReadMask = depth_stencil_state->stencil_read_mask;
         depth_stencil_desc.StencilWriteMask = depth_stencil_state->stencil_write_mask;
-        depth_stencil_desc.FrontFace.StencilFunc = Compare_Mode_Map[to_underlying(depth_stencil_state->stencil_front_compare)];
-        depth_stencil_desc.FrontFace.StencilDepthFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->depth_front_fail)];
-        depth_stencil_desc.FrontFace.StencilFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->stencil_front_fail)];
-        depth_stencil_desc.FrontFace.StencilPassOp = Stencil_Op_Map[to_underlying(depth_stencil_state->stencil_front_pass)];
-        depth_stencil_desc.BackFace.StencilFunc = Compare_Mode_Map[to_underlying(depth_stencil_state->stencil_back_compare)];
-        depth_stencil_desc.BackFace.StencilDepthFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->depth_back_fail)];
-        depth_stencil_desc.BackFace.StencilFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->stencil_back_fail)];
-        depth_stencil_desc.BackFace.StencilPassOp = Stencil_Op_Map[to_underlying(depth_stencil_state->stencil_back_pass)];
+        depth_stencil_desc.FrontFace.StencilFunc = Compare_Mode_Map[to_underlying(depth_stencil_state->front.stencil_compare)];
+        depth_stencil_desc.FrontFace.StencilDepthFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->front.depth_fail)];
+        depth_stencil_desc.FrontFace.StencilFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->front.stencil_fail)];
+        depth_stencil_desc.FrontFace.StencilPassOp = Stencil_Op_Map[to_underlying(depth_stencil_state->front.stencil_pass)];
+        depth_stencil_desc.BackFace.StencilFunc = Compare_Mode_Map[to_underlying(depth_stencil_state->back.stencil_compare)];
+        depth_stencil_desc.BackFace.StencilDepthFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->back.depth_fail)];
+        depth_stencil_desc.BackFace.StencilFailOp = Stencil_Op_Map[to_underlying(depth_stencil_state->back.stencil_fail)];
+        depth_stencil_desc.BackFace.StencilPassOp = Stencil_Op_Map[to_underlying(depth_stencil_state->back.stencil_pass)];
     }
 
     // pso

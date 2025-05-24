@@ -183,14 +183,17 @@ struct GPUDepthStencilState
     bool stencil_test;
     uint8_t stencil_read_mask;
     uint8_t stencil_write_mask;
-    GPUCompareMode stencil_front_compare;
-    GPUStencilOp stencil_front_fail;
-    GPUStencilOp stencil_front_pass;
-    GPUStencilOp depth_front_fail;
-    GPUCompareMode stencil_back_compare;
-    GPUStencilOp stencil_back_fail;
-    GPUStencilOp stencil_back_pass;
-    GPUStencilOp depth_back_fail;
+
+    struct GPUStencilState
+    {
+        GPUCompareMode stencil_compare;
+        GPUStencilOp stencil_fail;
+        GPUStencilOp stencil_pass;
+        GPUStencilOp depth_fail;
+    };
+
+    GPUStencilState front;
+    GPUStencilState back;
 };
 
 struct GPURasterizerState
@@ -201,7 +204,6 @@ struct GPURasterizerState
     GPUFillMode fill_mode;
     GPUFrontFace front_face;
     bool enable_multisample;
-    bool enable_scissor;
     bool enable_depth_clamp;
 };
 

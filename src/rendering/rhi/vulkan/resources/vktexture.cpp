@@ -14,6 +14,18 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+void check_format_support(VkImageUsageFlags usage, GPUAdapter::GPUFormatSupport format_support)
+{
+    if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+        RENDERING_ASSERT(format_support.render_target_write, "gpu can't write this format to render target image!");
+    if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+        RENDERING_ASSERT(format_support.depth_stencil_write, "gpu can't write this format to depth stencil image!");
+    if (usage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
+        RENDERING_ASSERT(format_support.shader_read, "gpu can't read this format from image!");
+    if (usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+        RENDERING_ASSERT(format_support.shader_write, "gpu can't write this format to image!");
+}
+
 VkImageType VKTexture::transfer_image_type(GPUTextureCreateInfo const& info)
 {
     if (info.flags & GPUTextureFlagsFlag::e_force_2d)
@@ -53,9 +65,6 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
     VKDevice const* vk_device = static_cast<VKDevice const*>(device);
     VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
 
-    const GPUAdapter::GPUFormatSupport& format_support = vk_adapter->m_adapter_detail.format_support[to_underlying(info.format)];
-    RENDERING_ASSERT(format_support.shader_read, "gpu can't read from this format {}!", to_underlying(info.format));
-
     VkImageCreateInfo image_create_info{
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = transfer_image_type(info),
@@ -91,6 +100,8 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
         image_create_info.flags |= VK_IMAGE_CREATE_SPARSE_BINDING_BIT;
         image_create_info.flags |= VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT;
     }
+
+    check_format_support(image_create_info.usage, vk_adapter->m_adapter_detail.format_support[to_underlying(info.format)]);
 
     VkFormatProperties format_properties;
     vkGetPhysicalDeviceFormatProperties(vk_adapter->m_physical_device, image_create_info.format, &format_properties);

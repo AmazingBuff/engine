@@ -7,7 +7,7 @@
 AMAZING_NAMESPACE_BEGIN
 
 OrbitalCamera::OrbitalCamera(const Vec3f& target, float radius, float theta, float phi)
-    : m_target(target), m_radius(radius), m_theta(theta), m_phi(phi), m_is_camera_moved(false)
+    : m_target(target), m_radius(radius), m_theta(theta), m_phi(phi), m_is_camera_moved(true)
 {
 
 }
@@ -40,10 +40,14 @@ bool OrbitalCamera::update_view_matrix(Affine3f& view)
         position.z() = m_radius * std::cos(m_phi) * std::cos(m_theta);
 
         const Vec3f world_up{ 0.0, 1.0, 0.0 };
-        // left coordinate
+        // left hand coordinate
         Vec3f front = -position.normalized();
         Vec3f right = -front.cross(world_up).normalized();
         Vec3f up = front.cross(right).normalized();
+        // right hand coordinate
+        // Vec3f front = position.normalized();
+        // Vec3f right = -front.cross(world_up).normalized();
+        // Vec3f up = front.cross(right).normalized();
 
         Mat3f r;
         r.row(0) = right;
@@ -52,7 +56,7 @@ bool OrbitalCamera::update_view_matrix(Affine3f& view)
 
         view = Affine3f::Identity();
         view.linear() = r;
-        view.translation() = -view.linear() * position;
+        view.translation() = -(position + m_target);
 
         m_is_camera_moved = false;
         return true;

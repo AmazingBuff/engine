@@ -30,6 +30,7 @@ public:
         uint8_t shader_read : 1;
         uint8_t shader_write : 1;
         uint8_t render_target_write : 1;
+        uint8_t depth_stencil_write : 1;
     };
 
     struct GPUAdapterDetail

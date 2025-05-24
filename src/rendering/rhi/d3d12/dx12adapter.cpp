@@ -4,6 +4,7 @@
 
 #include "dx12adapter.h"
 #include "utils/dx_macro.h"
+#include "utils/dx_utils.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -36,6 +37,27 @@ void DX12Adapter::record_adapter_detail()
     // create a device for feature query
     ID3D12Device* device = nullptr;
     DX_CHECK_RESULT(D3D12CreateDevice(m_adapter, m_feature_level, IID_PPV_ARGS(&device)));
+
+    // format support
+    for (uint8_t j = 0; j < GPU_Format_Count; j++)
+    {
+        DXGI_FORMAT format = transfer_format(static_cast<GPUFormat>(j));
+        D3D12_FEATURE_DATA_FORMAT_SUPPORT format_support = { format, {}, {} };
+        if (format != DXGI_FORMAT_UNKNOWN && SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &format_support, sizeof(D3D12_FEATURE_DATA_FORMAT_SUPPORT))))
+        {
+            m_adapter_detail.format_support[j].shader_read = (format_support.Support1 & D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE) != 0;
+            m_adapter_detail.format_support[j].shader_write = (format_support.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE) != 0;
+            m_adapter_detail.format_support[j].render_target_write = (format_support.Support1 & D3D12_FORMAT_SUPPORT1_RENDER_TARGET) != 0;
+            m_adapter_detail.format_support[j].depth_stencil_write = (format_support.Support1 & D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL) != 0;
+        }
+        else
+        {
+            m_adapter_detail.format_support[j].shader_read = 0;
+            m_adapter_detail.format_support[j].shader_write = 0;
+            m_adapter_detail.format_support[j].render_target_write = 0;
+            m_adapter_detail.format_support[j].depth_stencil_write = 0;
+        }
+    }
 
     D3D12_FEATURE_DATA_ARCHITECTURE1 architecture{
         .NodeIndex = GPU_Node_Index

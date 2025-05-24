@@ -21,6 +21,10 @@ thread_local GPUFence* t_present_fence[Frame_In_Flight] = { nullptr };
 thread_local GPUSemaphore* t_image_semaphore = nullptr;
 thread_local GPUSemaphore* t_present_semaphore = nullptr;
 
+// depth
+thread_local GPUTexture* t_depth_texture;
+thread_local GPUTextureView* t_depth_texture_view;
+
 static thread_local GPUBackend t_backend = GPUBackend::e_d3d12;
 
 void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
@@ -79,11 +83,52 @@ void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
 
     t_swap_chain = GPU_create_swap_chain(t_device, swap_chain_create_info);
 
+    GPUTextureCreateInfo depth_texture_create_info{
+        .name = "depth texture",
+        .width = Width,
+        .height = Height,
+        .depth = 1,
+        .array_layers = 1,
+        .mip_levels = 1,
+        .sample_quality = 0,
+        .sample_count = GPUSampleCount::e_1,
+        .format = Backend_Depth_Stencil_Format,
+        .state = GPUResourceStateFlag::e_depth_write,
+        .type = GPUResourceTypeFlag::e_depth_stencil,
+        .flags = GPUTextureFlagsFlag::e_dedicated,
+        .clear_color{
+            .depth_stencil{
+                .depth = 1.0,
+                .stencil = 0
+            }
+        }
+    };
+
+    t_depth_texture = GPU_create_texture(t_device, depth_texture_create_info);
+
+    GPUTextureViewCreateInfo depth_texture_view_create_info{
+        .name = "depth texture view",
+        .texture = t_depth_texture,
+        .format = Backend_Depth_Stencil_Format,
+        .usage = GPUTextureViewUsageFlag::e_rtv_dsv,
+        .aspect = GPUTextureViewAspectFlag::e_depth,
+        .type = GPUTextureType::e_2d,
+        .base_array_layer = 0,
+        .array_layers = 1,
+        .base_mip_level = 0,
+        .mip_levels = 1
+    };
+
+    t_depth_texture_view = GPU_create_texture_view(depth_texture_view_create_info);
+
     t_backend = backend;
 }
 
 void destroy_api_object()
 {
+    GPU_destroy_texture_view(t_depth_texture_view);
+    GPU_destroy_texture(t_depth_texture);
+
     GPU_destroy_semaphore(t_image_semaphore);
     GPU_destroy_semaphore(t_present_semaphore);
 

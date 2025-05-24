@@ -72,47 +72,35 @@ constexpr static uint32_t indices[] = {
 
 void set_scene()
 {
-    const Vec3f position{ 3.0, 0.0, 0.0 };
-    const Vec3f center{ 0.0, 0.0, 0.0 };
-    const Vec3f world_up{ 0.0, 0.0, 1.0 };
-    const Vec3f right{ 1.0, 0.0, 0.0 };
-    const Vec3f front{ 0.0, 0.0, 1.0 };
-    const Vec3f up{ 0.0, 1.0, 0.0 };
-    const Float fov = 45.0;
-    const Float z_near = 0.1;
-    const Float z_far = 10.0;
+    constexpr Float fov = 45.0;
+    constexpr Float z_near = 0.1;
+    constexpr Float z_far = 10.0;
 
-    Mat3f r;
-    r.row(0) = right;
-    r.row(1) = up;
-    r.row(2) = front;
+    constexpr Float aspect = static_cast<Float>(Width) / Height;
 
-    Affine3f look(Affine3f::Identity());
-    look.linear() = r;
-    look.translation() = -look.linear() * position;
-
-    const Float aspect = static_cast<Float>(Width) / Height;
-
-    Float theta = fov * 0.5;
-    Float range = z_far - z_near;
-    Float inv_tan = 1.0 / std::tan(theta);
+    constexpr Float theta = fov * 0.5f;
+    constexpr Float range = z_far / (z_far - z_near);
+    const Float inv_tan = 1.0f / std::tan(theta);
 
     Affine3f proj(Affine3f::Identity());
     proj(0, 0) = inv_tan / aspect;
     proj(1, 1) = inv_tan;
-    proj(2, 2) = -(z_far + z_near) / range;
-    proj(2, 3) = -2.0 * z_near * z_far / range;
-    proj(3, 2) = -1.0;
+    proj(2, 2) = range;
+    // left hand coordinate
+    proj(2, 3) = -z_near * range;
+    proj(3, 2) = 1.0;
+    // right hand coordinate
+    // proj(2, 3) = z_near * range;
+    // proj(3, 2) = -1.0;
     proj(3, 3) = 0.0;
 
-    push_constant.view = look;
+    push_constant.view = Affine3f::Identity();
     push_constant.proj = proj;
 
-
     Affine3f model(Affine3f::Identity());
-    model.scale(Vec3f(1.0, 1.0, 1.0));
-    model.rotate(Eigen::AngleAxisf(180, Vec3f::UnitZ()));
-    model.translate(Vec3f(3.0, 0.0, -6.0));
+    //model.scale(Vec3f(1.0, 1.0, 1.0));
+    //model.rotate(Eigen::AngleAxisf(180, Vec3f::UnitZ()));
+    //model.translate(Vec3f(3.0, 0.0, -6.0));
 
     world[0].model = model;
     world[0].model_inv = model.inverse();
@@ -190,13 +178,13 @@ void create_pipeline()
     transfer_buffer_to_texture(transfer_info);
 
     GPUSamplerCreateInfo sampler_create_info{
-    .min_filter = GPUFilterType::e_linear,
-    .mag_filter = GPUFilterType::e_linear,
-    .mipmap_mode = GPUMipMapMode::e_linear,
-    .address_u = GPUAddressMode::e_repeat,
-    .address_v = GPUAddressMode::e_repeat,
-    .address_w = GPUAddressMode::e_repeat,
-    .compare_mode = GPUCompareMode::e_never,
+        .min_filter = GPUFilterType::e_linear,
+        .mag_filter = GPUFilterType::e_linear,
+        .mipmap_mode = GPUMipMapMode::e_linear,
+        .address_u = GPUAddressMode::e_repeat,
+        .address_v = GPUAddressMode::e_repeat,
+        .address_w = GPUAddressMode::e_repeat,
+        .compare_mode = GPUCompareMode::e_never,
     };
     sampler = GPU_create_sampler(t_device, sampler_create_info);
 
@@ -297,13 +285,34 @@ void create_pipeline()
         .size = 12,
     };
 
+    GPURasterizerState rasterizer_state{
+        .cull_mode = GPUCullMode::e_front,
+        .depth_bias = 0,
+        .slope_scaled_depth_bias = 0.0f,
+        .fill_mode = GPUFillMode::e_solid,
+        .front_face = GPUFrontFace::e_counter_clockwise,
+        .enable_multisample = false,
+        .enable_depth_clamp = false
+    };
+
+    GPUDepthStencilState depth_stencil_state{
+        .depth_test = true,
+        .depth_write = true,
+        .depth_compare = GPUCompareMode::e_less,
+        .stencil_test = false,
+    };
+
     GPUGraphicsPipelineCreateInfo pipeline_desc{
         .root_signature = root_signature,
         .vertex_shader = &vertex_shader_entry,
         .fragment_shader = &fragment_shader_entry,
         .vertex_inputs = { pos, tex, normal, tangent },
+        .depth_stencil_state = &depth_stencil_state,
+        .rasterizer_state = &rasterizer_state,
         .color_format = &Backend_Format,
+        .depth_stencil_format = Backend_Depth_Stencil_Format,
         .render_target_count = 1,
+        .sample_count = GPUSampleCount::e_1,
         .primitive_topology = GPUPrimitiveTopology::e_triangle_list,
     };
 
@@ -376,7 +385,7 @@ void draw(SDL_Window* window)
     HWND hwnd = static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
     HINSTANCE hinstance = static_cast<HINSTANCE>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_INSTANCE_POINTER, nullptr));
 
-    create_api_object(hwnd, hinstance, GPUBackend::e_d3d12);
+    create_api_object(hwnd, hinstance, GPUBackend::e_vulkan);
     create_pipeline();
 
     SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_MOTION, EventUserDataType::e_orbital_camera, [](const SDL_Event& event, void* user_data)
@@ -438,12 +447,28 @@ void draw(SDL_Window* window)
             .clear_color = {0, 0, 0, 1}
         };
 
+        GPUDepthStencilAttachment depth_stencil_attachment{
+            .texture_view = t_depth_texture_view,
+            .depth_load = GPULoadAction::e_clear,
+            .depth_store = GPUStoreAction::e_dont_care,
+            .stencil_load = GPULoadAction::e_dont_care,
+            .stencil_store = GPUStoreAction::e_dont_care,
+            .clear_color{
+                .depth_stencil{
+                    .depth = 1.0f,
+                    .stencil = 0
+                }
+            },
+            .depth_write = 1,
+            .stencil_write = 0
+        };
+
         GPUGraphicsPassCreateInfo graphics_pass_create_info{
             .name = "triangle",
             .sample_count = GPUSampleCount::e_1,
             .color_attachments = {color_attachment},
             .color_attachment_count = 1,
-            .depth_stencil_attachment = nullptr,
+            .depth_stencil_attachment = &depth_stencil_attachment,
         };
 
         GPUGraphicsPassEncoder* encoder = t_command_buffer[index]->begin_graphics_pass(graphics_pass_create_info);
