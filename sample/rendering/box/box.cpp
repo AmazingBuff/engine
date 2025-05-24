@@ -4,8 +4,6 @@
 
 #include <common.h>
 
-#include "assimp/Vertex.h"
-
 thread_local GPURootSignature* root_signature = nullptr;
 thread_local GPUGraphicsPipeline* pipeline = nullptr;
 thread_local GPUDescriptorSet* texture_set = nullptr;
@@ -18,7 +16,7 @@ thread_local GPUBuffer* buffer = nullptr;
 thread_local GPUBuffer* vertex_buffer = nullptr;
 thread_local GPUBuffer* index_buffer = nullptr;
 
-thread_local bool use_static_samplers = false;
+thread_local bool use_static_samplers = true;
 
 
 struct ObjectInfo
@@ -258,42 +256,6 @@ void create_pipeline()
 
     root_signature = GPU_create_root_signature(t_device, rs_desc);
 
-    GPUDescriptorSetCreateInfo descriptor_set_create_info{
-        .root_signature = root_signature,
-        .set_index = 1
-    };
-    texture_set = GPU_create_descriptor_set(descriptor_set_create_info);
-
-    GPUDescriptorData texture_set_data;
-    texture_set_data.array_count = 1;
-    texture_set_data.textures = &texture_view;
-    texture_set_data.resource_type = GPUResourceTypeFlag::e_texture;
-    texture_set_data.binding = 0;
-    texture_set->update(&texture_set_data, 1);
-
-    descriptor_set_create_info.set_index = 0;
-    buffer_set = GPU_create_descriptor_set(descriptor_set_create_info);
-
-    GPUDescriptorData buffer_set_data;
-    buffer_set_data.array_count = 1;
-    buffer_set_data.buffers = &buffer;
-    buffer_set_data.resource_type = GPUResourceTypeFlag::e_uniform_buffer;
-    buffer_set_data.binding = 1;
-    buffer_set->update(&buffer_set_data, 1);
-
-    if (!use_static_samplers)
-    {
-        descriptor_set_create_info.set_index = 2;
-        sampler_set = GPU_create_descriptor_set(descriptor_set_create_info);
-
-        GPUDescriptorData sampler_set_data;
-        sampler_set_data.array_count = 1;
-        sampler_set_data.samplers = &sampler;
-        sampler_set_data.resource_type = GPUResourceTypeFlag::e_sampler;
-        sampler_set_data.binding = 0;
-        sampler_set->update(&sampler_set_data, 1);
-    }
-
     GPUVertexAttribute pos{
         .array_size = 1,
         .format = GPUFormat::e_r32g32b32_sfloat,
@@ -347,6 +309,43 @@ void create_pipeline()
 
     pipeline = GPU_create_graphics_pipeline(pipeline_desc);
 
+
+    GPUDescriptorSetCreateInfo descriptor_set_create_info{
+        .root_signature = root_signature,
+        .set_index = 1
+    };
+    texture_set = GPU_create_descriptor_set(descriptor_set_create_info);
+
+    GPUDescriptorData texture_set_data;
+    texture_set_data.array_count = 1;
+    texture_set_data.textures = &texture_view;
+    texture_set_data.resource_type = GPUResourceTypeFlag::e_texture;
+    texture_set_data.binding = 0;
+    texture_set->update(&texture_set_data, 1);
+
+    descriptor_set_create_info.set_index = 0;
+    buffer_set = GPU_create_descriptor_set(descriptor_set_create_info);
+
+    GPUDescriptorData buffer_set_data;
+    buffer_set_data.array_count = 1;
+    buffer_set_data.buffers = &buffer;
+    buffer_set_data.resource_type = GPUResourceTypeFlag::e_uniform_buffer;
+    buffer_set_data.binding = 0;
+    buffer_set->update(&buffer_set_data, 1);
+
+    if (!use_static_samplers)
+    {
+        descriptor_set_create_info.set_index = 2;
+        sampler_set = GPU_create_descriptor_set(descriptor_set_create_info);
+
+        GPUDescriptorData sampler_set_data;
+        sampler_set_data.array_count = 1;
+        sampler_set_data.samplers = &sampler;
+        sampler_set_data.resource_type = GPUResourceTypeFlag::e_sampler;
+        sampler_set_data.binding = 0;
+        sampler_set->update(&sampler_set_data, 1);
+    }
+
     GPU_destroy_shader_library(vertex_shader);
     GPU_destroy_shader_library(fragment_shader);
 
@@ -381,19 +380,19 @@ void draw(SDL_Window* window)
     create_pipeline();
 
     SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_MOTION, EventUserDataType::e_orbital_camera, [](const SDL_Event& event, void* user_data)
-    {
-        if (event.motion.state == SDL_BUTTON_LMASK)
         {
-            OrbitalCamera* camera = static_cast<OrbitalCamera*>(user_data);
-            camera->on_mouse_move(event.motion.xrel, event.motion.yrel);
-        }
-    });
+            if (event.motion.state == SDL_BUTTON_LMASK)
+            {
+                OrbitalCamera* camera = static_cast<OrbitalCamera*>(user_data);
+                camera->on_mouse_move(event.motion.xrel, event.motion.yrel);
+            }
+        });
 
     SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_WHEEL, EventUserDataType::e_orbital_camera, [](const SDL_Event& event, void* user_data)
-    {
-        OrbitalCamera* camera = static_cast<OrbitalCamera*>(user_data);
-        camera->on_mouse_scroll(event.wheel.y * event.wheel.mouse_y);
-    });
+        {
+            OrbitalCamera* camera = static_cast<OrbitalCamera*>(user_data);
+            camera->on_mouse_scroll(event.wheel.y * event.wheel.mouse_y);
+        });
 
     bool quit = false;
     while (!quit)

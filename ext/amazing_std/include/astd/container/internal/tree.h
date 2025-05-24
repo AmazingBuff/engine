@@ -395,6 +395,23 @@ public:
         return Iterator();
     }
 
+    Iterator const begin() const
+    {
+        // left most
+        node_type* node = m_root;
+        if (node)
+        {
+            while (node->left)
+                node = node->left;
+        }
+        return Iterator(node);
+    }
+
+    Iterator const end() const
+    {
+        return Iterator();
+    }
+
 protected:
     // find node for rb tree or find first node for multi rb tree
     node_type* find_node(const key_type& key) const

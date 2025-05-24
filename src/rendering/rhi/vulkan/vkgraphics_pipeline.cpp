@@ -85,20 +85,20 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         stage_count++;                                                                                                      \
     }
 
-    SHADER_STAGE(vertex_shader, VK_SHADER_STAGE_VERTEX_BIT)
-        SHADER_STAGE(tessellation_control_shader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
-        SHADER_STAGE(tessellation_evaluation_shader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
-        SHADER_STAGE(geometry_shader, VK_SHADER_STAGE_GEOMETRY_BIT)
-        SHADER_STAGE(fragment_shader, VK_SHADER_STAGE_FRAGMENT_BIT)
+    SHADER_STAGE(vertex_shader, VK_SHADER_STAGE_VERTEX_BIT);
+    SHADER_STAGE(tessellation_control_shader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+    SHADER_STAGE(tessellation_evaluation_shader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+    SHADER_STAGE(geometry_shader, VK_SHADER_STAGE_GEOMETRY_BIT);
+    SHADER_STAGE(fragment_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
 #undef SHADER_STAGE
 
-        // viewport
-        VkPipelineViewportStateCreateInfo viewport_state_info{
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-            .viewportCount = 1,
-            .pViewports = nullptr,
-            .scissorCount = 1,
-            .pScissors = nullptr,
+    // viewport
+    VkPipelineViewportStateCreateInfo viewport_state_info{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount = 1,
+        .pViewports = nullptr,
+        .scissorCount = 1,
+        .pScissors = nullptr,
     };
 
     // dynamic states
@@ -233,7 +233,7 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
             VkPipelineColorBlendAttachmentState& rt_blend = color_blend_state[i];
             rt_blend.blendEnable = VK_FALSE;
             rt_blend.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                   VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+                VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         }
     }
     VkPipelineColorBlendStateCreateInfo blend_state_info{

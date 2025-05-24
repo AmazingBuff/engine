@@ -27,7 +27,8 @@ private:
     };
 
     // set <---> layout
-    HashMap<uint32_t, VulkanDescriptorLayout> m_descriptor_layouts;
+    Map<uint32_t, VulkanDescriptorLayout> m_descriptor_layouts;
+    // sampler descriptors is a subset of descriptor layouts because layout must be ordered
     HashMap<uint32_t, VulkanDescriptorLayout> m_static_sampler_descriptors;
     VkPushConstantRange* m_push_constant_ranges;
 
