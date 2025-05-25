@@ -40,6 +40,7 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
         set_count_map[sampler.set] += 1;
 
     // binding
+    Map<uint32_t, VulkanDescriptorLayout> descriptor_layouts;
     for (auto const& [set, count] : set_count_map)
     {
         VkDescriptorSetLayoutBinding* bindings = STACK_NEW(VkDescriptorSetLayoutBinding, count);
@@ -84,9 +85,10 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
         VK_CHECK_RESULT(vk_device->m_device_table.vkCreateDescriptorSetLayout(vk_device->m_device, &set_layout_info, VK_Allocation_Callbacks_Ptr, &descriptor_layout.set_layout));
         descriptor_layout.set = vk_device->m_descriptor_pool->consume_descriptor_set(&descriptor_layout.set_layout, 1);
 
-
-        m_descriptor_layouts.emplace(set, descriptor_layout);
-        if (dynamic_binding_count <= 0)
+        descriptor_layouts.emplace(set, descriptor_layout);
+        if (dynamic_binding_count > 0)
+            m_descriptor_layouts.emplace(set, descriptor_layout);
+        else
             // only static samplers
             m_static_sampler_descriptors.emplace(set, descriptor_layout);
     }
@@ -101,9 +103,9 @@ VKRootSignature::VKRootSignature(GPUDevice const* device, GPURootSignatureCreate
     }
 
     // layout set
-    VkDescriptorSetLayout* layouts = m_descriptor_layouts.empty() ? nullptr : STACK_NEW(VkDescriptorSetLayout, m_descriptor_layouts.size());
+    VkDescriptorSetLayout* layouts = descriptor_layouts.empty() ? nullptr : STACK_NEW(VkDescriptorSetLayout, descriptor_layouts.size());
     uint32_t set_layout_count = 0;
-    for (auto const& [set, layout] : m_descriptor_layouts)
+    for (auto const& [set, layout] : descriptor_layouts)
     {
         layouts[set_layout_count] = layout.set_layout;
         set_layout_count++;
