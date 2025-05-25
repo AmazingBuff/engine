@@ -200,7 +200,7 @@ public:
         return *this;
     }
 
-    void insert(value_type&& value)
+    Iterator insert(value_type&& value)
     {
         size_t probe_group = m_probe(value_hash()(value), m_bucket_count);
         size_t i = 0;
@@ -211,18 +211,15 @@ public:
                 m_buckets[probe_group * max_bucket_size + i].flag = ElementFlag::e_valid;
                 m_buckets[probe_group * max_bucket_size + i].val = value;
                 m_size++;
-                break;
+                return Iterator(m_buckets + probe_group * max_bucket_size + i);
             }
         }
 
-        if (i == max_bucket_size)
-        {
-            rehash(m_bucket_count * 2);
-            insert(value);
-        }
+        rehash(m_bucket_count * 2);
+        return insert(value);
     }
 
-    void insert(const value_type& value)
+    Iterator insert(const value_type& value)
     {
         size_t probe_group = m_probe(value_hash()(value), m_bucket_count);
         size_t i = 0;
@@ -233,23 +230,20 @@ public:
                 m_buckets[probe_group * max_bucket_size + i].flag = ElementFlag::e_valid;
                 m_buckets[probe_group * max_bucket_size + i].val = value;
                 m_size++;
-                break;
+                return Iterator(m_buckets + probe_group * max_bucket_size + i);
             }
         }
 
-        if (i == max_bucket_size)
-        {
-            rehash(m_bucket_count * 2);
-            insert(value);
-        }
+        rehash(m_bucket_count * 2);
+        return insert(value);
     }
 
     template <typename... Args>
         requires(std::is_constructible_v<value_type, Args...>)
-    void emplace(Args&&... args)
+    Iterator emplace(Args&&... args)
     {
         value_type val(std::forward<Args>(args)...);
-        insert(std::move(val));
+        return insert(std::move(val));
     }
 
     void erase(const key_type& key)
@@ -345,12 +339,12 @@ public:
         }
     }
 
-    bool empty() const
+    NODISCARD bool empty() const
     {
         return m_size == 0;
     }
 
-    size_t size() const
+    NODISCARD size_t size() const
     {
         return m_size;
     }

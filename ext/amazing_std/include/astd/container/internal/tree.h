@@ -220,10 +220,10 @@ public:
 
     template <typename... Args>
         requires(std::is_constructible_v<value_type, Args...>)
-    void emplace(Args&&... args)
+    Iterator emplace(Args&&... args)
     {
         value_type val(std::forward<Args>(args)...);
-        insert(std::move(val));
+        return insert(std::move(val));
     }
 
     template <typename Iter>
@@ -236,7 +236,7 @@ public:
         }
     }
 
-    void insert(value_type&& val)
+    Iterator insert(value_type&& val)
     {
         // find position
         node_type* node = m_root;
@@ -259,7 +259,7 @@ public:
             {
                 // equal
                 if constexpr (!Trait::is_multi)
-                    return;
+                    return Iterator(node);
                 else
                 {
                     // insert to right subtree
@@ -293,6 +293,8 @@ public:
         insert_adjustment(node);
 
         m_size++;
+
+        return Iterator(node);
     }
 
     bool erase(const key_type& key)

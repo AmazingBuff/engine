@@ -82,10 +82,7 @@ public:
     {
         auto node = Tree::find_node(key);
         if (node == nullptr)
-        {
-            Tree::emplace(key, Tp());
-            return Tree::find_node(key)->val.second;
-        }
+            return Tree::emplace(key, Tp())->second;
 
         return node->val.second;
     }
@@ -137,8 +134,7 @@ public:
         if (Iterator(node) == Hash::end())
         {
             Tp val = Tp();
-            Hash::emplace(key, val);
-            return Hash::find_node(key)->val.second;
+            return Hash::emplace(key, val)->second;
         }
 
         return node->val.second;
