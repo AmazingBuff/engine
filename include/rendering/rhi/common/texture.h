@@ -26,6 +26,7 @@ protected:
         uint64_t size_in_bytes;
         GPUFormat format;
         GPUSampleCount sample_count;
+        GPUResourceState state;
         uint64_t unique_id;
         uint32_t aspect_mask;
         uint32_t node_index;

@@ -19,6 +19,7 @@ private:
     IDxcBlobEncoding* m_blob_encoding;
 
     friend class DX12GraphicsPipeline;
+    friend class DX12ComputePipeline;
 };
 
 

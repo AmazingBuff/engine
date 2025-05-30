@@ -49,7 +49,7 @@ D3D12_RESOURCE_FLAGS DX12Texture::transfer_resource_flags(GPUTextureCreateInfo c
 {
     D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
     // uav
-    if (info.type & GPUResourceTypeFlag::e_rw_texture)
+    if (info.type & GPUResourceTypeFlag::e_rw_texture || info.mip_levels > 1)
         flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     // rtv
     if (info.type & GPUResourceTypeFlag::e_render_target)
@@ -281,6 +281,7 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
     m_info->array_layers = info.array_layers;
     m_info->format = info.format;
     m_info->sample_count = info.sample_count;
+    m_info->state = info.state;
     m_info->is_cube = (info.type & GPUResourceTypeFlag::e_texture_cube) == GPUResourceTypeFlag::e_texture_cube ? 1 : 0;
 
     m_ref_device = device;

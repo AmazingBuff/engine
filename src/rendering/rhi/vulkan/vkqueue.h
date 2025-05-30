@@ -28,6 +28,7 @@ private:
     friend class VKCommandPool;
     friend class VKCommandBuffer;
     friend class VKGraphicsPassEncoder;
+    friend class VKComputePassEncoder;
 };
 
 AMAZING_NAMESPACE_END

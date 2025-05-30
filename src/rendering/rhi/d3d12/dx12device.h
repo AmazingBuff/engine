@@ -38,6 +38,7 @@ private:
     friend class DX12RootSignature;
     friend class DX12DescriptorSet;
     friend class DX12GraphicsPipeline;
+    friend class DX12ComputePipeline;
 
     friend class DX12MemoryPool;
     friend class DX12Buffer;

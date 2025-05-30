@@ -16,6 +16,8 @@
 #include "common/semaphore.h"
 #include "common/graphics_pipeline.h"
 #include "common/graphics_pass_encoder.h"
+#include "common/compute_pipeline.h"
+#include "common/compute_pass_encoder.h"
 #include "common/query_pool.h"
 #include "common/root_signature.h"
 #include "common/root_signature_pool.h"
@@ -41,6 +43,7 @@ GPUCommandPool* GPU_create_command_pool(GPUQueue const* queue, GPUCommandPoolCre
 GPUCommandBuffer* GPU_create_command_buffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info);
 GPUSwapChain* GPU_create_swap_chain(GPUDevice const* device, GPUSwapChainCreateInfo const& info);
 GPUGraphicsPipeline* GPU_create_graphics_pipeline(GPUGraphicsPipelineCreateInfo const& info);
+GPUComputePipeline* GPU_create_compute_pipeline(GPUComputePipelineCreateInfo const& info);
 GPUFence* GPU_create_fence(GPUDevice const* device);
 GPUSemaphore* GPU_create_semaphore(GPUDevice const* device);
 GPURootSignature* GPU_create_root_signature(GPUDevice const* device, GPURootSignatureCreateInfo const& info);
@@ -62,6 +65,7 @@ void GPU_destroy_command_pool(GPUCommandPool* command_pool);
 void GPU_destroy_command_buffer(GPUCommandBuffer* command_buffer);
 void GPU_destroy_swap_chain(GPUSwapChain* swap_chain);
 void GPU_destroy_graphics_pipeline(GPUGraphicsPipeline* graphic_pipeline);
+void GPU_destroy_compute_pipeline(GPUComputePipeline* graphic_pipeline);
 void GPU_destroy_fence(GPUFence* fence);
 void GPU_destroy_semaphore(GPUSemaphore* semaphore);
 void GPU_destroy_descriptor_set(GPUDescriptorSet* descriptor_set);

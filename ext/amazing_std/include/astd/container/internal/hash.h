@@ -389,7 +389,8 @@ protected:
         size_t probe_group = m_probe(key_hash()(key), m_bucket_count);
         for (size_t i = 0; i < max_bucket_size; i++)
         {
-            if (key_equal()(Trait::key_func(m_buckets[probe_group * max_bucket_size + i].val), key))
+            if (m_buckets[probe_group * max_bucket_size + i].flag == ElementFlag::e_valid &&
+                key_equal()(Trait::key_func(m_buckets[probe_group * max_bucket_size + i].val), key))
                 return m_buckets + probe_group * max_bucket_size + i;
         }
 

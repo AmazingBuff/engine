@@ -36,6 +36,7 @@ DX12DescriptorHeap::D3D12DescriptorHandle DX12DescriptorHeap::consume_descriptor
 
     }
 
+    // bind descriptor easily with one offset 
     heap->used_descriptor_count += descriptor_count;
 
     size_t offset = heap->used_descriptor_count * heap->descriptor_size;

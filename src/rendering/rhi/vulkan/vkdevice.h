@@ -51,6 +51,8 @@ private:
     friend class VKDescriptorSet;
     friend class VKGraphicsPipeline;
     friend class VKGraphicsPassEncoder;
+    friend class VKComputePipeline;
+    friend class VKComputePassEncoder;
     friend class VKQueryPool;
 
     friend class VKBuffer;

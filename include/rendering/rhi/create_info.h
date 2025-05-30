@@ -75,7 +75,7 @@ struct GPUDescriptorSetCreateInfo
 
 struct GPUGraphicsPipelineCreateInfo
 {
-    GPURootSignature* root_signature;
+    GPURootSignature const* root_signature;
     GPUShaderEntry const* vertex_shader;
     GPUShaderEntry const* tessellation_control_shader;
     GPUShaderEntry const* tessellation_evaluation_shader;
@@ -104,6 +104,17 @@ struct GPUGraphicsPassCreateInfo
     GPUColorAttachment color_attachments[GPU_Max_Render_Target];
     uint32_t color_attachment_count;
     GPUDepthStencilAttachment const* depth_stencil_attachment;
+};
+
+struct GPUComputePipelineCreateInfo
+{
+    GPURootSignature const* root_signature;
+    GPUShaderEntry const* compute_shader;
+};
+
+struct GPUComputePassCreateInfo
+{
+
 };
 
 
@@ -156,7 +167,7 @@ struct GPUTextureCreateInfo
 struct GPUTextureViewCreateInfo
 {
     String name;
-    GPUTexture* texture;
+    GPUTexture const* texture;
     GPUFormat format;
     GPUTextureViewUsage usage;
     GPUTextureViewAspect aspect;

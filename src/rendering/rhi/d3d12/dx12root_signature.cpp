@@ -73,7 +73,8 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
                 D3D12_DESCRIPTOR_RANGE1& cbv_srv_uav_range = cbv_srv_uav_ranges[i_range];
                 cbv_srv_uav_range.RegisterSpace = resource.set;
                 cbv_srv_uav_range.BaseShaderRegister = resource.binding;
-                cbv_srv_uav_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+                // allow mulitiple pass copy descritor operation, such as mipmap generation
+                cbv_srv_uav_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
                 cbv_srv_uav_range.NumDescriptors = resource.array_count;
                 cbv_srv_uav_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
                 cbv_srv_uav_range.RangeType = transfer_resource_type(resource.resource_type);

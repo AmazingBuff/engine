@@ -74,7 +74,7 @@ void set_scene()
 {
     constexpr Float fov = 45.0;
     constexpr Float z_near = 0.1;
-    constexpr Float z_far = 10.0;
+    constexpr Float z_far = 100.0;
 
     constexpr Float aspect = static_cast<Float>(Width) / Height;
 
@@ -130,11 +130,12 @@ void create_pipeline()
     ImageInfo image = load_image(RES_DIR"image/a.png");
 
     GPUTextureCreateInfo texture_create_info{
+        .name = "image",
         .width = static_cast<uint32_t>(image.width),
         .height = static_cast<uint32_t>(image.height),
         .depth = 1,
         .array_layers = 1,
-        .mip_levels = 1,
+        .mip_levels = 6,
         .sample_quality = 0,
         .sample_count = GPUSampleCount::e_1,
         .format = GPUFormat::e_r8g8b8a8_unorm,
@@ -143,19 +144,6 @@ void create_pipeline()
         .flags = GPUTextureFlagsFlag::e_dedicated,
     };
     texture = GPU_create_texture(t_device, texture_create_info);
-
-    GPUTextureViewCreateInfo texture_view_create_info{
-        .texture = texture,
-        .format = GPUFormat::e_r8g8b8a8_unorm,
-        .usage = GPUTextureViewUsageFlag::e_srv,
-        .aspect = GPUTextureViewAspectFlag::e_color,
-        .type = GPUTextureType::e_2d,
-        .base_array_layer = 0,
-        .array_layers = 1,
-        .base_mip_level = 0,
-        .mip_levels = 1,
-    };
-    texture_view = GPU_create_texture_view(texture_view_create_info);
 
     GPUBufferCreateInfo buffer_create_info{
         .size = image.data.size(),
@@ -176,6 +164,19 @@ void create_pipeline()
         },
     };
     transfer_buffer_to_texture(transfer_info);
+
+    GPUTextureViewCreateInfo texture_view_create_info{
+        .texture = texture,
+        .format = GPUFormat::e_r8g8b8a8_unorm,
+        .usage = GPUTextureViewUsageFlag::e_srv,
+        .aspect = GPUTextureViewAspectFlag::e_color,
+        .type = GPUTextureType::e_2d,
+        .base_array_layer = 0,
+        .array_layers = 1,
+        .base_mip_level = 0,
+        .mip_levels = 6,
+    };
+    texture_view = GPU_create_texture_view(texture_view_create_info);
 
     GPUSamplerCreateInfo sampler_create_info{
         .min_filter = GPUFilterType::e_linear,
@@ -431,7 +432,6 @@ void draw(SDL_Window* window)
         // barrier
         GPUTextureBarrier draw_barrier{
             .texture = texture,
-            .src_state = GPUResourceStateFlag::e_undefined,
             .dst_state = GPUResourceStateFlag::e_render_target,
         };
 
@@ -499,7 +499,6 @@ void draw(SDL_Window* window)
         // barrier
         GPUTextureBarrier present_barrier{
             .texture = texture,
-            .src_state = GPUResourceStateFlag::e_render_target,
             .dst_state = GPUResourceStateFlag::e_present,
         };
         GPUResourceBarrierInfo barrier{

@@ -21,6 +21,7 @@ private:
 
     friend class VKCommandBuffer;
     friend class VKGraphicsPassEncoder;
+    friend class VKComputePassEncoder;
     friend class VKTexture;
 };
 

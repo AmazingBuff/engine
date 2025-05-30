@@ -9,6 +9,7 @@
 #include "vkquery_pool.h"
 #include "vkqueue.h"
 #include "vkgraphics_pass_encoder.h"
+#include "vkcompute_pass_encoder.h"
 #include "resources/vkbuffer.h"
 #include "resources/vktexture.h"
 #include "resources/vktexture_view.h"
@@ -219,6 +220,18 @@ void VKCommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
     vk_device->m_device_table.vkCmdEndRenderPass(m_command_buffer);
 }
 
+GPUComputePassEncoder* VKCommandBuffer::begin_compute_pass(GPUComputePassCreateInfo const& info)
+{
+    VKComputePassEncoder* encoder = PLACEMENT_NEW(VKComputePassEncoder, sizeof(VKComputePassEncoder));
+    encoder->m_command = this;
+    return encoder;
+}
+
+void VKCommandBuffer::end_compute_pass(GPUComputePassEncoder* encoder)
+{
+    PLACEMENT_DELETE(VKComputePassEncoder, static_cast<VKComputePassEncoder*>(encoder));
+}
+
 void VKCommandBuffer::begin_query(GPUQueryPool const* pool, GPUQueryInfo const& info)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
@@ -314,6 +327,7 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
     {
         GPUTextureBarrier const& barrier = info.texture_barriers[i];
         VKTexture const* texture = static_cast<VKTexture const*>(barrier.texture);
+        GPUResourceState src_state = texture->m_info->state;
 
         image_barrier[i].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         image_barrier[i].pNext = nullptr;
@@ -323,12 +337,12 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         image_barrier[i].subresourceRange.levelCount = barrier.subresource_barrier ? 1 : VK_REMAINING_MIP_LEVELS;
         image_barrier[i].subresourceRange.baseArrayLayer = barrier.subresource_barrier ? barrier.array_layer : 0;
         image_barrier[i].subresourceRange.layerCount = barrier.subresource_barrier ? 1 : VK_REMAINING_ARRAY_LAYERS;
-        if (barrier.queue_acquire && barrier.src_state != GPUResourceStateFlag::e_undefined)
+        if (barrier.queue_acquire && src_state != GPUResourceStateFlag::e_undefined)
         {
             image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
             image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
         }
-        else if (barrier.queue_release && barrier.src_state != GPUResourceStateFlag::e_undefined)
+        else if (barrier.queue_release && src_state != GPUResourceStateFlag::e_undefined)
         {
             image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
             image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
@@ -339,7 +353,7 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
             image_barrier[i].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         }
 
-        if (barrier.src_state == GPUResourceStateFlag::e_unordered_access &&
+        if (src_state == GPUResourceStateFlag::e_unordered_access &&
             barrier.dst_state == GPUResourceStateFlag::e_unordered_access)
         {
             image_barrier[i].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
@@ -349,14 +363,16 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         }
         else
         {
-            image_barrier[i].srcAccessMask = transfer_access_state(barrier.src_state);
+            image_barrier[i].srcAccessMask = transfer_access_state(src_state);
             image_barrier[i].dstAccessMask = transfer_access_state(barrier.dst_state);
-            image_barrier[i].oldLayout = transfer_image_layout(barrier.src_state);
+            image_barrier[i].oldLayout = transfer_image_layout(src_state);
             image_barrier[i].newLayout = transfer_image_layout(barrier.dst_state);
         }
 
         src_access_flags |= image_barrier[i].srcAccessMask;
         dst_access_flags |= image_barrier[i].dstAccessMask;
+
+        texture->m_info->state = barrier.dst_state;
     }
 
     if (buffer_barrier || image_barrier)
@@ -401,8 +417,121 @@ void VKCommandBuffer::transfer_buffer_to_texture(GPUBufferToTextureTransferInfo 
             .depth = depth,
         },
     };
-    vk_device->m_device_table.vkCmdCopyBufferToImage(m_command_buffer, buffer->m_buffer, texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    vk_device->m_device_table.vkCmdCopyBufferToImage(m_command_buffer, buffer->m_buffer, texture->m_image, transfer_image_layout(texture->m_info->state), 1, &region);
 }
 
+void VKCommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUResourceState& dst_state)
+{
+    VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
+    VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
+    VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
+    VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
+    VKTexture const* vk_texture = static_cast<VKTexture const*>(texture);
+
+    VkImageLayout old_layout = transfer_image_layout(vk_texture->m_info->state);
+    VkImageLayout new_layout = transfer_image_layout(dst_state);
+    VkAccessFlags src_access_flags = transfer_access_state(vk_texture->m_info->state);
+    VkAccessFlags dst_access_flags = transfer_access_state(dst_state);
+    VkImageLayout mid_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    VkAccessFlags mid_access_flags = VK_ACCESS_TRANSFER_WRITE_BIT;
+    for (uint32_t layer = 0; layer < vk_texture->m_info->array_layers; layer++)
+    {
+        VkImageMemoryBarrier mipmap_barrier{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = vk_texture->m_image,
+            .subresourceRange = {
+                .aspectMask = vk_texture->m_info->aspect_mask,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = layer,
+                .layerCount = 1
+            },
+        };
+
+        // first
+        if (old_layout != mid_layout)
+        {
+            mipmap_barrier.subresourceRange.baseMipLevel = 0;
+            mipmap_barrier.oldLayout = old_layout;
+            mipmap_barrier.newLayout = mid_layout;
+            mipmap_barrier.srcAccessMask = src_access_flags;
+            mipmap_barrier.dstAccessMask = mid_access_flags;
+
+            vk_device->m_device_table.vkCmdPipelineBarrier(m_command_buffer,
+                transfer_pipeline_stage(vk_adapter, mipmap_barrier.srcAccessMask, vk_queue->m_type),
+                transfer_pipeline_stage(vk_adapter, mipmap_barrier.dstAccessMask, vk_queue->m_type),
+                0, 0, nullptr, 0, nullptr, 1, &mipmap_barrier);
+        }
+
+        int32_t mip_width = static_cast<int32_t>(vk_texture->m_info->width);
+        int32_t mip_height = static_cast<int32_t>(vk_texture->m_info->height);
+        for (uint32_t mip = 1; mip < vk_texture->m_info->mip_levels; mip++)
+        {
+            mipmap_barrier.subresourceRange.baseMipLevel = mip - 1;
+            mipmap_barrier.oldLayout = mid_layout;
+            mipmap_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            mipmap_barrier.srcAccessMask = mid_access_flags;
+            mipmap_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+            vk_device->m_device_table.vkCmdPipelineBarrier(m_command_buffer,
+                transfer_pipeline_stage(vk_adapter, mipmap_barrier.srcAccessMask, vk_queue->m_type),
+                transfer_pipeline_stage(vk_adapter, mipmap_barrier.dstAccessMask, vk_queue->m_type),
+                0, 0, nullptr, 0, nullptr, 1, &mipmap_barrier);
+
+            VkImageBlit blit{
+                .srcSubresource = {
+                    .aspectMask = vk_texture->m_info->aspect_mask,
+                    .mipLevel = mip - 1,
+                    .baseArrayLayer = layer,
+                    .layerCount = 1
+                },
+                .srcOffsets = {{0, 0, 0}, {mip_width, mip_height, 1}},
+                .dstSubresource = {
+                    .aspectMask = vk_texture->m_info->aspect_mask,
+                    .mipLevel = mip,
+                    .baseArrayLayer = layer,
+                    .layerCount = 1
+                },
+                .dstOffsets = {{0, 0, 0}, {mip_width > 1 ? mip_width / 2 : 1, mip_height > 1 ? mip_height / 2 : 1, 1}},
+            };
+
+            vk_device->m_device_table.vkCmdBlitImage(m_command_buffer, vk_texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vk_texture->m_image, mid_layout, 1, &blit, VK_FILTER_LINEAR);
+
+            // layout transfer for i - 1 mip level
+            if (new_layout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+            {
+                mipmap_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                mipmap_barrier.newLayout = new_layout;
+                mipmap_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                mipmap_barrier.dstAccessMask = dst_access_flags;
+
+                vk_device->m_device_table.vkCmdPipelineBarrier(m_command_buffer,
+                    transfer_pipeline_stage(vk_adapter, mipmap_barrier.srcAccessMask, vk_queue->m_type),
+                    transfer_pipeline_stage(vk_adapter, mipmap_barrier.dstAccessMask, vk_queue->m_type),
+                    0, 0, nullptr, 0, nullptr, 1, &mipmap_barrier);
+            }
+
+            mip_width = mip_width > 1 ? mip_width / 2 : 1;
+            mip_height = mip_height > 1 ? mip_height / 2 : 1;
+        }
+
+        if (mid_layout != new_layout)
+        {
+            // last mip level
+            mipmap_barrier.subresourceRange.baseMipLevel = vk_texture->m_info->mip_levels - 1;
+            mipmap_barrier.oldLayout = mid_layout;
+            mipmap_barrier.newLayout = new_layout;
+            mipmap_barrier.srcAccessMask = mid_access_flags;
+            mipmap_barrier.dstAccessMask = dst_access_flags;
+
+            vk_device->m_device_table.vkCmdPipelineBarrier(m_command_buffer,
+                transfer_pipeline_stage(vk_adapter, mipmap_barrier.srcAccessMask, vk_queue->m_type),
+                transfer_pipeline_stage(vk_adapter, mipmap_barrier.dstAccessMask, vk_queue->m_type),
+                0, 0, nullptr, 0, nullptr, 1, &mipmap_barrier);
+        }
+    }
+}
 
 AMAZING_NAMESPACE_END

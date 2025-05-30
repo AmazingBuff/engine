@@ -13,11 +13,6 @@ AMAZING_NAMESPACE_BEGIN
 
 DX12GraphicsPassEncoder::DX12GraphicsPassEncoder() : m_command_buffer(nullptr) {}
 
-DX12GraphicsPassEncoder::~DX12GraphicsPassEncoder()
-{
-
-}
-
 void DX12GraphicsPassEncoder::bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t binding_count)
 {
     Vector<D3D12_VERTEX_BUFFER_VIEW> vertex_buffer_views(binding_count);
@@ -104,7 +99,7 @@ void DX12GraphicsPassEncoder::set_push_constant(GPURootSignature const* root_sig
         if (name == dx12_root_signature->m_push_constants[i].name)
         {
             m_command_buffer->m_command_list->SetGraphicsRoot32BitConstants(dx12_root_signature->m_constant_parameters[i].index,
-        dx12_root_signature->m_constant_parameters[i].root_parameter.Constants.Num32BitValues, data, 0);
+                dx12_root_signature->m_constant_parameters[i].root_parameter.Constants.Num32BitValues, data, 0);
         }
     }
 }

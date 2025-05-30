@@ -214,7 +214,6 @@ void draw(SDL_Window* window)
         // barrier
         GPUTextureBarrier draw_barrier{
             .texture = texture,
-            .src_state = GPUResourceStateFlag::e_undefined,
             .dst_state = GPUResourceStateFlag::e_render_target,
         };
         GPUResourceBarrierInfo barrier_info{
@@ -252,7 +251,6 @@ void draw(SDL_Window* window)
         // barrier
         GPUTextureBarrier present_barrier{
             .texture = texture,
-            .src_state = GPUResourceStateFlag::e_render_target,
             .dst_state = GPUResourceStateFlag::e_present,
         };
         GPUResourceBarrierInfo barrier{
@@ -298,6 +296,5 @@ int main()
 
     draw(window);
 
-    int* p = Allocator<int>::allocate(1);
     return 0;
 }

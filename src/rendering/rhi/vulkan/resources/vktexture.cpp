@@ -229,13 +229,13 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
     m_info->array_layers = info.array_layers;
     m_info->is_cube = (info.type & GPUResourceTypeFlag::e_texture_cube) == GPUResourceTypeFlag::e_texture_cube;
     m_info->format = info.format;
+    m_info->state = GPUResourceStateFlag::e_undefined;
 
     // transfer image layout
     vk_device->m_internal_command_pool->reset();
     vk_device->m_internal_command_buffer->begin_command();
     GPUTextureBarrier barrier{
         .texture = this,
-        .src_state = GPUResourceStateFlag::e_undefined,
         .dst_state = info.state,
     };
     GPUResourceBarrierInfo barrier_info{

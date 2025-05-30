@@ -5,6 +5,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <renderdoc/renderdoc_app.h>
 #include <rendering/rhi/wrapper.h>
 #include <io/read.h>
 #include <event/sdl_event.h>
@@ -21,12 +22,15 @@ static constexpr GPUFormat Backend_Depth_Stencil_Format = GPUFormat::e_d32_sfloa
 static thread_local SDLEventCallbackHandler SDL_Event_Callback_Handler;
 static thread_local OrbitalCamera Orbital_Camera(Vec3f(0.0f, 0.0f, 0.0f));
 
-extern thread_local GPUInstance* t_instance;
+extern RENDERDOC_API_1_6_0* Renderdoc_Api;
+
 extern thread_local GPUDevice* t_device;
-extern thread_local GPUSurface* t_surface;
 extern thread_local GPUQueue* t_graphics_queue;
+extern thread_local GPUQueue* t_compute_queue;
 extern thread_local GPUCommandPool* t_command_pool[Frame_In_Flight];
+extern thread_local GPUCommandPool* t_compute_pool[Frame_In_Flight];
 extern thread_local GPUCommandBuffer* t_command_buffer[Frame_In_Flight];
+extern thread_local GPUCommandBuffer* t_compute_buffer[Frame_In_Flight];
 extern thread_local GPUSwapChain* t_swap_chain;
 extern thread_local GPUFence* t_present_fence[Frame_In_Flight];
 extern thread_local GPUSemaphore* t_image_semaphore;

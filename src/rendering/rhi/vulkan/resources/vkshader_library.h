@@ -20,6 +20,7 @@ private:
     VkShaderModule m_shader_module;
 
     friend class VKGraphicsPipeline;
+    friend class VKComputePipeline;
 };
 
 

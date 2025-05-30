@@ -48,17 +48,34 @@ void VKAdapter::record_adapter_detail()
 {
     // query indices
     Vector<VkQueueFamilyProperties> queue_families = enumerate_properties(vkGetPhysicalDeviceQueueFamilyProperties, m_physical_device);
-    for (uint32_t j = 0; j < queue_families.size(); j++)
+    Vector<Pair<VkQueueFamilyProperties, uint32_t>> queue_family_properties(queue_families.size());
+    for (uint32_t i = 0; i < queue_families.size(); i++)
+    {
+        queue_family_properties[i].first = queue_families[i];
+        queue_family_properties[i].second = i;
+    }
+
+    sort(queue_family_properties.begin(), queue_family_properties.end(), [](const Pair<VkQueueFamilyProperties, uint32_t>& a, const Pair<VkQueueFamilyProperties, uint32_t>& b)
+    {
+        size_t bit_a = count_bits(a.first.queueFlags);
+        size_t bit_b = count_bits(b.first.queueFlags);
+        if ((bit_a == 1 && bit_b == 1) || (bit_a != 1 && bit_b != 1))
+            return a.first.queueFlags < b.first.queueFlags;
+        if (bit_a == 1)
+            return true;
+        return false;
+    });
+    for (uint32_t j = 0; j < queue_family_properties.size(); j++)
     {
         if (m_queue_family_indices[to_underlying(GPUQueueType::e_graphics)] == std::numeric_limits<uint32_t>::max() &&
-            queue_families[j].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-            m_queue_family_indices[to_underlying(GPUQueueType::e_graphics)] = j;
-        else if (m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] == std::numeric_limits<uint32_t>::max() &&
-            queue_families[j].queueFlags & VK_QUEUE_COMPUTE_BIT)
-            m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] = j;
-        else if (m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] == std::numeric_limits<uint32_t>::max() &&
-            queue_families[j].queueFlags & VK_QUEUE_TRANSFER_BIT)
-            m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] = j;
+            queue_family_properties[j].first.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            m_queue_family_indices[to_underlying(GPUQueueType::e_graphics)] = queue_family_properties[j].second;
+        if (m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] == std::numeric_limits<uint32_t>::max() &&
+            queue_family_properties[j].first.queueFlags & VK_QUEUE_COMPUTE_BIT)
+            m_queue_family_indices[to_underlying(GPUQueueType::e_compute)] = queue_family_properties[j].second;
+        if (m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] == std::numeric_limits<uint32_t>::max() &&
+            queue_family_properties[j].first.queueFlags & VK_QUEUE_TRANSFER_BIT)
+            m_queue_family_indices[to_underlying(GPUQueueType::e_transfer)] = queue_family_properties[j].second;
     }
 
     // format support
@@ -73,6 +90,7 @@ void VKAdapter::record_adapter_detail()
             m_adapter_detail.format_support[j].shader_write = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT) != 0;
             m_adapter_detail.format_support[j].render_target_write = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT) != 0;
             m_adapter_detail.format_support[j].depth_stencil_write = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0;
+            m_adapter_detail.format_support[j].mipmap_write = (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) != 0;
         }
         else
         {
@@ -80,6 +98,7 @@ void VKAdapter::record_adapter_detail()
             m_adapter_detail.format_support[j].shader_write = 0;
             m_adapter_detail.format_support[j].render_target_write = 0;
             m_adapter_detail.format_support[j].depth_stencil_write = 0;
+            m_adapter_detail.format_support[j].mipmap_write = 0;
         }
     }
 

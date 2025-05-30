@@ -23,6 +23,7 @@ private:
     uint32_t m_sampler_stride;
 
     friend class DX12GraphicsPassEncoder;
+    friend class DX12ComputePassEncoder;
 };
 
 AMAZING_NAMESPACE_END

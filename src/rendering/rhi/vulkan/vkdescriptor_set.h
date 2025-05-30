@@ -22,6 +22,7 @@ private:
     VulkanDescriptorUpdateData* m_update_data;
 
     friend class VKGraphicsPassEncoder;
+    friend class VKComputePassEncoder;
 };
 
 AMAZING_NAMESPACE_END

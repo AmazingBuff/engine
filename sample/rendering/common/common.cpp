@@ -10,12 +10,17 @@
 #include <dxc/dxcapi.h>
 #include <filesystem>
 
+RENDERDOC_API_1_6_0* Renderdoc_Api = nullptr;
+
 thread_local GPUInstance* t_instance = nullptr;
 thread_local GPUDevice* t_device = nullptr;
 thread_local GPUSurface* t_surface = nullptr;
 thread_local GPUQueue* t_graphics_queue = nullptr;
+thread_local GPUQueue* t_compute_queue = nullptr;
 thread_local GPUCommandPool* t_command_pool[Frame_In_Flight] = { nullptr };
+thread_local GPUCommandPool* t_compute_pool[Frame_In_Flight] = { nullptr };
 thread_local GPUCommandBuffer* t_command_buffer[Frame_In_Flight] = { nullptr };
+thread_local GPUCommandBuffer* t_compute_buffer[Frame_In_Flight] = { nullptr };
 thread_local GPUSwapChain* t_swap_chain = nullptr;
 thread_local GPUFence* t_present_fence[Frame_In_Flight] = { nullptr };
 thread_local GPUSemaphore* t_image_semaphore = nullptr;
@@ -27,8 +32,23 @@ thread_local GPUTextureView* t_depth_texture_view;
 
 static thread_local GPUBackend t_backend = GPUBackend::e_d3d12;
 
+
+static void load_render_doc_api()
+{
+    if (Renderdoc_Api == nullptr)
+    {
+        if (HMODULE module = GetModuleHandleA("renderdoc.dll"))
+        {
+            pRENDERDOC_GetAPI api = reinterpret_cast<pRENDERDOC_GetAPI>(GetProcAddress(module, "RENDERDOC_GetAPI"));
+            ASSERT(api && api(eRENDERDOC_API_Version_1_6_0, reinterpret_cast<void**>(&Renderdoc_Api)) == 1, "Renderdoc api load", "unable load renderdoc api!");
+        }
+    }
+}
+
 void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
 {
+    load_render_doc_api();
+
     GPUInstanceCreateInfo instance_create_info{
         .backend = backend,
         .enable_debug_layer = true,
@@ -46,14 +66,19 @@ void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
         .queue_type = GPUQueueType::e_graphics,
         .queue_count = 1
     };
+    GPUQueueGroup compute_queue_group{
+        .queue_type = GPUQueueType::e_compute,
+        .queue_count = 1
+    };
     GPUDeviceCreateInfo device_create_info{
         .disable_pipeline_cache = false,
-        .queue_groups = {graphics_queue_group},
+        .queue_groups = {graphics_queue_group, compute_queue_group},
     };
 
     t_device = GPU_create_device(adapter, device_create_info);
 
     t_graphics_queue = (GPUQueue*)t_device->fetch_queue(GPUQueueType::e_graphics, 0);
+    t_compute_queue = (GPUQueue*)t_device->fetch_queue(GPUQueueType::e_compute, 0);
 
     GPUCommandBufferCreateInfo command_buffer_create_info{};
 
@@ -65,7 +90,9 @@ void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
     for (uint32_t i = 0; i < Frame_In_Flight; i++)
     {
         t_command_pool[i] = GPU_create_command_pool(t_graphics_queue, command_pool_create_info);
+        t_compute_pool[i] = GPU_create_command_pool(t_compute_queue, command_pool_create_info);
         t_command_buffer[i] = GPU_create_command_buffer(t_command_pool[i], command_buffer_create_info);
+        t_compute_buffer[i] = GPU_create_command_buffer(t_compute_pool[i], command_buffer_create_info);
         t_present_fence[i] = GPU_create_fence(t_device);
     }
 
@@ -135,7 +162,9 @@ void destroy_api_object()
     for (uint32_t i = 0; i < Frame_In_Flight; i++)
     {
         GPU_destroy_fence(t_present_fence[i]);
+        GPU_destroy_command_buffer(t_compute_buffer[i]);
         GPU_destroy_command_buffer(t_command_buffer[i]);
+        GPU_destroy_command_pool(t_compute_pool[i]);
         GPU_destroy_command_pool(t_command_pool[i]);
     }
 
@@ -243,20 +272,27 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
 
 void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
 {
+    if (Renderdoc_Api)
+        Renderdoc_Api->StartFrameCapture(nullptr, nullptr);
+
     t_command_pool[0]->reset();
     t_command_buffer[0]->begin_command();
     t_command_buffer[0]->transfer_buffer_to_texture(info);
-    GPUTextureBarrier barrier{
-        .texture = info.dst_texture,
-        .src_state = GPUResourceStateFlag::e_copy_destination,
-        .dst_state = GPUResourceStateFlag::e_shader_resource
-    };
 
-    GPUResourceBarrierInfo barrier_info{
-        .texture_barriers = {barrier}
-    };
+    // GPUTextureBarrier barrier{
+    //     .texture = info.dst_texture,
+    //     .src_state = GPUResourceStateFlag::e_copy_destination,
+    //     .dst_state = GPUResourceStateFlag::e_shader_resource
+    // };
+    //
+    // GPUResourceBarrierInfo barrier_info{
+    //     .texture_barriers = {barrier}
+    // };
+    //
+    // t_command_buffer[0]->resource_barrier(barrier_info);
 
-    t_command_buffer[0]->resource_barrier(barrier_info);
+    t_command_buffer[0]->generate_mipmap(info.dst_texture, GPUResourceStateFlag::e_shader_resource);
+
     t_command_buffer[0]->end_command();
 
     GPUQueueSubmitInfo submit_info{
@@ -265,4 +301,7 @@ void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
 
     t_graphics_queue->submit(submit_info);
     t_graphics_queue->wait_idle();
+
+    if (Renderdoc_Api)
+        Renderdoc_Api->EndFrameCapture(nullptr, nullptr);
 }

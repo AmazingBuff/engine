@@ -25,12 +25,12 @@ void DX12Queue::submit(GPUQueueSubmitInfo const& info) const
     for (size_t i = 0; i < info.command_buffers.size(); i++)
         commands[i] = static_cast<DX12CommandBuffer const*>(info.command_buffers[i])->m_command_list;
 
-    //// wait
-    //for (GPUSemaphore const* wait_semaphore : info.wait_semaphores)
-    //{
-    //    DX12Semaphore const* semaphore = static_cast<DX12Semaphore const*>(wait_semaphore);
-    //    DX_CHECK_RESULT(m_queue->Wait(semaphore->m_fence, semaphore->m_fence_value));
-    //}
+    // wait
+    for (GPUSemaphore const* wait_semaphore : info.wait_semaphores)
+    {
+        DX12Semaphore const* semaphore = static_cast<DX12Semaphore const*>(wait_semaphore);
+        DX_CHECK_RESULT(m_queue->Wait(semaphore->m_fence, semaphore->m_fence_value));
+    }
     // execute
     m_queue->ExecuteCommandLists(info.command_buffers.size(), commands);
     // signal
@@ -39,11 +39,11 @@ void DX12Queue::submit(GPUQueueSubmitInfo const& info) const
         DX12Fence* fence = static_cast<DX12Fence*>(info.signal_fence);
         DX_CHECK_RESULT(m_queue->Signal(fence->m_fence, ++fence->m_fence_value));
     }
-    //for (size_t i = 0; i < info.signal_semaphores.size(); i++)
-    //{
-    //    DX12Semaphore* semaphore = static_cast<DX12Semaphore*>(info.signal_semaphores[i]);
-    //    DX_CHECK_RESULT(m_queue->Signal(semaphore->m_fence, ++semaphore->m_fence_value));
-    //}
+    for (size_t i = 0; i < info.signal_semaphores.size(); i++)
+    {
+        DX12Semaphore* semaphore = static_cast<DX12Semaphore*>(info.signal_semaphores[i]);
+        DX_CHECK_RESULT(m_queue->Signal(semaphore->m_fence, ++semaphore->m_fence_value));
+    }
 }
 
 void DX12Queue::wait_idle() const

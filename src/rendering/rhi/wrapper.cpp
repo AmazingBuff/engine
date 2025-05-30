@@ -12,6 +12,7 @@
 #include "d3d12/dx12command_buffer.h"
 #include "d3d12/dx12swapchain.h"
 #include "d3d12/dx12graphics_pipeline.h"
+#include "d3d12/dx12compute_pipeline.h"
 #include "d3d12/dx12fence.h"
 #include "d3d12/dx12semaphore.h"
 #include "d3d12/dx12descriptor_set.h"
@@ -33,6 +34,7 @@
 #include "vulkan/vkcommand_buffer.h"
 #include "vulkan/vkswapchain.h"
 #include "vulkan/vkgraphics_pipeline.h"
+#include "vulkan/vkcompute_pipeline.h"
 #include "vulkan/vkfence.h"
 #include "vulkan/vksemaphore.h"
 #include "vulkan/vkdescriptor_set.h"
@@ -127,6 +129,10 @@ GPUGraphicsPipeline* GPU_create_graphics_pipeline(GPUGraphicsPipelineCreateInfo 
 {
     GPU_CREATE(GPUGraphicsPipeline, DX12GraphicsPipeline, VKGraphicsPipeline, info);
 }
+GPUComputePipeline* GPU_create_compute_pipeline(GPUComputePipelineCreateInfo const& info)
+{
+    GPU_CREATE(GPUComputePipeline, DX12ComputePipeline, VKComputePipeline, info);
+}
 GPUFence* GPU_create_fence(GPUDevice const* device)
 {
     GPU_CREATE(GPUFence, DX12Fence, VKFence, device);
@@ -201,6 +207,7 @@ GPU_DESTROY(GPUCommandPool, command_pool)
 GPU_DESTROY(GPUCommandBuffer, command_buffer)
 GPU_DESTROY(GPUSwapChain, swap_chain)
 GPU_DESTROY(GPUGraphicsPipeline, graphics_pipeline)
+GPU_DESTROY(GPUComputePipeline, compute_pipeline)
 GPU_DESTROY(GPUFence, fence)
 GPU_DESTROY(GPUSemaphore, semaphore)
 GPU_DESTROY(GPUDescriptorSet, descriptor_set)

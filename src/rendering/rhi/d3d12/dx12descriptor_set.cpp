@@ -158,7 +158,7 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (const GPUShaderResource& resource : dx12_root_signature->m_tables[m_set_index].resources)
             {
-                if (resource.resource_type == data.resource_type || resource.binding == data.binding)
+                if (resource.resource_type == data.resource_type && resource.binding == data.binding)
                 {
                     shader_resource = &resource;
                     break;

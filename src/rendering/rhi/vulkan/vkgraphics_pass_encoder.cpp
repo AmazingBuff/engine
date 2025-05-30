@@ -17,11 +17,6 @@ AMAZING_NAMESPACE_BEGIN
 
 VKGraphicsPassEncoder::VKGraphicsPassEncoder() : m_command(nullptr) {}
 
-VKGraphicsPassEncoder::~VKGraphicsPassEncoder()
-{
-
-}
-
 void VKGraphicsPassEncoder::bind_descriptor_set(GPUDescriptorSet const* set)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_command->m_ref_pool);

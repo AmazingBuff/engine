@@ -457,12 +457,12 @@ VkSampleCountFlagBits transfer_sample_count(GPUSampleCount sample_count)
 	}
 }
 
-VkImageUsageFlags transfer_image_usage(GPUResourceType type)
+VkImageUsageFlags transfer_image_usage(const GPUResourceType& type)
 {
 	VkImageUsageFlags usage = 0;
 	if (BIT_IDENTITY(type, GPUResourceTypeFlag::e_texture))
 		usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-	if (BIT_IDENTITY(type, GPUResourceTypeFlag::e_rw_buffer))
+	if (BIT_IDENTITY(type, GPUResourceTypeFlag::e_rw_buffer) || BIT_IDENTITY(type, GPUResourceTypeFlag::e_rw_texture))
 		usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 	return usage;
 }

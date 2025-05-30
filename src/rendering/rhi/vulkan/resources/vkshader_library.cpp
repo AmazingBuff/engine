@@ -114,7 +114,8 @@ VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreate
         // add more
         reflection.shader_resources.resize(resources.uniform_buffers.size() +
             resources.sampled_images.size() + resources.push_constant_buffers.size() +
-            resources.separate_images.size() + resources.separate_samplers.size());
+            resources.separate_images.size() + resources.separate_samplers.size() +
+            resources.storage_buffers.size() + resources.storage_images.size());
         size_t index = 0;
         for (spirv_cross::Resource const& uniform : resources.uniform_buffers)
         {
@@ -243,6 +244,48 @@ VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreate
             }
             else
                 ref_resource.array_count = 1;
+        }
+        for (spirv_cross::Resource const& image : resources.storage_images)
+        {
+            GPUShaderResource& ref_resource = reflection.shader_resources[index++];
+            ref_resource.name = image.name.c_str();
+            ref_resource.name_hash = hash_str(image.name.c_str(), image.name.size(), VK_Hash);
+            ref_resource.set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
+            ref_resource.binding = compiler.get_decoration(image.id, spv::DecorationBinding);
+            ref_resource.stage = transfer_execution_model(entry_point.execution_model);
+
+            const spirv_cross::SPIRType& type = compiler.get_type(image.type_id);
+            if (!type.array.empty())
+            {
+                for (const uint32_t& size : type.array)
+                    ref_resource.array_count += size;
+            }
+            else
+                ref_resource.array_count = 1;
+
+            if (type.image.dim == spv::Dim::DimBuffer)
+            {
+                // buffer
+                ref_resource.resource_type = GPUResourceTypeFlag::e_rw_buffer;
+                ref_resource.size = 0;
+            }
+            else
+            {
+                ref_resource.resource_type = GPUResourceTypeFlag::e_rw_texture;
+                ref_resource.size = 0;
+                if (type.image.arrayed)
+                    ref_resource.texture_type = Texture_Array_Type_Map[type.image.dim];
+                else
+                    ref_resource.texture_type = Texture_Type_Map[type.image.dim];
+
+                if (type.image.ms)
+                {
+                    if (ref_resource.texture_type == GPUTextureType::e_2d)
+                        ref_resource.texture_type =  GPUTextureType::e_2dms;
+                    else if (ref_resource.texture_type == GPUTextureType::e_2d_array)
+                        ref_resource.texture_type = GPUTextureType::e_2dms_array;
+                }
+            }
         }
     }
 

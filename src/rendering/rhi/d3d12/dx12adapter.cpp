@@ -49,6 +49,7 @@ void DX12Adapter::record_adapter_detail()
             m_adapter_detail.format_support[j].shader_write = (format_support.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE) != 0;
             m_adapter_detail.format_support[j].render_target_write = (format_support.Support1 & D3D12_FORMAT_SUPPORT1_RENDER_TARGET) != 0;
             m_adapter_detail.format_support[j].depth_stencil_write = (format_support.Support1 & D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL) != 0;
+            m_adapter_detail.format_support[j].mipmap_write = (format_support.Support1 & D3D12_FORMAT_SUPPORT1_MIP) != 0;
         }
         else
         {
@@ -56,6 +57,7 @@ void DX12Adapter::record_adapter_detail()
             m_adapter_detail.format_support[j].shader_write = 0;
             m_adapter_detail.format_support[j].render_target_write = 0;
             m_adapter_detail.format_support[j].depth_stencil_write = 0;
+            m_adapter_detail.format_support[j].mipmap_write = 0;
         }
     }
 
@@ -85,6 +87,12 @@ void DX12Adapter::record_adapter_detail()
     if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &options1, sizeof(options1))))
     {
         m_adapter_detail.wave_lane_count = options1.WaveLaneCountMin;
+    }
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5;
+    if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5))))
+    {
+        m_adapter_detail.support_ray_tracing = options5.RaytracingTier < D3D12_RAYTRACING_TIER_1_0;
     }
 
     D3D12_FEATURE_DATA_D3D12_OPTIONS6 options6;

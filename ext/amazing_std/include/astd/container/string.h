@@ -37,7 +37,14 @@ class StringT : public Vector<Tp, Alloc>
     using allocator = Alloc<Tp>;
     using allocator_next = Alloc<size_t>;
 public:
-    StringT() = default;
+    StringT()
+    {
+        Str::m_size = 0;
+        Str::m_capacity = Str::m_size + 1;
+        Str::m_data = allocator::allocate(Str::m_capacity);
+        Str::m_data[Str::m_size] = '\0';
+    }
+
     StringT(const Tp* str)
     {
         Str::m_size = str_length(str);

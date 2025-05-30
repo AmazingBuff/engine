@@ -15,8 +15,6 @@ class VKCommandBuffer;
 class VKGraphicsPassEncoder final : public GPUGraphicsPassEncoder
 {
 public:
-    ~VKGraphicsPassEncoder() override;
-
     void bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t binding_count) override;
     void bind_index_buffer(GPUBufferBinding const& binding) override;
     void bind_descriptor_set(GPUDescriptorSet const* set) override;

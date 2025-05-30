@@ -31,6 +31,7 @@ public:
         uint8_t shader_write : 1;
         uint8_t render_target_write : 1;
         uint8_t depth_stencil_write : 1;
+        uint8_t mipmap_write: 1;
     };
 
     struct GPUAdapterDetail
@@ -55,6 +56,7 @@ public:
         bool support_tiled_buffer : 1;
         bool support_tiled_texture : 1;
         bool support_tiled_volume : 1;
+        bool support_ray_tracing : 1;
         // RDNA2
         bool support_shading_rate : 1;
         bool support_shading_rate_mask : 1;

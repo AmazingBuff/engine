@@ -12,7 +12,7 @@ AMAZING_NAMESPACE_BEGIN
 
 DX12TextureView::DX12TextureView(GPUTextureViewCreateInfo const& info) : m_rtv_dsv_handle{}, m_srv_uva_handle{}, m_uav_offset(0)
 {
-    DX12Texture* dx12_texture = static_cast<DX12Texture*>(info.texture);
+    DX12Texture const* dx12_texture = static_cast<DX12Texture const*>(info.texture);
     DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_texture->m_ref_device);
 
     const GPUTextureViewUsage usage = info.usage;

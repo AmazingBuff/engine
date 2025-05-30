@@ -113,7 +113,7 @@ VkFormat transfer_format(GPUFormat format);
 GPUFormat transfer_format_reverse(VkFormat format);
 VkBufferUsageFlags transfer_buffer_usage(GPUResourceType type, bool texture);
 VkSampleCountFlagBits transfer_sample_count(GPUSampleCount sample_count);
-VkImageUsageFlags transfer_image_usage(GPUResourceType type);
+VkImageUsageFlags transfer_image_usage(const GPUResourceType& type);
 VkImageAspectFlags transfer_image_aspect(VkFormat format, bool stencil);
 VkFilter transfer_filter(GPUFilterType filter);
 VkSamplerMipmapMode transfer_mipmap_mode(GPUMipMapMode mode);

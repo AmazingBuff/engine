@@ -23,21 +23,29 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
     VKInstance const* vk_instance = static_cast<VKInstance const*>(vk_adapter->m_ref_instance);
 
     // queue
-    Vector<VkDeviceQueueCreateInfo> queue_create_infos(info.queue_groups.size());
-    uint32_t queue_index = 0;
+    HashMap<uint32_t, uint32_t> queue_family_indices;
     for (GPUQueueGroup const& queue_group : info.queue_groups)
     {
-        uint32_t queue_family_index = vk_adapter->m_queue_family_indices[to_underlying(queue_group.queue_type)];
-        if (queue_family_index != std::numeric_limits<uint32_t>::max())
-        {
-            queue_create_infos[queue_index].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queue_create_infos[queue_index].queueCount = queue_group.queue_count;
-            queue_create_infos[queue_index].queueFamilyIndex = queue_family_index;
-            queue_create_infos[queue_index].pQueuePriorities = VK_Queue_Priorities;
-            queue_index++;
-        }
+        uint8_t type = to_underlying(queue_group.queue_type);
+        uint32_t queue_family_index = vk_adapter->m_queue_family_indices[type];
+        if (queue_family_index == std::numeric_limits<uint32_t>::max())
+            RENDERING_LOG_ERROR("not satisfied queue! queue type is {}", type);
+
+        if (auto iter = queue_family_indices.find(queue_family_index); iter != queue_family_indices.end())
+            iter->second += queue_group.queue_count;
         else
-            RENDERING_LOG_ERROR("not satisfied queue! queue type is {}", to_underlying(queue_group.queue_type));
+            queue_family_indices.emplace(queue_family_index, queue_group.queue_count);
+    }
+
+    Vector<VkDeviceQueueCreateInfo> queue_create_infos(queue_family_indices.size());
+    uint32_t queue_index = 0;
+    for (auto& [queue_family_index, queue_count] : queue_family_indices)
+    {
+        queue_create_infos[queue_index].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queue_create_infos[queue_index].queueFamilyIndex = queue_family_index;
+        queue_create_infos[queue_index].queueCount = queue_count;
+        queue_create_infos[queue_index].pQueuePriorities = VK_Queue_Priorities;
+        queue_index++;
     }
 
     VkDeviceCreateInfo device_create_info{
@@ -60,7 +68,7 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
     // get queue
     for (GPUQueueGroup const& queue_group : info.queue_groups)
     {
-        size_t type = to_underlying(queue_group.queue_type);
+        uint8_t type = to_underlying(queue_group.queue_type);
         uint32_t queue_family_index = vk_adapter->m_queue_family_indices[type];
         if (queue_family_index != std::numeric_limits<uint32_t>::max())
         {

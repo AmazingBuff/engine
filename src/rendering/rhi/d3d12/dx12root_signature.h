@@ -27,8 +27,11 @@ private:
     D3D12ConstantParameter* m_constant_parameters;
 
     friend class DX12DescriptorSet;
+    friend class DX12CommandBuffer;
     friend class DX12GraphicsPipeline;
     friend class DX12GraphicsPassEncoder;
+    friend class DX12ComputePipeline;
+    friend class DX12ComputePassEncoder;
 };
 
 AMAZING_NAMESPACE_END
