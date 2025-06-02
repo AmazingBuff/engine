@@ -209,14 +209,12 @@ void create_pipeline()
         .code = reinterpret_cast<uint32_t*>(vs_compile.data()),
         .code_size = static_cast<uint32_t>(vs_compile.size()),
         .stage = GPUShaderStageFlag::e_vertex,
-        .reflection = true,
     };
     GPUShaderLibraryCreateInfo fs_desc{
         .name = "FragmentShaderLibrary",
         .code = reinterpret_cast<uint32_t*>(fs_compile.data()),
         .code_size = static_cast<uint32_t>(fs_compile.size()),
         .stage = GPUShaderStageFlag::e_fragment,
-        .reflection = true,
     };
 
     GPUShaderLibrary* vertex_shader = GPU_create_shader_library(t_device, vs_desc);
@@ -389,19 +387,17 @@ void draw(SDL_Window* window)
     create_api_object(hwnd, hinstance, GPUBackend::e_vulkan);
     create_pipeline();
 
-    SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_MOTION, EventUserDataType::e_orbital_camera, [](const SDL_Event& event, void* user_data)
+    SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_MOTION, [&](const SDL_Event& event)
         {
             if (event.motion.state == SDL_BUTTON_LMASK)
             {
-                OrbitalCamera* camera = static_cast<OrbitalCamera*>(user_data);
-                camera->on_mouse_move(event.motion.xrel, event.motion.yrel);
+                Orbital_Camera.on_mouse_move(event.motion.xrel, event.motion.yrel);
             }
         });
 
-    SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_WHEEL, EventUserDataType::e_orbital_camera, [](const SDL_Event& event, void* user_data)
+    SDL_Event_Callback_Handler.register_callback(SDL_EVENT_MOUSE_WHEEL, [&](const SDL_Event& event)
         {
-            OrbitalCamera* camera = static_cast<OrbitalCamera*>(user_data);
-            camera->on_mouse_scroll(event.wheel.y * event.wheel.mouse_y);
+            Orbital_Camera.on_mouse_scroll(event.wheel.y * event.wheel.mouse_y);
         });
 
     bool quit = false;
@@ -410,7 +406,7 @@ void draw(SDL_Window* window)
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            SDL_Event_Callback_Handler.call(event.type, EventUserDataType::e_orbital_camera, event, &Orbital_Camera);
+            SDL_Event_Callback_Handler.call(event.type, event);
             switch (event.type)
             {
             case SDL_EVENT_QUIT:

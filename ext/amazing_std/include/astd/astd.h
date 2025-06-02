@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "trait/functional.h"
 
 #include "container/vector.h"
 #include "container/string.h"

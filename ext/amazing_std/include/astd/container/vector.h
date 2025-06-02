@@ -1,9 +1,9 @@
 #pragma once
 
 #include "astd/base/define.h"
-#include "astd/base/trait.h"
 #include "astd/base/logger.h"
 #include "astd/base/util.h"
+#include "astd/trait/trait.h"
 #include "astd/memory/allocator.h"
 
 AMAZING_NAMESPACE_BEGIN

@@ -10,7 +10,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-using SDLEventCallback = void(*)(const SDL_Event&, void*);
+using SDLEventCallback = Functional<void(const SDL_Event&)>;
 
 using SDLEventCallbackHandler = EventCallbackHandler<uint32_t, SDLEventCallback>;
 

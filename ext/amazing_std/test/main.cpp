@@ -63,8 +63,18 @@ void just()
     Amazing::Allocator<NoDtor>::deallocate(no_dtor);
 }
 
+void iii(int x)
+{
+    std::cout << x << '\n';
+}
+
 int main()
 {
+    int hj = 5;
+    Amazing::Functional<void(int)> td(iii);
+
+    td(5);
+
     Amazing::Pair<int, NoDtor> pt;
     Amazing::Pair<int, NoDtor> qt(std::move(pt));
 

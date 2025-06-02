@@ -2,7 +2,7 @@
 
 #include <type_traits>
 #include <utility>
-#include "macro.h"
+#include "base/macro.h"
 
 AMAZING_NAMESPACE_BEGIN
 

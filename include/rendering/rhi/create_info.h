@@ -197,7 +197,6 @@ struct GPUShaderLibraryCreateInfo
     const uint32_t* code;
     uint32_t code_size;
     GPUShaderStage stage;
-    bool reflection;
 };
 
 
