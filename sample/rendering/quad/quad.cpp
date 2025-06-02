@@ -88,14 +88,12 @@ void create_pipeline()
         .code = reinterpret_cast<uint32_t*>(vs_compile.data()),
         .code_size = static_cast<uint32_t>(vs_compile.size()),
         .stage = GPUShaderStageFlag::e_vertex,
-        .reflection = true,
     };
     GPUShaderLibraryCreateInfo fs_desc{
         .name = "FragmentShaderLibrary",
         .code = reinterpret_cast<uint32_t*>(fs_compile.data()),
         .code_size = static_cast<uint32_t>(fs_compile.size()),
         .stage = GPUShaderStageFlag::e_fragment,
-        .reflection = true,
     };
 
     GPUShaderLibrary* vertex_shader = GPU_create_shader_library(t_device, vs_desc);
@@ -186,7 +184,7 @@ void draw(SDL_Window* window)
     HWND hwnd = static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
     HINSTANCE hinstance = static_cast<HINSTANCE>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_INSTANCE_POINTER, nullptr));
 
-    create_api_object(hwnd, hinstance, GPUBackend::e_vulkan);
+    create_api_object(hwnd, hinstance, GPUBackend::e_d3d12);
     create_pipeline();
 
     bool quit = false;

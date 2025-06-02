@@ -22,7 +22,7 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
     {
         const GPUQueueGroup& queue_group = info.queue_groups[i];
 
-        size_t type = to_underlying(queue_group.queue_type);
+        uint8_t type = to_underlying(queue_group.queue_type);
         m_command_queues[type].resize(queue_group.queue_count);
 
         for (uint32_t j = 0; j < queue_group.queue_count; j++)
@@ -57,7 +57,7 @@ DX12Device::DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& inf
 
     // d3d12ma
     D3D12MA::ALLOCATION_CALLBACKS allocator_callbacks{
-        .pAllocate = [](size_t size, size_t alignment, void* data) { return allocate(size, alignment); },
+        .pAllocate = [](size_t size, size_t alignment, void* data) { return allocate(size, alignment, data); },
         .pFree = [](void* p, void*) { deallocate(p); },
         .pPrivateData = nullptr
     };
