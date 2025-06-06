@@ -24,6 +24,9 @@ using Affine3f = Eigen::Affine3f;
 static constexpr Float Pi = EIGEN_PI;
 static constexpr Float PiOver2 = EIGEN_PI / 2;
 static constexpr Float PiOver4 = EIGEN_PI / 4;
+static constexpr Float Max_Allowable_Error = 1e-6;
+
+#define EQUAL_TO_ZERO(expr)  (std::abs(expr) < Max_Allowable_Error)
 
 AMAZING_NAMESPACE_END
 

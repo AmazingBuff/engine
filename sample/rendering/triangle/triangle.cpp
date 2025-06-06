@@ -20,14 +20,12 @@ void create_pipeline()
         .code = reinterpret_cast<uint32_t*>(vs_compile.data()),
         .code_size = static_cast<uint32_t>(vs_compile.size()),
         .stage = GPUShaderStageFlag::e_vertex,
-        .reflection = true,
     };
     GPUShaderLibraryCreateInfo fs_desc{
         .name = "FragmentShaderLibrary",
         .code = reinterpret_cast<uint32_t*>(fs_compile.data()),
         .code_size = static_cast<uint32_t>(fs_compile.size()),
         .stage = GPUShaderStageFlag::e_fragment,
-        .reflection = true,
     };
 
     GPUShaderLibrary* vertex_shader = GPU_create_shader_library(t_device, vs_desc);

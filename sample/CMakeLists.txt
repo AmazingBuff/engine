@@ -16,3 +16,4 @@ function(add_samples sample_list)
 endfunction()
 
 add_subdirectory(rendering)
+add_subdirectory(geometry)

@@ -10,6 +10,7 @@
 #include "container/string.h"
 #include "container/list.h"
 #include "container/queue.h"
+#include "container/stack.h"
 #include "container/map.h"
 #include "container/set.h"
 #include "container/ring.h"

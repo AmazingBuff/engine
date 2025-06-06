@@ -30,6 +30,7 @@
 
 # ide
 .vs/
+.vscode/
 .idea/
 
 # build files
