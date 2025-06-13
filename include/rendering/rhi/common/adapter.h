@@ -50,6 +50,7 @@ public:
         bool multidraw_indirect : 1;
         bool support_geom_shader : 1;
         bool support_tessellation : 1;
+        bool support_mesh_shader : 1;
         bool is_uma : 1;
         bool is_virtual : 1;
         bool is_cpu : 1;

@@ -13,6 +13,8 @@
 #include "geometry/3d/primitive/cuboid.h"
 #include "geometry/3d/primitive/sphere.h"
 #include "geometry/3d/primitive/cylinder.h"
+#include "geometry/3d/primitive/cone.h"
+#include "geometry/3d/primitive/capsule.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -55,7 +57,13 @@ bool intersect_segment_cylinder_unchecked(const Segment3D& s, const Cylinder& c)
 // only give nearest intersection
 bool intersect_segment_cylinder(const Segment3D& s, const Cylinder& c, Point3D& intersection);
 
+bool intersect_segment_cone_unchecked(const Segment3D& s, const Cone& c);
+// only give nearest intersection
+bool intersect_segment_cone(const Segment3D& s, const Cone& c, Point3D& intersection);
 
+bool intersect_segment_capsule_unchecked(const Segment3D& s, const Capsule& c);
+// only give nearest intersection
+bool intersect_segment_capsule(const Segment3D& s, const Capsule& c, Point3D& intersection);
 
 AMAZING_NAMESPACE_END
 

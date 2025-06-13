@@ -28,7 +28,7 @@ public:
     virtual void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info) = 0;
     virtual void resource_barrier(GPUResourceBarrierInfo const& info) = 0;
     // generate mipmap, if mip levels is equal to 1, then just do a resource barrier
-    virtual void generate_mipmap(GPUTexture const* texture, const GPUResourceState& dst_state) = 0;
+    virtual void generate_mipmap(GPUTexture const* texture, const GPUResourceState& src_state, const GPUResourceState& dst_state) = 0;
 protected:
     GPUCommandPool const* m_ref_pool;
 };

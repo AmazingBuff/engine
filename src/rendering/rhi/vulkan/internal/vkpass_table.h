@@ -5,8 +5,7 @@
 #ifndef VKPASS_TABLE_H
 #define VKPASS_TABLE_H
 
-#include "vkrender_pass.h"
-#include "vkframebuffer.h"
+#include "rendering/rhi/vulkan/vk.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -15,12 +14,14 @@ class VKDevice;
 class VKPassTable
 {
 public:
-    VKPassTable() = default;
+    explicit VKPassTable(VKDevice const* device);
     ~VKPassTable();
 
-    VkRenderPass find_render_pass(VKDevice const* device, VulkanRenderPassCreateInfo const& info);
-    VkFramebuffer find_framebuffer(VKDevice const* device, VulkanFramebufferCreateInfo const& info);
+    VkRenderPass find_render_pass(VulkanRenderPassCreateInfo const& info);
+    VkFramebuffer find_framebuffer(VulkanFramebufferCreateInfo const& info);
 private:
+    VKDevice const* m_ref_device;
+
     struct VulkanRenderPassCreateInfoHasher
     {
         size_t operator()(VulkanRenderPassCreateInfo const& render_pass_create_info) const
@@ -57,8 +58,18 @@ private:
         }
     };
 
-    HashMap<VulkanRenderPassCreateInfo, VKRenderPass*, VulkanRenderPassCreateInfoHasher, VulkanRenderPassCreateInfoEqual>        m_render_pass_map;
-    HashMap<VulkanFramebufferCreateInfo, VKFramebuffer*, VulkanFramebufferCreateInfoHasher, VulkanFramebufferCreateInfoEqual>    m_framebuffer_map;
+    struct VulkanRenderPass
+    {
+        VkRenderPass render_pass;
+    };
+
+    struct VulkanFramebuffer
+    {
+        VkFramebuffer framebuffer;
+    };
+
+    HashMap<VulkanRenderPassCreateInfo, VulkanRenderPass, VulkanRenderPassCreateInfoHasher, VulkanRenderPassCreateInfoEqual>        m_render_pass_map;
+    HashMap<VulkanFramebufferCreateInfo, VulkanFramebuffer, VulkanFramebufferCreateInfoHasher, VulkanFramebufferCreateInfoEqual>    m_framebuffer_map;
 };
 
 AMAZING_NAMESPACE_END

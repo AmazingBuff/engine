@@ -31,9 +31,7 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
         if (queue_family_index == std::numeric_limits<uint32_t>::max())
             RENDERING_LOG_ERROR("not satisfied queue! queue type is {}", type);
 
-        if (auto iter = queue_family_indices.find(queue_family_index); iter != queue_family_indices.end())
-            iter->second += queue_group.queue_count;
-        else
+        if (auto iter = queue_family_indices.find(queue_family_index); iter == queue_family_indices.end())
             queue_family_indices.emplace(queue_family_index, queue_group.queue_count);
     }
 
@@ -115,7 +113,7 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
     VK_CHECK_RESULT(vmaCreateAllocator(&allocation_info, &m_allocator));
 
     m_descriptor_pool = PLACEMENT_NEW(VKDescriptorPool, sizeof(VKDescriptorPool), this);
-    m_pass_table = PLACEMENT_NEW(VKPassTable, sizeof(VKPassTable));
+    m_pass_table = PLACEMENT_NEW(VKPassTable, sizeof(VKPassTable), this);
 
     VKQueue* internal_queue = nullptr;
     if (m_command_queues[to_underlying(GPUQueueType::e_transfer)].empty())

@@ -63,8 +63,7 @@ private:
     friend class VKMemoryPool;
 
     friend class VKDescriptorPool;
-    friend class VKRenderPass;
-    friend class VKFramebuffer;
+    friend class VKPassTable;
 };
 
 AMAZING_NAMESPACE_END

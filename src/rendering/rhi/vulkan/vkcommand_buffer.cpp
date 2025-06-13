@@ -111,7 +111,7 @@ GPUGraphicsPassEncoder* VKCommandBuffer::begin_graphics_pass(GPUGraphicsPassCrea
             depth_stencil_attachment.stencil_load_action = GPULoadAction::e_dont_care;
             depth_stencil_attachment.stencil_store_action = GPUStoreAction::e_dont_care;
         }
-        render_pass = vk_device->m_pass_table->find_render_pass(vk_device, render_pass_info);
+        render_pass = vk_device->m_pass_table->find_render_pass(render_pass_info);
     }
 
     // framebuffer
@@ -156,7 +156,7 @@ GPUGraphicsPassEncoder* VKCommandBuffer::begin_graphics_pass(GPUGraphicsPassCrea
         }
 
         framebuffer_info.attachment_count = attachment_count;
-        framebuffer = vk_device->m_pass_table->find_framebuffer(vk_device, framebuffer_info);
+        framebuffer = vk_device->m_pass_table->find_framebuffer(framebuffer_info);
     }
 
     // begin
@@ -327,7 +327,6 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
     {
         GPUTextureBarrier const& barrier = info.texture_barriers[i];
         VKTexture const* texture = static_cast<VKTexture const*>(barrier.texture);
-        GPUResourceState src_state = texture->m_info->state;
 
         image_barrier[i].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         image_barrier[i].pNext = nullptr;
@@ -337,12 +336,12 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         image_barrier[i].subresourceRange.levelCount = barrier.subresource_barrier ? 1 : VK_REMAINING_MIP_LEVELS;
         image_barrier[i].subresourceRange.baseArrayLayer = barrier.subresource_barrier ? barrier.array_layer : 0;
         image_barrier[i].subresourceRange.layerCount = barrier.subresource_barrier ? 1 : VK_REMAINING_ARRAY_LAYERS;
-        if (barrier.queue_acquire && src_state != GPUResourceStateFlag::e_undefined)
+        if (barrier.queue_acquire && barrier.src_state != GPUResourceStateFlag::e_undefined)
         {
             image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
             image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
         }
-        else if (barrier.queue_release && src_state != GPUResourceStateFlag::e_undefined)
+        else if (barrier.queue_release && barrier.src_state != GPUResourceStateFlag::e_undefined)
         {
             image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
             image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
@@ -353,7 +352,7 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
             image_barrier[i].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         }
 
-        if (src_state == GPUResourceStateFlag::e_unordered_access &&
+        if (barrier.src_state == GPUResourceStateFlag::e_unordered_access &&
             barrier.dst_state == GPUResourceStateFlag::e_unordered_access)
         {
             image_barrier[i].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
@@ -363,9 +362,9 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         }
         else
         {
-            image_barrier[i].srcAccessMask = transfer_access_state(src_state);
+            image_barrier[i].srcAccessMask = transfer_access_state(barrier.src_state);
             image_barrier[i].dstAccessMask = transfer_access_state(barrier.dst_state);
-            image_barrier[i].oldLayout = transfer_image_layout(src_state);
+            image_barrier[i].oldLayout = transfer_image_layout(barrier.src_state);
             image_barrier[i].newLayout = transfer_image_layout(barrier.dst_state);
         }
 
@@ -420,7 +419,7 @@ void VKCommandBuffer::transfer_buffer_to_texture(GPUBufferToTextureTransferInfo 
     vk_device->m_device_table.vkCmdCopyBufferToImage(m_command_buffer, buffer->m_buffer, texture->m_image, transfer_image_layout(texture->m_info->state), 1, &region);
 }
 
-void VKCommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUResourceState& dst_state)
+void VKCommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUResourceState& src_state, const GPUResourceState& dst_state)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
     VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
@@ -428,9 +427,9 @@ void VKCommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUResour
     VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
     VKTexture const* vk_texture = static_cast<VKTexture const*>(texture);
 
-    VkImageLayout old_layout = transfer_image_layout(vk_texture->m_info->state);
+    VkImageLayout old_layout = transfer_image_layout(src_state);
     VkImageLayout new_layout = transfer_image_layout(dst_state);
-    VkAccessFlags src_access_flags = transfer_access_state(vk_texture->m_info->state);
+    VkAccessFlags src_access_flags = transfer_access_state(src_state);
     VkAccessFlags dst_access_flags = transfer_access_state(dst_state);
     VkImageLayout mid_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     VkAccessFlags mid_access_flags = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -532,6 +531,8 @@ void VKCommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUResour
                 0, 0, nullptr, 0, nullptr, 1, &mipmap_barrier);
         }
     }
+
+    vk_texture->m_info->state = dst_state;
 }
 
 AMAZING_NAMESPACE_END

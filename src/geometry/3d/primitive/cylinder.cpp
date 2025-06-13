@@ -44,14 +44,17 @@ DirectionDetection Cylinder::detect_point_direction(const Point3D& point) const
 
     if (t < -Max_Allowable_Error || t > 1.0 + Max_Allowable_Error)
         return DirectionDetection::e_outer;
-    else if (EQUAL_TO_ZERO(t) || EQUAL_TO_ZERO(t - 1.0))
-        return DirectionDetection::e_border;
     else
     {
         Point3D q = m_down_center + t * d;
         Float distance = (q - point).norm();
         if (distance < m_radius - Max_Allowable_Error)
-            return DirectionDetection::e_inner;
+        {
+            if (EQUAL_TO_ZERO(t) || EQUAL_TO_ZERO(1.0 - t))
+                return DirectionDetection::e_border;
+            else
+                return DirectionDetection::e_inner;
+        }
         else if (EQUAL_TO_ZERO(distance - m_radius))
             return DirectionDetection::e_border;
         else

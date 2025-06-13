@@ -259,7 +259,7 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         if (info.sample_count > GPUSampleCount::e_1)
             render_pass_info.color_attachment[i].resolve_enable = true;
     }
-    VkRenderPass render_pass = vk_device->m_pass_table->find_render_pass(vk_device, render_pass_info);
+    VkRenderPass render_pass = vk_device->m_pass_table->find_render_pass(render_pass_info);
 
     VkGraphicsPipelineCreateInfo pipeline_info{
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,

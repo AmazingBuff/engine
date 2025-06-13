@@ -621,8 +621,7 @@ void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
     {
         D3D12_RESOURCE_BARRIER& resource = resource_barriers[transition_count];
         DX12Texture const* texture = static_cast<DX12Texture const*>(barrier.texture);
-        GPUResourceState src_state = texture->m_info->state;
-        if (src_state == GPUResourceStateFlag::e_unordered_access &&
+        if (barrier.src_state == GPUResourceStateFlag::e_unordered_access &&
             barrier.dst_state == GPUResourceStateFlag::e_unordered_access)
         {
             resource.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
@@ -641,7 +640,7 @@ void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
             if (barrier.queue_acquire)
                 resource.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
             else
-                resource.Transition.StateBefore = transfer_resource_state(src_state);
+                resource.Transition.StateBefore = transfer_resource_state(barrier.src_state);
 
             if (barrier.queue_release)
                 resource.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
@@ -650,7 +649,7 @@ void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
 
             if (resource.Transition.StateBefore == D3D12_RESOURCE_STATE_COMMON &&
                 resource.Transition.StateAfter == D3D12_RESOURCE_STATE_COMMON &&
-                (src_state == GPUResourceStateFlag::e_present || barrier.dst_state == GPUResourceStateFlag::e_present))
+                (barrier.src_state == GPUResourceStateFlag::e_present || barrier.dst_state == GPUResourceStateFlag::e_present))
                 continue;
         }
         texture->m_info->state = barrier.dst_state;
@@ -660,7 +659,7 @@ void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         m_command_list->ResourceBarrier(transition_count, resource_barriers);
 }
 
-void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUResourceState& dst_state)
+void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUResourceState& src_state, const GPUResourceState& dst_state)
 {
     // not a good way to generate mipmap in dx12 like vulkan
     // according to microsoft samples, a compute shader is used
@@ -677,7 +676,7 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
             .Transition{
                 .pResource = dx12_texture->m_resource,
                 .Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                .StateBefore = transfer_resource_state(dx12_texture->m_info->state),
+                .StateBefore = transfer_resource_state(src_state),
                 .StateAfter = transfer_resource_state(dst_state),
             }
         };
@@ -732,7 +731,7 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
 
         uint32_t layer_count = dx12_texture->m_info->array_layers;
         uint32_t mip_levels = dx12_texture->m_info->mip_levels;
-        if (dx12_texture->m_info->state != GPUResourceStateFlag::e_non_pixel_shader_resource)
+        if (src_state != GPUResourceStateFlag::e_non_pixel_shader_resource)
         {
             for (uint32_t layer = 0; layer < layer_count; layer++)
             {
@@ -742,7 +741,7 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
                     .Transition{
                         .pResource = dx12_texture->m_resource,
                         .Subresource = transfer_subresource_index(0, layer, 0, dx12_texture->m_info->mip_levels, dx12_texture->m_info->array_layers),
-                        .StateBefore = transfer_resource_state(dx12_texture->m_info->state),
+                        .StateBefore = transfer_resource_state(src_state),
                         .StateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
                     }
                 };
@@ -831,7 +830,7 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
                     .Transition{
                         .pResource = dx12_texture->m_resource,
                         .Subresource = transfer_subresource_index(mip, layer, 0, dx12_texture->m_info->mip_levels, dx12_texture->m_info->array_layers),
-                        .StateBefore = transfer_resource_state(dx12_texture->m_info->state),
+                        .StateBefore = transfer_resource_state(src_state),
                         .StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS
                     }
                 };
@@ -882,6 +881,8 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
 
         DX12DescriptorHeap::return_descriptor_handle(heap, start_handle.cpu, mip_levels * layer_count);
     }
+
+    dx12_texture->m_info->state = dst_state;
 }
 
 void DX12CommandBuffer::reset_root_signature(GPUPipelineType type, ID3D12RootSignature* root_signature)

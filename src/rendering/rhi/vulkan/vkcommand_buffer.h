@@ -29,7 +29,7 @@ public:
 
     void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info) override;
     void resource_barrier(GPUResourceBarrierInfo const& info) override;
-    void generate_mipmap(GPUTexture const* texture, const GPUResourceState& dst_state) override;
+    void generate_mipmap(GPUTexture const* texture, const GPUResourceState& src_state, const GPUResourceState& dst_state) override;
 private:
     VkCommandBuffer m_command_buffer;
 

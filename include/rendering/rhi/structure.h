@@ -222,6 +222,7 @@ struct GPUBufferBarrier
 struct GPUTextureBarrier
 {
     GPUTexture const* texture;
+    GPUResourceState src_state;
     GPUResourceState dst_state;
     uint8_t queue_acquire;
     uint8_t queue_release;

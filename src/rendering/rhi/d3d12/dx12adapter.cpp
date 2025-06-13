@@ -118,6 +118,12 @@ void DX12Adapter::record_adapter_detail()
         }
     }
 
+    D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7;
+    if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7))))
+    {
+        m_adapter_detail.support_mesh_shader = options7.MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    }
+
     D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12;
     if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options12, sizeof(options12))))
     {

@@ -5,6 +5,8 @@ project(
     LANGUAGES CXX C
 )
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     add_compile_options(-Wno-nontrivial-memaccess -Wno-unsafe-buffer-usage)
 endif ()
@@ -66,6 +68,15 @@ target_compile_definitions(
     ${PROJECT_NAME}
     PUBLIC
     RES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/"
+)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME}
+    PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_BINARY_DIR}/compile_commands.json
+        ${CMAKE_SOURCE_DIR}/.vscode/compile_commands.json
+    VERBATIM
 )
 
 if (WIN32)

@@ -291,7 +291,7 @@ void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
     //
     // t_command_buffer[0]->resource_barrier(barrier_info);
 
-    t_command_buffer[0]->generate_mipmap(info.dst_texture, GPUResourceStateFlag::e_shader_resource);
+    t_command_buffer[0]->generate_mipmap(info.dst_texture, GPUResourceStateFlag::e_copy_destination, GPUResourceStateFlag::e_shader_resource);
 
     t_command_buffer[0]->end_command();
 

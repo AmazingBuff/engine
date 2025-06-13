@@ -493,55 +493,67 @@ bool intersect_segment_cuboid_unchecked(const Segment3D& s, const Cuboid& c)
     Point3D o = s.origin();
     Vector3D d = s.direction();
 
-#ifdef CONTACT_AS_INTERSECTION
-    if (EQUAL_TO_ZERO(d.x()))
-    {
-        Rectangle3D r1(min, Point3D(min.x(), max.y(), min.z()), Point3D(min.x(), min.y(), max.z()));
-        Rectangle3D r2(Point3D(max.x(), min.y(), min.z()), Point3D(max.x(), max.y(), min.z()), Point3D(max.x(), min.y(), max.z()));
-        return intersect_segment_rectangle_unchecked(s, r1) || intersect_segment_rectangle_unchecked(s, r2);
-    }
-    else if (EQUAL_TO_ZERO(d.y()))
-    {
-        Rectangle3D r1(min, Point3D(max.x(), min.y(), min.z()), Point3D(min.x(), min.y(), max.z()));
-        Rectangle3D r2(Point3D(min.x(), max.y(), min.z()), Point3D(max.x(), max.y(), min.z()), Point3D(min.x(), max.y(), max.z()));
-        return intersect_segment_rectangle_unchecked(s, r1) || intersect_segment_rectangle_unchecked(s, r2);
-    }
-    else if (EQUAL_TO_ZERO(d.z()))
-    {
-        Rectangle3D r1(min, Point3D(max.x(), min.y(), min.z()), Point3D(min.x(), max.y(), min.z()));
-        Rectangle3D r2(Point3D(min.x(), min.y(), max.z()), Point3D(max.x(), min.y(), max.z()), Point3D(min.x(), max.y(), max.z()));
-        return intersect_segment_rectangle_unchecked(s, r1) || intersect_segment_rectangle_unchecked(s, r2);
-    }
-#else
-    if (EQUAL_TO_ZERO(d.x()) || EQUAL_TO_ZERO(d.y()) || EQUAL_TO_ZERO(d.z()))
-        return false;
-#endif
-
     // slab
     Float t_min = 0.0, t_max = 1.0;
-    Float tx1 = (min.x() - o.x()) / d.x();
-    Float tx2 = (max.x() - o.x()) / d.x();
+    if (!EQUAL_TO_ZERO(d.x()))
+    {
+        Float tx1 = (min.x() - o.x()) / d.x();
+        Float tx2 = (max.x() - o.x()) / d.x();
 
-    if (tx1 > tx2)
-        swap(tx1, tx2);
-    t_min = std::max(t_min, tx1);
-    t_max = std::min(t_max, tx2);
+        if (tx1 > tx2)
+            swap(tx1, tx2);
+        t_min = std::max(t_min, tx1);
+        t_max = std::min(t_max, tx2);
+    }
+    else
+    {
+        if (o.x() < min.x() - Max_Allowable_Error || o.x() > max.x() + Max_Allowable_Error)
+            return false;
+#ifndef CONTACT_AS_INTERSECTION
+        if (EQUAL_TO_ZERO(o.x() - min.x()) || EQUAL_TO_ZERO(o.x() - max.x()))
+            return false;
+#endif
+    }
 
-    Float ty1 = (min.y() - o.y()) / d.y();
-    Float ty2 = (max.y() - o.y()) / d.y();
+    if (!EQUAL_TO_ZERO(d.y()))
+    {
+        Float ty1 = (min.y() - o.y()) / d.y();
+        Float ty2 = (max.y() - o.y()) / d.y();
 
-    if (ty1 > ty2)
-        swap(ty1, ty2);
-    t_min = std::max(t_min, ty1);
-    t_max = std::min(t_max, ty2);
+        if (ty1 > ty2)
+            swap(ty1, ty2);
+        t_min = std::max(t_min, ty1);
+        t_max = std::min(t_max, ty2);
+    }
+    else
+    {
+        if (o.y() < min.y() - Max_Allowable_Error || o.y() > max.y() + Max_Allowable_Error)
+            return false;
+#ifndef CONTACT_AS_INTERSECTION
+        if (EQUAL_TO_ZERO(o.y() - min.y()) || EQUAL_TO_ZERO(o.y() - max.y()))
+            return false;
+#endif
+    }
 
-    Float tz1 = (min.z() - o.z()) / d.z();
-    Float tz2 = (max.z() - o.z()) / d.z();
+    if (!EQUAL_TO_ZERO(d.z()))
+    {
+        Float tz1 = (min.z() - o.z()) / d.z();
+        Float tz2 = (max.z() - o.z()) / d.z();
 
-    if (tz1 > tz2)
-        swap(tz1, tz2);
-    t_min = std::max(t_min, tz1);
-    t_max = std::min(t_max, tz2);
+        if (tz1 > tz2)
+            swap(tz1, tz2);
+        t_min = std::max(t_min, tz1);
+        t_max = std::min(t_max, tz2);
+    }
+    else
+    {
+        if (o.z() < min.z() - Max_Allowable_Error || o.z() > max.z() + Max_Allowable_Error)
+            return false;
+#ifndef CONTACT_AS_INTERSECTION
+        if (EQUAL_TO_ZERO(o.z() - min.z()) || EQUAL_TO_ZERO(o.z() - max.z()))
+            return false;
+#endif
+    }
 
 #ifndef CONTAINMENT_AS_INTERSECTION
     if (EQUAL_TO_ZERO(t_min) && EQUAL_TO_ZERO(t_max - 1.0))
@@ -562,56 +574,67 @@ bool intersect_segment_cuboid(const Segment3D& s, const Cuboid& c, Point3D& inte
     Point3D o = s.origin();
     Vector3D d = s.direction();
 
-#ifdef CONTACT_AS_INTERSECTION
-    if (EQUAL_TO_ZERO(d.x()))
-    {
-        Rectangle3D r1(min, Point3D(min.x(), max.y(), min.z()), Point3D(min.x(), min.y(), max.z()));
-        Rectangle3D r2(Point3D(max.x(), min.y(), min.z()), Point3D(max.x(), max.y(), min.z()), Point3D(max.x(), min.y(), max.z()));
-        return intersect_segment_rectangle(s, r1, intersection) || intersect_segment_rectangle(s, r2, intersection);
-    }
-    else if (EQUAL_TO_ZERO(d.y()))
-    {
-        Rectangle3D r1(min, Point3D(max.x(), min.y(), min.z()), Point3D(min.x(), min.y(), max.z()));
-        Rectangle3D r2(Point3D(min.x(), max.y(), min.z()), Point3D(max.x(), max.y(), min.z()), Point3D(min.x(), max.y(), max.z()));
-        return intersect_segment_rectangle(s, r1, intersection) || intersect_segment_rectangle(s, r2, intersection);
-    }
-    else if (EQUAL_TO_ZERO(d.z()))
-    {
-        Rectangle3D r1(min, Point3D(max.x(), min.y(), min.z()), Point3D(min.x(), max.y(), min.z()));
-        Rectangle3D r2(Point3D(min.x(), min.y(), max.z()), Point3D(max.x(), min.y(), max.z()), Point3D(min.x(), max.y(), max.z()));
-        return intersect_segment_rectangle(s, r1, intersection) || intersect_segment_rectangle(s, r2, intersection);
-    }
-#else
-    // todo: some problem
-    if (EQUAL_TO_ZERO(d.x()) || EQUAL_TO_ZERO(d.y()) || EQUAL_TO_ZERO(d.z()))
-        return false;
-#endif
-
     // slab
     Float t_min = 0.0, t_max = 1.0;
-    Float tx1 = (min.x() - o.x()) / d.x();
-    Float tx2 = (max.x() - o.x()) / d.x();
+    if (!EQUAL_TO_ZERO(d.x()))
+    {
+        Float tx1 = (min.x() - o.x()) / d.x();
+        Float tx2 = (max.x() - o.x()) / d.x();
 
-    if (tx1 > tx2)
-        swap(tx1, tx2);
-    t_min = std::max(t_min, tx1);
-    t_max = std::min(t_max, tx2);
+        if (tx1 > tx2)
+            swap(tx1, tx2);
+        t_min = std::max(t_min, tx1);
+        t_max = std::min(t_max, tx2);
+    }
+    else
+    {
+        if (o.x() < min.x() - Max_Allowable_Error || o.x() > max.x() + Max_Allowable_Error)
+            return false;
+#ifndef CONTACT_AS_INTERSECTION
+        if (EQUAL_TO_ZERO(o.x() - min.x()) || EQUAL_TO_ZERO(o.x() - max.x()))
+            return false;
+#endif
+    }
 
-    Float ty1 = (min.y() - o.y()) / d.y();
-    Float ty2 = (max.y() - o.y()) / d.y();
+    if (!EQUAL_TO_ZERO(d.y()))
+    {
+        Float ty1 = (min.y() - o.y()) / d.y();
+        Float ty2 = (max.y() - o.y()) / d.y();
 
-    if (ty1 > ty2)
-        swap(ty1, ty2);
-    t_min = std::max(t_min, ty1);
-    t_max = std::min(t_max, ty2);
+        if (ty1 > ty2)
+            swap(ty1, ty2);
+        t_min = std::max(t_min, ty1);
+        t_max = std::min(t_max, ty2);
+    }
+    else
+    {
+        if (o.y() < min.y() - Max_Allowable_Error || o.y() > max.y() + Max_Allowable_Error)
+            return false;
+#ifndef CONTACT_AS_INTERSECTION
+        if (EQUAL_TO_ZERO(o.y() - min.y()) || EQUAL_TO_ZERO(o.y() - max.y()))
+            return false;
+#endif
+    }
 
-    Float tz1 = (min.z() - o.z()) / d.z();
-    Float tz2 = (max.z() - o.z()) / d.z();
+    if (!EQUAL_TO_ZERO(d.z()))
+    {
+        Float tz1 = (min.z() - o.z()) / d.z();
+        Float tz2 = (max.z() - o.z()) / d.z();
 
-    if (tz1 > tz2)
-        swap(tz1, tz2);
-    t_min = std::max(t_min, tz1);
-    t_max = std::min(t_max, tz2);
+        if (tz1 > tz2)
+            swap(tz1, tz2);
+        t_min = std::max(t_min, tz1);
+        t_max = std::min(t_max, tz2);
+    }
+    else
+    {
+        if (o.z() < min.z() - Max_Allowable_Error || o.z() > max.z() + Max_Allowable_Error)
+            return false;
+#ifndef CONTACT_AS_INTERSECTION
+        if (EQUAL_TO_ZERO(o.z() - min.z()) || EQUAL_TO_ZERO(o.z() - max.z()))
+            return false;
+#endif
+    }
 
     if (t_min > t_max)
         return false;
@@ -782,9 +805,9 @@ bool intersect_segment_cylinder_unchecked(const Segment3D& s, const Cylinder& c)
         if (EQUAL_TO_ZERO((cc.cross(d)).squaredNorm()))
         {
             // cc // d
-            Vector3D od = down - so;
-            Vector3D od_prep = od - od.dot(d) / d.dot(d) * d;
-            if (od_prep.norm() < r - Max_Allowable_Error)
+            Vector3D od = so - down;
+            Vector3D od_perp = od - od.dot(cc) / cc.dot(cc) * cc;
+            if (od_perp.norm() < r - Max_Allowable_Error)
                 return true;
             
             return false;
@@ -793,13 +816,13 @@ bool intersect_segment_cylinder_unchecked(const Segment3D& s, const Cylinder& c)
         Float m = d.dot(cc) / a;
         Float n = o.dot(cc) / a;
 
-        Vector3D d_prep = d - m * cc;
-        Vector3D o_prep = o - n * cc;
+        Vector3D d_perp = d - m * cc;
+        Vector3D o_perp = o - n * cc;
 
-        // equation, from ||o_prep + t * d_prep|| = r
-        Float A = d_prep.dot(d_prep);
-        Float B = 2.0 * d_prep.dot(o_prep);
-        Float C = o_prep.dot(o_prep) - r * r;
+        // equation, from ||o_perp + t * d_perp|| = r
+        Float A = d_perp.dot(d_perp);
+        Float B = 2.0 * d_perp.dot(o_perp);
+        Float C = o_perp.dot(o_perp) - r * r;
         Float discriminant = B * B - 4 * A * C;
         if (discriminant < -Max_Allowable_Error)
             return false;
@@ -824,19 +847,7 @@ bool intersect_segment_cylinder_unchecked(const Segment3D& s, const Cylinder& c)
         if ((t1 > Max_Allowable_Error && t1 < 1.0 - Max_Allowable_Error) ||
             (t2 > Max_Allowable_Error && t2 < 1.0 - Max_Allowable_Error) ||
             (t1 < -Max_Allowable_Error && t2 > 1.0 + Max_Allowable_Error))
-        {
-#ifndef CONTACT_AS_INTERSECTION
-            Float k1 = n + t1 * m;
-            Float k2 = n + t2 * m;
-
-            if (k1 > k2)
-                swap(k1, k2);
-            
-            if (EQUAL_TO_ZERO(k1) || EQUAL_TO_ZERO(k2 - 1.0))
-                return false;
-#endif
             return true;
-        }
     }
 
     return false;
@@ -918,9 +929,9 @@ bool intersect_segment_cylinder(const Segment3D& s, const Cylinder& c, Point3D& 
         if (EQUAL_TO_ZERO((cc.cross(d)).squaredNorm()))
         {
             // cc // d
-            Vector3D od = down - so;
-            Vector3D od_prep = od - od.dot(d) / d.dot(d) * d;
-            if (od_prep.norm() < r - Max_Allowable_Error)
+            Vector3D od = so - down;
+            Vector3D od_perp = od - od.dot(cc) / cc.dot(cc) * cc;
+            if (od_perp.norm() < r - Max_Allowable_Error)
             {
                 Vector3D nn = cc.normalized();
                 Disc3D c1(down, nn, r);
@@ -954,13 +965,13 @@ bool intersect_segment_cylinder(const Segment3D& s, const Cylinder& c, Point3D& 
         Float m = d.dot(cc) / a;
         Float n = o.dot(cc) / a;
 
-        Vector3D d_prep = d - m * cc;
-        Vector3D o_prep = o - n * cc;
+        Vector3D d_perp = d - m * cc;
+        Vector3D o_perp = o - n * cc;
 
-        // equation, from ||o_prep + t * d_prep|| = r
-        Float A = d_prep.dot(d_prep);
-        Float B = 2.0 * d_prep.dot(o_prep);
-        Float C = o_prep.dot(o_prep) - r * r;
+        // equation, from ||o_perp + t * d_perp|| = r
+        Float A = d_perp.dot(d_perp);
+        Float B = 2.0 * d_perp.dot(o_perp);
+        Float C = o_perp.dot(o_perp) - r * r;
         Float discriminant = B * B - 4 * A * C;
         if (discriminant < -Max_Allowable_Error)
             return false;
@@ -985,25 +996,470 @@ bool intersect_segment_cylinder(const Segment3D& s, const Cylinder& c, Point3D& 
         Float t1 = (-B - discriminant_sqrt) / (2 * A);
         Float t2 = (-B + discriminant_sqrt) / (2 * A);
 
+        // t1 < t2
+        if (t1 > Max_Allowable_Error && t1 < 1.0 - Max_Allowable_Error)
+            intersection = so + t1 * d;
+        else if (t2 > Max_Allowable_Error && t2 < 1.0 - Max_Allowable_Error)
+        {
+            Disc3D d1(down, cc, r);
+            Disc3D d2(up, cc, r);
+            Point3D intersection1, intersection2;
+            if (intersect_segment_disc(s, d1, intersection1))
+            {
+                Float k1 = (intersection1 - so).dot(d) / d.dot(d);
+                if (k1 > Max_Allowable_Error && k1 < t2)
+                    t2 = k1;
+            }
+            if (intersect_segment_disc(s, d2, intersection2))
+            {
+                Float k2 = (intersection2 - so).dot(d) / d.dot(d);
+                if (k2 > Max_Allowable_Error && k2 < t2)
+                    t2 = k2;
+            }
+            intersection = so + t2 * d;
+        }
+        else if (t1 < -Max_Allowable_Error && t2 > 1.0 + Max_Allowable_Error)
+        {
+            Disc3D d1(down, cc, r);
+            Disc3D d2(up, cc, r);
+            Point3D intersection1, intersection2;
+            Float k = 1.0 - Max_Allowable_Error;
+            if (intersect_segment_disc(s, d1, intersection1))
+            {
+                Float k1 = (intersection1 - so).dot(d) / d.dot(d);
+                if (k1 > Max_Allowable_Error && k1 < k)
+                    k = k1;
+            }
+            if (intersect_segment_disc(s, d2, intersection2))
+            {
+                Float k2 = (intersection2 - so).dot(d) / d.dot(d);
+                if (k2 > Max_Allowable_Error && k2 < k)
+                    k = k2;
+            }
+            intersection = so + k * d;
+        }
+        else
+            return false;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool intersect_segment_cone_unchecked(const Segment3D& s, const Cone& c)
+{
+    Point3D so = s.origin();
+    Vector3D d = s.direction();
+
+    DirectionDetection sd = c.detect_point_direction(so);
+    DirectionDetection dd = c.detect_point_direction(so + d);
+    if (sd == DirectionDetection::e_inner)
+    {
+        if (dd == DirectionDetection::e_inner)
+#ifdef CONTAINMENT_AS_INTERSECTION
+            return true;
+#else
+            return false;
+#endif
+        else if (dd == DirectionDetection::e_border)
+#ifdef CONTACT_AS_INTERSECTION
+            return true;
+#else
+            return false;
+#endif
+    }
+
+    if ((dd == DirectionDetection::e_inner && sd == DirectionDetection::e_border) ||
+        (dd == DirectionDetection::e_border && sd == DirectionDetection::e_border))
+#ifdef CONTACT_AS_INTERSECTION
+        return true;
+#else
+        return false;
+#endif
+
+    Point3D peak = c.peak();
+    Point3D center = c.center();
+    Float r = c.radius();
+
+    Vector3D cc = peak - center;
+    Vector3D o = so - center;
+
+    Float a = cc.dot(cc);
+
+    // projection test
+    Vector3D e = o + d;
+
+    Float i1 = o.dot(cc) / a;
+    Float i2 = e.dot(cc) / a;
+
+    if (i1 > i2)
+        swap(i1, i2);
+
+    // i2 > i1
+    if ((i1 < -Max_Allowable_Error && i2 > Max_Allowable_Error) ||
+        (i1 > Max_Allowable_Error && i1 < 1.0 - Max_Allowable_Error))
+    {
+        if (EQUAL_TO_ZERO((cc.cross(d)).squaredNorm()))
+        {
+            // cc // d
+            static auto check_point = [=](const Vector3D& v)
+            {
+                Vector3D oc = v - center;
+                Float t = oc.dot(cc) / a;
+                Float radius = std::clamp(1.0 - t, 0.0, 1.0) * r;
+                Vector3D oc_perp = oc - t * d;
+                if (oc_perp.norm() < radius - Max_Allowable_Error)
+                    return true;
+                return false;
+            };
+
+            if (check_point(so) || check_point(so + d))
+                return true;
+
+            return false;
+        }
+
+        Float m = d.dot(cc) / a;
+        Float n = o.dot(cc) / a;
+        Float one_minus_n = 1.0 - n;
+
+        Vector3D d_perp = d - m * cc;
+        Vector3D o_perp = o - n * cc;
+
+        // equation, from ||o_perp + t * d_perp|| = k * r
+        // where k = 1 - n - m * t
+        Float m_r = m * r;
+        Float one_minus_n_r = one_minus_n * r;
+        Float A = d_perp.dot(d_perp) - m_r * m_r;
+        Float B = 2 * (d_perp.dot(o_perp) + m_r * one_minus_n_r);
+        Float C = o_perp.dot(o_perp) - one_minus_n_r * one_minus_n_r;
+        Float discriminant = B * B - 4 * A * C;
+        if (discriminant < -Max_Allowable_Error)
+            return false;
+
+        if (EQUAL_TO_ZERO(discriminant))
+#ifdef CONTACT_AS_INTERSECTION
+        {
+            Float t = -B / (2 * A);
+            if (t < -Max_Allowable_Error || t > 1.0 + Max_Allowable_Error)
+                return false;
+            else
+                return true;
+        }
+#else
+            return false;
+#endif
+
+        Float discriminant_sqrt = std::sqrt(discriminant);
+        Float t1 = (-B - discriminant_sqrt) / (2 * A);
+        Float t2 = (-B + discriminant_sqrt) / (2 * A);
+
         if ((t1 > Max_Allowable_Error && t1 < 1.0 - Max_Allowable_Error) ||
             (t2 > Max_Allowable_Error && t2 < 1.0 - Max_Allowable_Error) ||
             (t1 < -Max_Allowable_Error && t2 > 1.0 + Max_Allowable_Error))
+            return true;
+    }
+
+    return false;
+}
+// only give nearest intersection
+bool intersect_segment_cone(const Segment3D& s, const Cone& c, Point3D& intersection)
+{
+    Point3D so = s.origin();
+    Vector3D d = s.direction();
+
+    DirectionDetection sd = c.detect_point_direction(so);
+    DirectionDetection dd = c.detect_point_direction(so + d);
+    if (sd == DirectionDetection::e_inner)
+    {
+        if (dd == DirectionDetection::e_inner)
+#ifdef CONTAINMENT_AS_INTERSECTION
         {
-#ifndef CONTACT_AS_INTERSECTION
-            Float k1 = n + t1 * m;
-            Float k2 = n + t2 * m;
-
-            if (k1 > k2)
-                swap(k1, k2);
-
-            if (EQUAL_TO_ZERO(k1) || EQUAL_TO_ZERO(k2 - 1.0))
-                return false;
-#endif
-            // todo: find the intersection
-            
+            // countless intersections
+            intersection = { std::numeric_limits<Float>::max(), std::numeric_limits<Float>::max(), std::numeric_limits<Float>::max() };
             return true;
         }
+#else
+            return false;
+#endif
+        else if (dd == DirectionDetection::e_border)
+#ifdef CONTACT_AS_INTERSECTION
+        {
+            intersection = so + d; // segment is tangent to the cylinder at the end point of the segment
+            return true;
+        }
+#else
+            return false;
+#endif
     }
+
+    if (dd == DirectionDetection::e_inner && sd == DirectionDetection::e_border)
+#ifdef CONTACT_AS_INTERSECTION
+    {
+        intersection = so; // segment is tangent to the cylinder at the start point of the segment
+        return true;
+    }
+#else
+        return false;
+#endif
+
+    if (dd == DirectionDetection::e_border && sd == DirectionDetection::e_border)
+#ifdef CONTACT_AS_INTERSECTION
+    {
+        // countless intersections
+        intersection = { std::numeric_limits<Float>::max(), std::numeric_limits<Float>::max(), std::numeric_limits<Float>::max() };
+        return true;
+    }
+#else
+        return false;
+#endif
+
+    Point3D peak = c.peak();
+    Point3D center = c.center();
+    Float r = c.radius();
+
+    Vector3D cc = peak - center;
+    Vector3D o = so - center;
+
+    Float a = cc.dot(cc);
+
+    // projection test
+    Vector3D e = o + d;
+
+    Float i1 = o.dot(cc) / a;
+    Float i2 = e.dot(cc) / a;
+
+    if (i1 > i2)
+        swap(i1, i2);
+
+    // i2 > i1
+    if ((i1 < -Max_Allowable_Error && i2 > Max_Allowable_Error) ||
+        (i1 > Max_Allowable_Error && i1 < 1.0 - Max_Allowable_Error))
+    {
+        if (EQUAL_TO_ZERO((cc.cross(d)).squaredNorm()))
+        {
+            // cc // d
+            static auto check_point = [=](const Vector3D& v, Vector3D& perp)
+            {
+                Vector3D oc = v - center;
+                Float t = oc.dot(cc) / a;
+                Float radius = std::clamp(1.0 - t, 0.0, 1.0) * r;
+                Vector3D oc_perp = oc - t * d;
+                if (oc_perp.norm() < radius - Max_Allowable_Error)
+                {
+                    perp = oc_perp;
+                    return true;
+                }
+                return false;
+            };
+
+            Vector3D perp;
+            bool p1 = check_point(so, perp);
+            bool p2 = check_point(so + d, perp);
+
+            if (p1 && p2)
+            {
+                // one inner point, one outer point through disc
+                Disc3D disc(center, cc, r);
+                if (intersect_segment_disc(s, disc, intersection))
+                    return true;
+            }
+            else if (p1 || p2)
+            {
+                // one inner point, one outer point through side
+                Float radius = perp.norm();
+                Float h = radius * c.height() / r;
+                Float t = 1.0 - h / cc.norm();
+                intersection = center + t * cc + perp;
+                return true;
+            }
+
+            return false;
+        }
+
+        Float m = d.dot(cc) / a;
+        Float n = o.dot(cc) / a;
+        Float one_minus_n = 1.0 - n;
+
+        Vector3D d_perp = d - m * cc;
+        Vector3D o_perp = o - n * cc;
+
+        // equation, from ||o_perp + t * d_perp|| = k * r
+        // where k = 1 - n - m * t
+        Float m_r = m * r;
+        Float one_minus_n_r = one_minus_n * r;
+        Float A = d_perp.dot(d_perp) - m_r * m_r;
+        Float B = 2 * (d_perp.dot(o_perp) + m_r * one_minus_n_r);
+        Float C = o_perp.dot(o_perp) - one_minus_n_r * one_minus_n_r;
+        Float discriminant = B * B - 4 * A * C;
+        if (discriminant < -Max_Allowable_Error)
+            return false;
+
+        if (EQUAL_TO_ZERO(discriminant))
+#ifdef CONTACT_AS_INTERSECTION
+        {
+            Float t = -B / (2 * A);
+            if (t < -Max_Allowable_Error || t > 1.0 + Max_Allowable_Error)
+                return false;
+            else
+            {
+                intersection = so + t * d;
+                return true;
+            }
+        }
+#else
+            return false;
+#endif
+
+        Float discriminant_sqrt = std::sqrt(discriminant);
+        Float t1 = (-B - discriminant_sqrt) / (2 * A);
+        Float t2 = (-B + discriminant_sqrt) / (2 * A);
+
+        // t1 < t2
+        if (t1 > Max_Allowable_Error && t1 < 1.0 - Max_Allowable_Error)
+            intersection = so + t1 * d;
+        else if (t2 > Max_Allowable_Error && t2 < 1.0 - Max_Allowable_Error)
+        {
+            Disc3D disc(center, cc, r);
+            Point3D intersection1;
+            if (intersect_segment_disc(s, disc, intersection1))
+            {
+                Float k1 = (intersection1 - so).dot(d) / d.dot(d);
+                if (k1 > Max_Allowable_Error && k1 < t2)
+                    t2 = k1;
+            }
+            intersection = so + t2 * d;
+        }
+        else if (t1 < -Max_Allowable_Error && t2 > 1.0 + Max_Allowable_Error)
+        {
+            Disc3D disc(center, cc, r);
+            Point3D intersection1;
+            Float k = 1.0 - Max_Allowable_Error;
+            if (intersect_segment_disc(s, disc, intersection1))
+            {
+                Float k1 = (intersection1 - so).dot(d) / d.dot(d);
+                if (k1 > Max_Allowable_Error && k1 < k)
+                    k = k1;
+            }
+            intersection = so + k * d;
+        }
+        else
+            return false;
+
+        return true;
+    }
+
+    return false;
+}
+
+// todo: check capsule
+bool intersect_segment_capsule_unchecked(const Segment3D& s, const Capsule& c)
+{
+    Point3D so = s.origin();
+    Vector3D d = s.direction();
+
+    DirectionDetection sd = c.detect_point_direction(so);
+    DirectionDetection dd = c.detect_point_direction(so + d);
+    if (sd == DirectionDetection::e_inner)
+    {
+        if (dd == DirectionDetection::e_inner)
+#ifdef CONTAINMENT_AS_INTERSECTION
+            return true;
+#else
+            return false;
+#endif
+        else if (dd == DirectionDetection::e_border)
+#ifdef CONTACT_AS_INTERSECTION
+            return true;
+#else
+            return false;
+#endif
+    }
+
+    if ((dd == DirectionDetection::e_inner && sd == DirectionDetection::e_border) ||
+        (dd == DirectionDetection::e_border && sd == DirectionDetection::e_border))
+#ifdef CONTACT_AS_INTERSECTION
+        return true;
+#else
+        return false;
+#endif
+
+    Point3D up = c.up_center();
+    Point3D down = c.down_center();
+    Float r = c.radius();
+
+    Vector3D cc = up - down;
+    Vector3D o = so - down;
+
+    Float a = cc.dot(cc);
+
+    // projection test
+    Vector3D e = o + d;
+
+    Float i1 = o.dot(cc) / a;
+    Float i2 = e.dot(cc) / a;
+
+    if (i1 > i2)
+        swap(i1, i2);
+
+    // i2 > i1
+    if ((i1 < -Max_Allowable_Error && i2 > Max_Allowable_Error) ||
+        (i1 > Max_Allowable_Error && i1 < 1.0 - Max_Allowable_Error))
+    {
+        if (EQUAL_TO_ZERO((cc.cross(d)).squaredNorm()))
+        {
+            // cc // d
+            Vector3D od = so - down;
+            Vector3D od_perp = od - od.dot(cc) / cc.dot(cc) * cc;
+            if (od_perp.norm() < r - Max_Allowable_Error)
+                return true;
+
+            return false;
+        }
+
+        Float m = d.dot(cc) / a;
+        Float n = o.dot(cc) / a;
+
+        Vector3D d_perp = d - m * cc;
+        Vector3D o_perp = o - n * cc;
+
+        // equation, from ||o_perp + t * d_perp|| = r
+        Float A = d_perp.dot(d_perp);
+        Float B = 2.0 * d_perp.dot(o_perp);
+        Float C = o_perp.dot(o_perp) - r * r;
+        Float discriminant = B * B - 4 * A * C;
+        if (discriminant < -Max_Allowable_Error)
+            return false;
+
+        if (EQUAL_TO_ZERO(discriminant))
+#ifdef CONTACT_AS_INTERSECTION
+        {
+            Float t = -B / (2 * A);
+            if (t < -Max_Allowable_Error || t > 1.0 + Max_Allowable_Error)
+                return false;
+            else
+                return true;
+        }
+#else
+            return false;
+#endif
+
+        Float discriminant_sqrt = std::sqrt(discriminant);
+        Float t1 = (-B - discriminant_sqrt) / (2 * A);
+        Float t2 = (-B + discriminant_sqrt) / (2 * A);
+
+        if ((t1 > Max_Allowable_Error && t1 < 1.0 - Max_Allowable_Error) ||
+            (t2 > Max_Allowable_Error && t2 < 1.0 - Max_Allowable_Error) ||
+            (t1 < -Max_Allowable_Error && t2 > 1.0 + Max_Allowable_Error))
+            return true;
+    }
+
+    return false;
+}
+// only give nearest intersection
+bool intersect_segment_capsule(const Segment3D& s, const Capsule& c, Point3D& intersection)
+{
 
     return false;
 }
