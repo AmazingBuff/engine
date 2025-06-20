@@ -75,7 +75,7 @@ static Mesh* load_mesh(aiMesh* mesh, const aiScene* scene)
     return ret;
 }
 
-static Node* load_node(aiNode* node, const aiScene* scene, Model& model)
+static Node* load_node(aiNode* node, const aiScene* scene, Scene& model)
 {
     Node* ret = PLACEMENT_NEW(Node, sizeof(Node));
     ret->name = node->mName.data;
@@ -110,7 +110,7 @@ static void release_node(Node* node)
 }
 
 
-Model load_model(const char* path)
+Scene load_model(const char* path)
 {
     uint32_t flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_MakeLeftHanded;
     Assimp::Importer importer;
@@ -119,17 +119,17 @@ Model load_model(const char* path)
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         LOG_ERROR("Model Loader", "unable to load this model, which is from {}!", path);
 
-    Model model{};
+    Scene model{};
     model.root = load_node(scene->mRootNode, scene, model);
 
     return model;
 }
 
 
-void release_model(const Model& model)
+void release_model(const Scene& scene)
 {
-    release_node(model.root);
-    for (Mesh* mesh : model.meshes)
+    release_node(scene.root);
+    for (Mesh* mesh : scene.meshes)
     {
         PLACEMENT_DELETE(Mesh, mesh);
     }
