@@ -7,7 +7,6 @@
 #include "dx12adapter.h"
 #include "dx12device.h"
 #include "dx12queue.h"
-#include "rendering/api.h"
 #include "resources/dx12texture_view.h"
 #include "utils/dx_macro.h"
 #include "utils/dx_utils.h"

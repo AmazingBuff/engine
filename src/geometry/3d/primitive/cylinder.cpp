@@ -3,13 +3,17 @@
 //
 
 #include "geometry/3d/primitive/cylinder.h"
-#include "geometry/3d/primitive/cuboid.h"
 #include "geometry/3d/segment3d.h"
 
 AMAZING_NAMESPACE_BEGIN
 
 Cylinder::Cylinder(const Point3D& up_center, const Point3D& down_center, Float radius)
     : m_up_center(up_center), m_down_center(down_center), m_radius(radius) {}
+
+PrimitiveType Cylinder::type() const
+{
+    return PrimitiveType::e_cylinder;
+}
 
 Point3D Cylinder::up_center() const
 {
@@ -31,9 +35,35 @@ Float Cylinder::radius() const
     return m_radius;
 }
 
-Cuboid Cylinder::aabb() const
+AABB Cylinder::aabb() const
 {
-    return Cuboid(0, 0, 0, 1, 1, 1);
+    // P = lerp(C2, C1, t) + R * (U * cos + V * sin)
+    static auto compute_half = [](Float radius, Float n_component) -> Float
+    {
+        Float one_minus = 1.0 - n_component * n_component;
+        if (EQUAL_TO_ZERO(one_minus))
+            return 0;
+        return radius * std::sqrt(one_minus);
+    };
+
+    Vector3D normal = (m_up_center - m_down_center).normalized();
+
+    Float half_x = compute_half(m_radius, normal.x());
+    Float half_y = compute_half(m_radius, normal.y());
+    Float half_z = compute_half(m_radius, normal.z());
+
+    Point3D min = std::min(m_up_center, m_down_center);
+    Point3D max = std::max(m_up_center, m_down_center);
+
+    min.x() -= half_x;
+    min.y() -= half_y;
+    min.z() -= half_z;
+
+    max.x() += half_x;
+    max.y() += half_y;
+    max.z() += half_z;
+
+    return {min, max};
 }
 
 DirectionDetection Cylinder::detect_point_direction(const Point3D& point) const

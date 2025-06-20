@@ -7,7 +7,6 @@
 #include "dx12device.h"
 #include "resources/dx12shader_library.h"
 #include "utils/dx_macro.h"
-#include "rendering/api.h"
 
 AMAZING_NAMESPACE_BEGIN
 

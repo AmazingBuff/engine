@@ -3,11 +3,15 @@
 //
 
 #include "geometry/3d/primitive/capsule.h"
-#include "geometry/3d/primitive/cuboid.h"
 
 AMAZING_NAMESPACE_BEGIN
 
 Capsule::Capsule(const Point3D& up_center, const Point3D& down_center, Float radius) : m_up_center(up_center), m_down_center(down_center), m_radius(radius) {}
+
+PrimitiveType Capsule::type() const
+{
+    return PrimitiveType::e_capsule;
+}
 
 Point3D Capsule::up_center() const
 {
@@ -29,9 +33,20 @@ Float Capsule::radius() const
     return m_radius;
 }
 
-Cuboid Capsule::aabb() const
+AABB Capsule::aabb() const
 {
-    return Cuboid(0, 0, 0, 1, 1, 1);
+    return {
+            {
+                std::min(m_down_center.x(), m_up_center.x()) - m_radius,
+                std::min(m_down_center.y(), m_up_center.y()) - m_radius,
+                std::min(m_down_center.z(), m_up_center.z()) - m_radius
+            },
+            {
+                std::max(m_down_center.x(), m_up_center.x()) + m_radius,
+                std::max(m_down_center.y(), m_up_center.y()) + m_radius,
+                std::max(m_down_center.z(), m_up_center.z()) + m_radius
+            }
+    };
 }
 
 DirectionDetection Capsule::detect_point_direction(const Point3D& point) const

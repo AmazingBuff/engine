@@ -8,6 +8,11 @@ AMAZING_NAMESPACE_BEGIN
 
 Sphere::Sphere(const Point3D& center, Float radius) : m_center(center), m_radius(radius) {}
 
+PrimitiveType Sphere::type() const
+{
+    return PrimitiveType::e_sphere;
+}
+
 Point3D Sphere::center() const
 {
     return m_center;
@@ -16,6 +21,12 @@ Point3D Sphere::center() const
 Float Sphere::radius() const
 {
     return m_radius;
+}
+
+AABB Sphere::aabb() const
+{
+    Vector3D half(m_radius, m_radius, m_radius);
+    return {m_center - half, m_center + half};
 }
 
 DirectionDetection Sphere::detect_point_direction(const Point3D& point) const

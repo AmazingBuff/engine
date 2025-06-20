@@ -10,6 +10,11 @@ AMAZING_NAMESPACE_BEGIN
 Triangle3D::Triangle3D(const Point3D& p0, const Point3D& p1, const Point3D& p2)
     : m_vertices{p0, p1, p2} {}
 
+PrimitiveType Triangle3D::type() const
+{
+    return PrimitiveType::e_triangle;
+}
+
 Vector3D Triangle3D::normal() const
 {
     Vector3D v1 = m_vertices[1] - m_vertices[0];
@@ -35,6 +40,14 @@ Float Triangle3D::area() const
     Vector3D v2 = m_vertices[2] - m_vertices[0];
 
     return v1.cross(v2).norm() / 2;
+}
+
+AABB Triangle3D::aabb() const
+{
+    Point3D min = std::min(std::min(m_vertices[0], m_vertices[1]), m_vertices[2]);
+    Point3D max = std::max(std::max(m_vertices[0], m_vertices[1]), m_vertices[2]);
+
+    return {min, max};
 }
 
 DirectionDetection Triangle3D::detect_point_direction(const Point3D& p) const

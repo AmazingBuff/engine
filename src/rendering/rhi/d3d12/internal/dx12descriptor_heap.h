@@ -5,7 +5,6 @@
 #ifndef DX12DESCRIPTORHEAP_H
 #define DX12DESCRIPTORHEAP_H
 
-#include "rendering/api.h"
 #include "rendering/rhi/enumeration.h"
 #include "rendering/rhi/d3d12/dx12.h"
 

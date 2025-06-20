@@ -10,7 +10,6 @@
 #include "resources/dx12texture_view.h"
 #include "resources/dx12buffer.h"
 #include "internal/dx12descriptor_heap.h"
-#include "rendering/api.h"
 
 AMAZING_NAMESPACE_BEGIN
 

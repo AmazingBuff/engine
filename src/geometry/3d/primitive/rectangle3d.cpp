@@ -10,6 +10,11 @@ AMAZING_NAMESPACE_BEGIN
 Rectangle3D::Rectangle3D(const Point3D& o, const Point3D& h, const Point3D& v)
     : m_origin(o), m_horizontal(h), m_vertical(v){}
 
+PrimitiveType Rectangle3D::type() const
+{
+    return PrimitiveType::e_rectangle;
+}
+
 Vector3D Rectangle3D::normal() const
 {
     Vector3D v1 = m_horizontal - m_origin;
@@ -46,6 +51,19 @@ Float Rectangle3D::area() const
     Vector3D v2 = m_vertical - m_origin;
 
     return v1.cross(v2).norm() / 2;
+}
+
+AABB Rectangle3D::aabb() const
+{
+    Point3D v1 = m_origin;
+    Point3D v2 = m_horizontal;
+    Point3D v3 = m_vertical;
+    Point3D v4 = v2 + v3 - v1;
+
+    Point3D min = std::min(std::min(std::min(v1, v2), v3), v4);
+    Point3D max = std::max(std::max(std::max(v1, v2), v3), v4);
+
+    return {min, max};
 }
 
 DirectionDetection Rectangle3D::detect_point_direction(const Point3D& p) const

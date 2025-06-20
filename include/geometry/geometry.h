@@ -8,5 +8,4 @@
 #include "type.h"
 #include "algorithm/intersect.h"
 
-
 #endif //GEOMETRY_H

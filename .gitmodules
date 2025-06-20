@@ -1,0 +1,15 @@
+[submodule "ext/amazing_std"]
+	path = ext/amazing_std
+	url = https://github.com/AmazingBuff/amazing_std.git
+[submodule "ext/assimp"]
+	path = ext/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "ext/sdl"]
+	path = ext/sdl
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "ext/eigen"]
+	path = ext/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "ext/spirv_cross"]
+	path = ext/spirv_cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git

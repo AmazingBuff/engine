@@ -5,18 +5,20 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "geometry/3d/point3d.h"
+#include "primitive.h"
 
 AMAZING_NAMESPACE_BEGIN
 
-class Sphere
+class Sphere final : public Primitive
 {
 public:
     Sphere(const Point3D& center, Float radius);
+    NODISCARD PrimitiveType type() const override;
 
     NODISCARD Point3D center() const;
     NODISCARD Float radius() const;
-    NODISCARD DirectionDetection detect_point_direction(const Point3D& point) const;
+    NODISCARD AABB aabb() const override;
+    NODISCARD DirectionDetection detect_point_direction(const Point3D& point) const override;
 private:
     Point3D m_center;
     Float m_radius;

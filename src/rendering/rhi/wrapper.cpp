@@ -2,7 +2,7 @@
 // Created by AmazingBuff on 2025/4/30.
 //
 
-#include "rendering/rhi/wrapper.h"
+#include "wrapper.h"
 
 // d3d12
 #ifdef _WIN64
@@ -50,7 +50,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-static thread_local GPUBackend t_backend = GPUBackend::e_d3d12;
+static GPUBackend t_backend = GPUBackend::e_d3d12;
 
 GPUInstance* GPU_create_instance(GPUInstanceCreateInfo const& info)
 {

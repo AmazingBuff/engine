@@ -2,7 +2,7 @@
 // Created by AmazingBuff on 2025/6/12.
 //
 
-#include "rendering/acceleration/render_geometry.h"
+#include "render_geometry.h"
 #include "rendering/rhi/wrapper.h"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -69,13 +69,20 @@ static RenderMesh import_mesh(const aiMesh* mesh, const aiScene* scene, Vector<R
     vertex_offset += mesh->mNumVertices;
     triangle_offset += mesh->mNumFaces;
 
-    return {vertex_offset, triangle_offset * 3, mesh->mNumVertices, mesh->mNumFaces * 3};
+    AABB aabb{
+        .min = {mesh->mAABB.mMin.x, mesh->mAABB.mMin.y, mesh->mAABB.mMin.z},
+        .max = {mesh->mAABB.mMax.x, mesh->mAABB.mMax.y, mesh->mAABB.mMax.z}
+    };
+    return {vertex_offset, triangle_offset * 3, mesh->mNumVertices, mesh->mNumFaces * 3, aabb};
 }
 
-static RenderNode* import_node(const aiNode* node, const aiScene* scene, Vector<RenderMesh>& meshes, Vector<RenderVertex>& vertices, Vector<Index3i>& indices, uint32_t mesh_offset, uint32_t& vertex_offset, uint32_t& triangle_offset)
+static RenderNode* import_node(const aiNode* node, const aiScene* scene, Vector<RenderMesh>& meshes, Vector<RenderVertex>& vertices, Vector<Index3i>& indices, Vector<Affine3f>& transforms, uint32_t mesh_offset, uint32_t& vertex_offset, uint32_t& triangle_offset, uint32_t& transform_offset)
 {
     RenderNode *render_node = PLACEMENT_NEW(RenderNode, sizeof(RenderNode));
-    memcpy(&render_node->transform, &node->mTransformation, std::min(sizeof(render_node->transform), sizeof(node->mTransformation)));
+    memcpy(render_node->transform.model.data(), &node->mTransformation, std::min(sizeof(Affine3f), sizeof(node->mTransformation)));
+    render_node->transform.offset = transform_offset * sizeof(Affine3f);
+    transforms[transform_offset] = render_node->transform.model;
+    transform_offset++;
 
     render_node->mesh_indices.resize(node->mNumMeshes);
     for (uint32_t i = 0; i < node->mNumMeshes; i++)
@@ -89,22 +96,26 @@ static RenderNode* import_node(const aiNode* node, const aiScene* scene, Vector<
     render_node->children.resize(node->mNumChildren);
     for (uint32_t i = 0; i < node->mNumChildren; i++)
       render_node->children[i] =
-          import_node(node->mChildren[i], scene, meshes, vertices, indices,
-                      mesh_offset, triangle_offset, vertex_offset);
+          import_node(node->mChildren[i], scene, meshes, vertices, indices, transforms,
+                      mesh_offset, triangle_offset, vertex_offset, transform_offset);
 
     return render_node;
 }
 
-static RenderNode* transfer_render_node(Node* node)
+static RenderNode* transfer_render_node(Node* node, uint32_t& transform_offset, Vector<Affine3f>& transforms)
 {
     RenderNode* render_node = PLACEMENT_NEW(RenderNode, sizeof(RenderNode));
     render_node->mesh_indices = node->mesh_indices;
-    render_node->transform = node->transform;
+    render_node->transform.model = node->transform;
+    render_node->transform.offset = transform_offset;
+
+    transform_offset += sizeof(Affine3f);
+    transforms.push_back(render_node->transform.model);
 
     uint32_t child_size = node->children.size();
     render_node->children.resize(child_size);
     for (uint32_t i = 0; i < child_size; i++)
-        render_node->children[i] = transfer_render_node(node->children[i]);
+        render_node->children[i] = transfer_render_node(node->children[i], transform_offset, transforms);
     return render_node;
 }
 
@@ -116,17 +127,19 @@ static void destroy_render_node(RenderNode* node)
 }
 
 
-GPURenderGeometry GPU_import_render_geometry(GPUDevice const* device, const Model& model)
+RenderGeometry GPU_import_render_geometry(GPUDevice const* device, const Scene& scene)
 {
-    GPURenderGeometry geometry;
-    geometry.root = transfer_render_node(model.root);
+    uint32_t transform_offset = 0;
+    Vector<Affine3f> transforms;
+    RenderGeometry geometry;
+    geometry.root = transfer_render_node(scene.root, transform_offset, transforms);
 
-    uint32_t mesh_count = model.meshes.size();
+    uint32_t mesh_count = scene.meshes.size();
     geometry.meshes.resize(mesh_count);
 
     uint32_t vertex_count = 0;
     uint32_t triangle_count = 0;
-    for (Mesh const* mesh : model.meshes)
+    for (Mesh const* mesh : scene.meshes)
     {
         vertex_count += mesh->vertices.size();
         triangle_count += mesh->triangles.size();
@@ -138,11 +151,12 @@ GPURenderGeometry GPU_import_render_geometry(GPUDevice const* device, const Mode
     uint32_t triangle_index = 0;
     for (uint32_t i = 0; i < mesh_count; i++)
     {
-        Mesh const* mesh = model.meshes[i];
+        Mesh const* mesh = scene.meshes[i];
         geometry.meshes[i].vertex_offset = vertex_index;
         geometry.meshes[i].index_offset = triangle_index * 3;
         geometry.meshes[i].vertex_count = mesh->vertices.size();
         geometry.meshes[i].index_count = mesh->triangles.size() * 3;
+        geometry.meshes[i].aabb = mesh->aabb;
 
         for (uint32_t j = 0; j < mesh->triangles.size(); j++)
         {
@@ -186,25 +200,34 @@ GPURenderGeometry GPU_import_render_geometry(GPUDevice const* device, const Mode
     GPUBuffer* index_buffer = GPU_create_buffer(device, info);
     index_buffer->map(0, sizeof(triangles), triangles.data());
 
+    info.size = transform_offset;
+    info.type = GPUResourceTypeFlag::e_uniform_buffer;
+    info.flags = GPUBufferFlagsFlag::e_persistent_map;
+    GPUBuffer* uniform_buffer = GPU_create_buffer(device, info);
+    uniform_buffer->map(0, transform_offset, transforms.data());
+
     geometry.vertex_buffer = vertex_buffer;
     geometry.index_buffer = index_buffer;
+    geometry.uniform_buffer = uniform_buffer;
 
     return geometry;
 }
 
-GPURenderGeometry GPU_import_render_geometry(GPUDevice const* device, const char* file)
+RenderGeometry GPU_import_render_geometry(GPUDevice const* device, const char* file)
 {
     struct GeometryCounter
     {
         uint32_t vertex_count;
         uint32_t triangle_count;
         uint32_t mesh_count;
+        uint32_t transform_count;
     };
     static auto count_geometry_attribute = [](this auto self, const aiNode* node, const aiScene* scene) -> GeometryCounter
     {
         uint32_t vertex_count = 0;
         uint32_t triangle_count = 0;
         uint32_t mesh_count = 0;
+        uint32_t transform_count = 1;
         for (uint32_t i = 0; i < node->mNumMeshes; i++)
         {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -219,11 +242,12 @@ GPURenderGeometry GPU_import_render_geometry(GPUDevice const* device, const char
             vertex_count += count.vertex_count;
             triangle_count += count.triangle_count;
             mesh_count += count.mesh_count;
+            transform_count += count.transform_count;
         }
-        return {vertex_count, triangle_count, mesh_count};
+        return {vertex_count, triangle_count, mesh_count, transform_count};
     };
 
-    uint32_t flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_MakeLeftHanded;
+    uint32_t flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_MakeLeftHanded | aiProcess_GenBoundingBoxes;
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file, flags);
 
@@ -233,12 +257,13 @@ GPURenderGeometry GPU_import_render_geometry(GPUDevice const* device, const char
     GeometryCounter count = count_geometry_attribute(scene->mRootNode, scene);
     Vector<RenderVertex> vertices(count.vertex_count);
     Vector<Index3i> triangles(count.triangle_count);
+    Vector<Affine3f> transforms(count.transform_count);
 
-    uint32_t vertex_offset = 0, triangle_offset = 0, mesh_offset = 0;
+    uint32_t vertex_offset = 0, triangle_offset = 0, mesh_offset = 0, transform_offset = 0;
 
-    GPURenderGeometry geometry;
+    RenderGeometry geometry;
     geometry.meshes.reserve(count.mesh_count);
-    geometry.root = import_node(scene->mRootNode, scene, geometry.meshes, vertices, triangles, mesh_offset, vertex_offset, triangle_offset);
+    geometry.root = import_node(scene->mRootNode, scene, geometry.meshes, vertices, triangles, transforms, mesh_offset, vertex_offset, triangle_offset, transform_offset);
 
 
     GPUBufferCreateInfo info{
@@ -255,13 +280,20 @@ GPURenderGeometry GPU_import_render_geometry(GPUDevice const* device, const char
     GPUBuffer* index_buffer = GPU_create_buffer(device, info);
     index_buffer->map(0, sizeof(triangles), triangles.data());
 
+    info.size = transform_offset * sizeof(Affine3f);
+    info.type = GPUResourceTypeFlag::e_uniform_buffer;
+    info.flags = GPUBufferFlagsFlag::e_persistent_map;
+    GPUBuffer* uniform_buffer = GPU_create_buffer(device, info);
+    uniform_buffer->map(0, info.size, transforms.data());
+
     geometry.vertex_buffer = vertex_buffer;
     geometry.index_buffer = index_buffer;
+    geometry.uniform_buffer = uniform_buffer;
 
     return geometry;
 }
 
-void GPU_destroy_render_geometry(const GPURenderGeometry& geometry)
+void GPU_destroy_render_geometry(const RenderGeometry& geometry)
 {
     GPU_destroy_buffer(const_cast<GPUBuffer*>(geometry.vertex_buffer));
     GPU_destroy_buffer(const_cast<GPUBuffer*>(geometry.index_buffer));

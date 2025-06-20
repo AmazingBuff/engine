@@ -5,7 +5,6 @@
 #include "vkadapter.h"
 #include "vkdevice.h"
 #include "utils/vk_utils.h"
-#include "rendering/api.h"
 
 AMAZING_NAMESPACE_BEGIN
 

@@ -9,6 +9,11 @@ AMAZING_NAMESPACE_BEGIN
 Disc3D::Disc3D(const Point3D& center, const Vector3D& normal, Float radius)
     : m_center(center), m_normal(normal.normalized()), m_radius(radius) {}
 
+PrimitiveType Disc3D::type() const
+{
+    return PrimitiveType::e_disc;
+}
+
 Point3D Disc3D::center() const
 {
     return m_center;
@@ -22,6 +27,27 @@ Vector3D Disc3D::normal() const
 Float Disc3D::radius() const
 {
     return m_radius;
+}
+
+AABB Disc3D::aabb() const
+{
+    // P = C + R * (U * cos + V * sin)
+    static auto compute_half = [](Float radius, Float n_component) -> Float
+    {
+        Float one_minus = 1.0 - n_component * n_component;
+        if (EQUAL_TO_ZERO(one_minus))
+            return 0;
+        return radius * std::sqrt(one_minus);
+    };
+
+    Float half_x = compute_half(m_radius, m_normal.x());
+    Float half_y = compute_half(m_radius, m_normal.y());
+    Float half_z = compute_half(m_radius, m_normal.z());
+
+    Point3D min(m_center.x() - half_x, m_center.y() - half_y, m_center.z() - half_z);
+    Point3D max(m_center.x() + half_x, m_center.y() + half_y, m_center.z() + half_z);
+
+    return {min, max};
 }
 
 DirectionDetection Disc3D::detect_point_direction(const Point3D& point) const

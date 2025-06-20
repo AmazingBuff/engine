@@ -14,6 +14,11 @@ Cuboid::Cuboid(const Point3D& point, Float width, Float height, Float depth)
 
 Cuboid::Cuboid(const Point3D& p_min, const Point3D& p_max) : m_min(p_min), m_max(p_max) {}
 
+PrimitiveType Cuboid::type() const
+{
+    return PrimitiveType::e_cuboid;
+}
+
 Point3D Cuboid::min() const
 {
     return m_min;
@@ -22,6 +27,11 @@ Point3D Cuboid::min() const
 Point3D Cuboid::max() const
 {
     return m_max;
+}
+
+AABB Cuboid::aabb() const
+{
+    return {m_min, m_max};
 }
 
 DirectionDetection Cuboid::detect_point_direction(const Point3D& point) const

@@ -545,7 +545,7 @@ void CompilerGLSL::find_static_extensions()
 	if (options.separate_shader_objects && !options.es && options.version < 410)
 		require_extension_internal("GL_ARB_separate_shader_objects");
 
-	if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64EXT)
+	if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64)
 	{
 		if (!options.vulkan_semantics)
 			SPIRV_CROSS_THROW("GL_EXT_buffer_reference is only supported in Vulkan GLSL.");
@@ -557,7 +557,7 @@ void CompilerGLSL::find_static_extensions()
 	}
 	else if (ir.addressing_model != AddressingModelLogical)
 	{
-		SPIRV_CROSS_THROW("Only Logical and PhysicalStorageBuffer64EXT addressing models are supported.");
+		SPIRV_CROSS_THROW("Only Logical and PhysicalStorageBuffer64 addressing models are supported.");
 	}
 
 	// Check for nonuniform qualifier and passthrough.
@@ -708,7 +708,7 @@ string CompilerGLSL::compile()
 
 	// Shaders might cast unrelated data to pointers of non-block types.
 	// Find all such instances and make sure we can cast the pointers to a synthesized block type.
-	if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64EXT)
+	if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64)
 		analyze_non_block_pointer_types();
 
 	uint32_t pass_count = 0;
@@ -1542,14 +1542,14 @@ uint32_t CompilerGLSL::type_to_packed_base_size(const SPIRType &type, BufferPack
 uint32_t CompilerGLSL::type_to_packed_alignment(const SPIRType &type, const Bitset &flags,
                                                 BufferPackingStandard packing)
 {
-	// If using PhysicalStorageBufferEXT storage class, this is a pointer,
+	// If using PhysicalStorageBuffer storage class, this is a pointer,
 	// and is 64-bit.
 	if (is_physical_pointer(type))
 	{
 		if (!type.pointer)
-			SPIRV_CROSS_THROW("Types in PhysicalStorageBufferEXT must be pointers.");
+			SPIRV_CROSS_THROW("Types in PhysicalStorageBuffer must be pointers.");
 
-		if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64EXT)
+		if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64)
 		{
 			if (packing_is_vec4_padded(packing) && type_is_array_of_pointers(type))
 				return 16;
@@ -1557,7 +1557,7 @@ uint32_t CompilerGLSL::type_to_packed_alignment(const SPIRType &type, const Bits
 				return 8;
 		}
 		else
-			SPIRV_CROSS_THROW("AddressingModelPhysicalStorageBuffer64EXT must be used for PhysicalStorageBufferEXT.");
+			SPIRV_CROSS_THROW("AddressingModelPhysicalStorageBuffer64 must be used for PhysicalStorageBuffer.");
 	}
 	else if (is_array(type))
 	{
@@ -1665,17 +1665,17 @@ uint32_t CompilerGLSL::type_to_packed_array_stride(const SPIRType &type, const B
 
 uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing)
 {
-	// If using PhysicalStorageBufferEXT storage class, this is a pointer,
+	// If using PhysicalStorageBuffer storage class, this is a pointer,
 	// and is 64-bit.
 	if (is_physical_pointer(type))
 	{
 		if (!type.pointer)
-			SPIRV_CROSS_THROW("Types in PhysicalStorageBufferEXT must be pointers.");
+			SPIRV_CROSS_THROW("Types in PhysicalStorageBuffer must be pointers.");
 
-		if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64EXT)
+		if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64)
 			return 8;
 		else
-			SPIRV_CROSS_THROW("AddressingModelPhysicalStorageBuffer64EXT must be used for PhysicalStorageBufferEXT.");
+			SPIRV_CROSS_THROW("AddressingModelPhysicalStorageBuffer64 must be used for PhysicalStorageBuffer.");
 	}
 	else if (is_array(type))
 	{
@@ -3638,6 +3638,36 @@ void CompilerGLSL::emit_resources()
 
 	bool emitted = false;
 
+	if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64)
+	{
+		// Output buffer reference block forward declarations.
+		ir.for_each_typed_id<SPIRType>([&](uint32_t id, SPIRType &type)
+		{
+			if (is_physical_pointer(type))
+			{
+				bool emit_type = true;
+				if (!is_physical_pointer_to_buffer_block(type))
+				{
+					// Only forward-declare if we intend to emit it in the non_block_pointer types.
+					// Otherwise, these are just "benign" pointer types that exist as a result of access chains.
+					emit_type = std::find(physical_storage_non_block_pointer_types.begin(),
+					                      physical_storage_non_block_pointer_types.end(),
+					                      id) != physical_storage_non_block_pointer_types.end();
+				}
+
+				if (emit_type)
+				{
+					emit_buffer_reference_block(id, true);
+					emitted = true;
+				}
+			}
+		});
+	}
+
+	if (emitted)
+		statement("");
+	emitted = false;
+
 	// If emitted Vulkan GLSL,
 	// emit specialization constants as actual floats,
 	// spec op expressions will redirect to the constant name.
@@ -3747,30 +3777,10 @@ void CompilerGLSL::emit_resources()
 
 	emitted = false;
 
-	if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64EXT)
+	if (ir.addressing_model == AddressingModelPhysicalStorageBuffer64)
 	{
 		// Output buffer reference blocks.
-		// Do this in two stages, one with forward declaration,
-		// and one without. Buffer reference blocks can reference themselves
-		// to support things like linked lists.
-		ir.for_each_typed_id<SPIRType>([&](uint32_t id, SPIRType &type) {
-			if (is_physical_pointer(type))
-			{
-				bool emit_type = true;
-				if (!is_physical_pointer_to_buffer_block(type))
-				{
-					// Only forward-declare if we intend to emit it in the non_block_pointer types.
-					// Otherwise, these are just "benign" pointer types that exist as a result of access chains.
-					emit_type = std::find(physical_storage_non_block_pointer_types.begin(),
-					                      physical_storage_non_block_pointer_types.end(),
-					                      id) != physical_storage_non_block_pointer_types.end();
-				}
-
-				if (emit_type)
-					emit_buffer_reference_block(id, true);
-			}
-		});
-
+		// Buffer reference blocks can reference themselves to support things like linked lists.
 		for (auto type : physical_storage_non_block_pointer_types)
 			emit_buffer_reference_block(type, false);
 
@@ -5930,6 +5940,30 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c,
 		require_extension_internal("GL_EXT_null_initializer");
 		return backend.constant_null_initializer;
 	}
+	else if (c.replicated && type.op != spv::OpTypeArray)
+	{
+		if (type.op == spv::OpTypeMatrix)
+		{
+			uint32_t num_elements = type.columns;
+			// GLSL does not allow the replication constructor for matrices
+			// mat4(vec4(0.0)) needs to be manually expanded to mat4(vec4(0.0), vec4(0.0), vec4(0.0), vec4(0.0));
+			std::string res;
+			res += type_to_glsl(type);
+			res += "(";
+			for (uint32_t i = 0; i < num_elements; i++)
+			{
+				res += to_expression(c.subconstants[0]);
+				if (i < num_elements - 1)
+					res += ", ";
+			}
+			res += ")";
+			return res;
+		}
+		else
+		{
+			return join(type_to_glsl(type), "(", to_expression(c.subconstants[0]), ")");
+		}
+	}
 	else if (!c.subconstants.empty())
 	{
 		// Handles Arrays and structures.
@@ -5979,8 +6013,16 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c,
 		}
 
 		uint32_t subconstant_index = 0;
-		for (auto &elem : c.subconstants)
+		size_t num_elements = c.subconstants.size();
+		if (c.replicated)
 		{
+			if (type.array.size() != 1)
+				SPIRV_CROSS_THROW("Multidimensional arrays not yet supported as replicated constans");
+			num_elements = type.array[0];
+		}
+		for (size_t i = 0; i < num_elements; i++)
+		{
+			auto &elem = c.subconstants[c.replicated ? 0 : i];
 			if (auto *op = maybe_get<SPIRConstantOp>(elem))
 			{
 				res += constant_op_expression(*op);
@@ -6011,7 +6053,7 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c,
 				}
 			}
 
-			if (&elem != &c.subconstants.back())
+			if (i != num_elements - 1)
 				res += ", ";
 
 			subconstant_index++;
@@ -10317,7 +10359,8 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 		if (!is_ptr_chain)
 			mod_flags &= ~ACCESS_CHAIN_PTR_CHAIN_BIT;
 		access_chain_internal_append_index(expr, base, type, mod_flags, access_chain_is_arrayed, index);
-		check_physical_type_cast(expr, type, physical_type);
+		if (check_physical_type_cast(expr, type, physical_type))
+			physical_type = 0;
 	};
 
 	for (uint32_t i = 0; i < count; i++)
@@ -10825,8 +10868,9 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	return expr;
 }
 
-void CompilerGLSL::check_physical_type_cast(std::string &, const SPIRType *, uint32_t)
+bool CompilerGLSL::check_physical_type_cast(std::string &, const SPIRType *, uint32_t)
 {
+	return false;
 }
 
 bool CompilerGLSL::prepare_access_chain_for_scalar_access(std::string &, const SPIRType &, spv::StorageClass, bool &)
@@ -15337,8 +15381,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	case OpConvertUToPtr:
 	{
 		auto &type = get<SPIRType>(ops[0]);
-		if (type.storage != StorageClassPhysicalStorageBufferEXT)
-			SPIRV_CROSS_THROW("Only StorageClassPhysicalStorageBufferEXT is supported by OpConvertUToPtr.");
+		if (type.storage != StorageClassPhysicalStorageBuffer)
+			SPIRV_CROSS_THROW("Only StorageClassPhysicalStorageBuffer is supported by OpConvertUToPtr.");
 
 		auto &in_type = expression_type(ops[2]);
 		if (in_type.vecsize == 2)
@@ -15353,8 +15397,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	{
 		auto &type = get<SPIRType>(ops[0]);
 		auto &ptr_type = expression_type(ops[2]);
-		if (ptr_type.storage != StorageClassPhysicalStorageBufferEXT)
-			SPIRV_CROSS_THROW("Only StorageClassPhysicalStorageBufferEXT is supported by OpConvertPtrToU.");
+		if (ptr_type.storage != StorageClassPhysicalStorageBuffer)
+			SPIRV_CROSS_THROW("Only StorageClassPhysicalStorageBuffer is supported by OpConvertPtrToU.");
 
 		if (type.vecsize == 2)
 			require_extension_internal("GL_EXT_buffer_reference_uvec2");
@@ -15568,6 +15612,51 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		inherit_expression_dependencies(id, A);
 		inherit_expression_dependencies(id, B);
 		inherit_expression_dependencies(id, C);
+		break;
+	}
+
+	case OpCompositeConstructReplicateEXT:
+	{
+		uint32_t result_type = ops[0];
+		uint32_t id = ops[1];
+
+		auto &type = get<SPIRType>(result_type);
+		auto value_to_replicate = to_expression(ops[2]);
+		std::string rhs;
+		// Matrices don't have a replicating constructor for vectors. Need to manually replicate
+		if (type.op == spv::OpTypeMatrix || type.op == spv::OpTypeArray)
+		{
+			if (type.op == spv::OpTypeArray && type.array.size() != 1)
+			{
+				SPIRV_CROSS_THROW(
+				    "Multi-dimensional arrays currently not supported for OpCompositeConstructReplicateEXT");
+			}
+			uint32_t num_elements = type.op == spv::OpTypeMatrix ? type.columns : type.array[0];
+			if (backend.use_initializer_list && type.op == spv::OpTypeArray)
+			{
+				rhs += "{";
+			}
+			else
+			{
+				rhs += type_to_glsl_constructor(type);
+				rhs += "(";
+			}
+			for (uint32_t i = 0; i < num_elements; i++)
+			{
+				rhs += value_to_replicate;
+				if (i < num_elements - 1)
+					rhs += ", ";
+			}
+			if (backend.use_initializer_list && type.op == spv::OpTypeArray)
+				rhs += "}";
+			else
+				rhs += ")";
+		}
+		else
+		{
+			rhs = join(type_to_glsl(type), "(", to_expression(ops[2]), ")");
+		}
+		emit_op(result_type, id, rhs, true);
 		break;
 	}
 
@@ -16143,7 +16232,7 @@ string CompilerGLSL::to_array_size(const SPIRType &type, uint32_t index)
 
 string CompilerGLSL::type_to_array_glsl(const SPIRType &type, uint32_t)
 {
-	if (type.pointer && type.storage == StorageClassPhysicalStorageBufferEXT && type.basetype != SPIRType::Struct)
+	if (type.pointer && type.storage == StorageClassPhysicalStorageBuffer && type.basetype != SPIRType::Struct)
 	{
 		// We are using a wrapped pointer type, and we should not emit any array declarations here.
 		return "";
@@ -16856,6 +16945,7 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 			{
 				// Recursively emit functions which are called.
 				uint32_t id = ops[2];
+
 				emit_function(get<SPIRFunction>(id), ir.meta[ops[1]].decoration.decoration_flags);
 			}
 		}

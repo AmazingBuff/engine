@@ -2,8 +2,8 @@
 // Created by AmazingBuff on 2025/4/24.
 //
 
-#include "rendering/rhi/common/root_signature.h"
-#include "rendering/rhi/common/shader_library.h"
+#include "root_signature.h"
+#include "shader_library.h"
 
 AMAZING_NAMESPACE_BEGIN
 

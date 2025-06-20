@@ -34,15 +34,15 @@ target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
     ${THIRD_PARTY_INCLUDE_DIRS}
-    include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/
     PRIVATE
-    src/
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/
 )
 
 target_precompile_headers(
     ${PROJECT_NAME}
     PRIVATE
-    src/pch.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pch.h
 )
 
 target_link_libraries(

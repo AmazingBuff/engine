@@ -4,7 +4,6 @@
 
 #include "dx12query_pool.h"
 #include "dx12device.h"
-#include "rendering/api.h"
 #include "utils/dx_macro.h"
 #include "utils/dx_utils.h"
 

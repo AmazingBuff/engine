@@ -7,7 +7,6 @@
 #include "resources/dx12sampler.h"
 #include "utils/dx_macro.h"
 #include "utils/dx_utils.h"
-#include "rendering/api.h"
 #include "rendering/rhi/common/root_signature_pool.h"
 
 AMAZING_NAMESPACE_BEGIN

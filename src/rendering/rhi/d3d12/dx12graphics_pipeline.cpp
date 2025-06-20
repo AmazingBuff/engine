@@ -6,7 +6,6 @@
 #include "dx12device.h"
 #include "dx12root_signature.h"
 #include "dx12.h"
-#include "rendering/api.h"
 #include "resources/dx12shader_library.h"
 #include "utils/dx_macro.h"
 #include "utils/dx_utils.h"

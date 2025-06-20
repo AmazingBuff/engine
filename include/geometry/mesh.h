@@ -5,7 +5,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "geometry.h"
+#include "3d/primitive/primitive.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -34,6 +34,25 @@ struct Mesh
     DynamicVector<Edge> edges;
     HashMap<Vec3f, DynamicVector<Edge>> vertex_edges;
     HashMap<Index3i, DynamicVector<Edge>> triangle_edges;
+
+    AABB aabb;
+};
+
+struct Node
+{
+    String name;
+    uint64_t name_hash;
+    Affine3f transform;
+    Vector<uint32_t> mesh_indices;
+    Vector<Node*> children;
+};
+
+struct Scene
+{
+    String name;
+    uint64_t name_hash;
+    Node* root;
+    Vector<Mesh*> meshes;
 };
 
 

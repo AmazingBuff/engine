@@ -2,7 +2,7 @@
 // Created by AmazingBuff on 2025/4/23.
 //
 #include "rendering/rhi/common/root_signature_pool.h"
-#include "rendering/rhi/common/root_signature.h"
+#include "root_signature.h"
 #include <ranges>
 
 AMAZING_NAMESPACE_BEGIN

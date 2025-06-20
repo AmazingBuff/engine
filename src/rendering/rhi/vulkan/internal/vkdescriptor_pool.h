@@ -5,7 +5,6 @@
 #ifndef VKDESCRIPTOR_POOL_H
 #define VKDESCRIPTOR_POOL_H
 
-#include "rendering/api.h"
 #include "rendering/rhi/enumeration.h"
 #include "rendering/rhi/vulkan/vk.h"
 

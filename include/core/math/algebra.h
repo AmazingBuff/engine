@@ -30,18 +30,41 @@ static constexpr Float Max_Allowable_Error = 1e-6;
 
 AMAZING_NAMESPACE_END
 
-template <typename Scalar, int Rows, int Cols>
-struct std::hash<Eigen::Matrix<Scalar, Rows, Cols>>
+namespace std
 {
-    // https://wjngkoh.wordpress.com/2015/03/04/c-hash-function-for-eigen-matrix-and-vector/
-    NODISCARD constexpr size_t operator()(const Eigen::Matrix<Scalar, Rows, Cols>& matrix) const
+    template <typename Scalar, int Rows, int Cols>
+    Eigen::Matrix<Scalar, Rows, Cols> min(const Eigen::Matrix<Scalar, Rows, Cols>& l, const Eigen::Matrix<Scalar, Rows, Cols>& r)
     {
-        size_t seed = 0;
-        for (size_t i = 0; i < matrix.size(); i++)
-        {
-            Scalar elem = *(matrix.data() + i);
-            seed = Amazing::hash_combine(seed, hash<Scalar>()(elem));
-        }
-        return seed;
+        Eigen::Matrix<Scalar, Rows, Cols> ret;
+        for (int i = 0; i < Rows; i++)
+            for (int j = 0; j < Cols; j++)
+                ret(i, j) = min(l(i, j), r(i, j));
+        return ret;
     }
-};
+
+    template <typename Scalar, int Rows, int Cols>
+    Eigen::Matrix<Scalar, Rows, Cols> max(const Eigen::Matrix<Scalar, Rows, Cols>& l, const Eigen::Matrix<Scalar, Rows, Cols>& r)
+    {
+        Eigen::Matrix<Scalar, Rows, Cols> ret;
+        for (int i = 0; i < Rows; i++)
+            for (int j = 0; j < Cols; j++)
+                ret(i, j) = max(l(i, j), r(i, j));
+        return ret;
+    }
+
+    template <typename Scalar, int Rows, int Cols>
+    struct hash<Eigen::Matrix<Scalar, Rows, Cols>>
+    {
+        // https://wjngkoh.wordpress.com/2015/03/04/c-hash-function-for-eigen-matrix-and-vector/
+        NODISCARD constexpr size_t operator()(const Eigen::Matrix<Scalar, Rows, Cols>& matrix) const
+        {
+            size_t seed = 0;
+            for (size_t i = 0; i < matrix.size(); i++)
+            {
+                Scalar elem = *(matrix.data() + i);
+                seed = Amazing::hash_combine(seed, hash<Scalar>()(elem));
+            }
+            return seed;
+        }
+    };
+}

@@ -6,7 +6,7 @@
 
 #include <SDL3/SDL.h>
 #include <renderdoc/renderdoc_app.h>
-#include <rendering/rhi/wrapper.h>
+#include <../../../src/rendering/rhi/wrapper.h>
 #include <io/read.h>
 #include <event/sdl_event.h>
 #include <camera/orbital_camera.h>
