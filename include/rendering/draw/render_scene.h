@@ -16,8 +16,8 @@ public:
     RenderScene() : m_ref_render_system(nullptr) {}
     virtual ~RenderScene() = default;
 
-    virtual void add_entity(RenderEntity const& entity);
-    virtual void remove_entity(RenderEntity const& entity);
+    virtual void add_entity(RenderEntity const& entity) = 0;
+    virtual void remove_entity(RenderEntity const& entity) = 0;
 protected:
     RenderSystem const* m_ref_render_system;
 };

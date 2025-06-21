@@ -9,6 +9,7 @@
 #include "resources/dx12shader_library.h"
 #include "utils/dx_macro.h"
 #include "utils/dx_utils.h"
+#include <dxc/dxcapi.h>
 
 AMAZING_NAMESPACE_BEGIN
 

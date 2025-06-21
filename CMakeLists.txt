@@ -52,6 +52,7 @@ target_link_libraries(
     d3d12
     dxgi
     amazing_std
+    reflect
     SDL3::SDL3
     Eigen3::Eigen
     assimp::assimp
@@ -89,3 +90,5 @@ if (WIN32)
 endif ()
 
 add_subdirectory(sample)
+
+EXECUTE_REFLECT()

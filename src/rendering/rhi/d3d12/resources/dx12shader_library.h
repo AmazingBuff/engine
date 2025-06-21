@@ -6,7 +6,8 @@
 #define DX12SHADER_LIBRARY_H
 
 #include "rendering/rhi/common/shader_library.h"
-#include <dxc/dxcapi.h>
+
+struct IDxcBlobEncoding;
 
 AMAZING_NAMESPACE_BEGIN
 

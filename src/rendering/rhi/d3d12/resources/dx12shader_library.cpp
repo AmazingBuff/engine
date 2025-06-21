@@ -4,6 +4,7 @@
 
 #include <windows.h>
 #include <dxc/d3d12shader.h>
+#include <dxc/dxcapi.h>
 
 #include "dx12shader_library.h"
 #include "rendering/rhi/d3d12/dx12.h"
