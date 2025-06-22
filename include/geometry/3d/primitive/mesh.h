@@ -5,7 +5,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "3d/primitive/primitive.h"
+#include "primitive.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -22,8 +22,9 @@ struct Edge
     Index2i tri;        // triangle index form the field triangles of Mesh
 };
 
-struct Mesh
+class Mesh final : public Primitive
 {
+public:
     DynamicVector<Vec3f> vertices;
     DynamicVector<Vec3f> normals;
     DynamicVector<Vec2f> texcoords;
@@ -34,27 +35,15 @@ struct Mesh
     DynamicVector<Edge> edges;
     HashMap<Vec3f, DynamicVector<Edge>> vertex_edges;
     HashMap<Index3i, DynamicVector<Edge>> triangle_edges;
-
-    AABB aabb;
+public:
+    explicit Mesh(const AABB& aabb);
+    ~Mesh() override = default;
+    NODISCARD PrimitiveType type() const override;
+    NODISCARD AABB aabb() const override;
+    NODISCARD DirectionDetection detect_point_direction(const Point3D& p) const override;
+private:
+    AABB m_aabb;
 };
-
-struct Node
-{
-    String name;
-    uint64_t name_hash;
-    Affine3f transform;
-    Vector<uint32_t> mesh_indices;
-    Vector<Node*> children;
-};
-
-struct Scene
-{
-    String name;
-    uint64_t name_hash;
-    Node* root;
-    Vector<Mesh*> meshes;
-};
-
 
 AMAZING_NAMESPACE_END
 

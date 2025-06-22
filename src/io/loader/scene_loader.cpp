@@ -11,10 +11,13 @@ AMAZING_NAMESPACE_BEGIN
 
 static Mesh* load_mesh(aiMesh* mesh, const aiScene* scene)
 {
-    Mesh* ret = PLACEMENT_NEW(Mesh, sizeof(Mesh));
+    AABB aabb{
+        .min = {mesh->mAABB.mMin.x, mesh->mAABB.mMin.y, mesh->mAABB.mMin.z},
+        .max = {mesh->mAABB.mMax.x, mesh->mAABB.mMax.y, mesh->mAABB.mMax.z}
+    };
+
+    Mesh* ret = PLACEMENT_NEW(Mesh, sizeof(Mesh), aabb);
     // position
-    ret->aabb.min = {mesh->mAABB.mMin.x, mesh->mAABB.mMin.y, mesh->mAABB.mMin.z};
-    ret->aabb.max = {mesh->mAABB.mMax.x, mesh->mAABB.mMax.y, mesh->mAABB.mMax.z};
     if (mesh->HasPositions())
     {
         ret->vertices.resize(mesh->mNumVertices);

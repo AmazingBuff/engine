@@ -5,7 +5,7 @@
 #ifndef CONSTRUCT_H
 #define CONSTRUCT_H
 
-#include "geometry/mesh.h"
+#include "geometry/scene.h"
 
 AMAZING_NAMESPACE_BEGIN
 

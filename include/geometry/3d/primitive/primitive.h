@@ -19,6 +19,7 @@ enum class PrimitiveType : uint8_t
     e_cylinder,
     e_cone,
     e_capsule,
+    e_mesh,
 };
 
 struct AABB

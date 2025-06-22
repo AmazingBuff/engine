@@ -156,7 +156,7 @@ RenderGeometry GPU_import_render_geometry(GPUDevice const* device, const Scene& 
         geometry.meshes[i].index_offset = triangle_index * 3;
         geometry.meshes[i].vertex_count = mesh->vertices.size();
         geometry.meshes[i].index_count = mesh->triangles.size() * 3;
-        geometry.meshes[i].aabb = mesh->aabb;
+        geometry.meshes[i].aabb = mesh->aabb();
 
         for (uint32_t j = 0; j < mesh->triangles.size(); j++)
         {

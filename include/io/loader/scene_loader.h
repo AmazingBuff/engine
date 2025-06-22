@@ -5,7 +5,7 @@
 #ifndef SCENE_LOADER_H
 #define SCENE_LOADER_H
 
-#include "geometry/mesh.h"
+#include "geometry/scene.h"
 
 AMAZING_NAMESPACE_BEGIN
 
