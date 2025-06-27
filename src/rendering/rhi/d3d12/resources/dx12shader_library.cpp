@@ -13,21 +13,21 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-static constexpr GPUResourceTypeFlag Resource_Type_Flag_Map[] =
+static constexpr GPUResourceType Resource_Type_Flag_Map[] =
 {
-    GPUResourceTypeFlag::e_uniform_buffer,     // D3D_SIT_CBUFFER
-    GPUResourceTypeFlag::e_buffer,             // D3D_SIT_TBUFFER
-    GPUResourceTypeFlag::e_texture,            // D3D_SIT_TEXTURE
-    GPUResourceTypeFlag::e_sampler,            // D3D_SIT_SAMPLER
-    GPUResourceTypeFlag::e_rw_texture,         // D3D_SIT_UAV_RWTYPED
-    GPUResourceTypeFlag::e_buffer,             // D3D_SIT_STRUCTURED
-    GPUResourceTypeFlag::e_rw_buffer,          // D3D_SIT_RWSTRUCTURED
-    GPUResourceTypeFlag::e_buffer,             // D3D_SIT_BYTEADDRESS
-    GPUResourceTypeFlag::e_rw_buffer,          // D3D_SIT_UAV_RWBYTEADDRESS
-    GPUResourceTypeFlag::e_rw_buffer,          // D3D_SIT_UAV_APPEND_STRUCTURED
-    GPUResourceTypeFlag::e_rw_buffer,          // D3D_SIT_UAV_CONSUME_STRUCTURED
-    GPUResourceTypeFlag::e_rw_buffer,          // D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER
-    GPUResourceTypeFlag::e_ray_tracing,        // D3D_SIT_RTACCELERATIONSTRUCTURE
+    GPUResourceType::e_uniform_buffer,     // D3D_SIT_CBUFFER
+    GPUResourceType::e_buffer,             // D3D_SIT_TBUFFER
+    GPUResourceType::e_texture,            // D3D_SIT_TEXTURE
+    GPUResourceType::e_sampler,            // D3D_SIT_SAMPLER
+    GPUResourceType::e_rw_texture,         // D3D_SIT_UAV_RWTYPED
+    GPUResourceType::e_buffer,             // D3D_SIT_STRUCTURED
+    GPUResourceType::e_rw_buffer,          // D3D_SIT_RWSTRUCTURED
+    GPUResourceType::e_buffer,             // D3D_SIT_BYTEADDRESS
+    GPUResourceType::e_rw_buffer,          // D3D_SIT_UAV_RWBYTEADDRESS
+    GPUResourceType::e_rw_buffer,          // D3D_SIT_UAV_APPEND_STRUCTURED
+    GPUResourceType::e_rw_buffer,          // D3D_SIT_UAV_CONSUME_STRUCTURED
+    GPUResourceType::e_rw_buffer,          // D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER
+    GPUResourceType::e_ray_tracing,        // D3D_SIT_RTACCELERATIONSTRUCTURE
 };
 
 static constexpr GPUTextureType Texture_Type_Map[] =
@@ -116,13 +116,13 @@ DX12ShaderLibrary::DX12ShaderLibrary(GPUDevice const* device, GPUShaderLibraryCr
             shader_resource.size = buffer_desc.Size;
         }
         if (input_bind_desc.Type == D3D_SIT_UAV_RWTYPED && input_bind_desc.Dimension == D3D_SRV_DIMENSION_BUFFER)
-            shader_resource.resource_type = GPUResourceTypeFlag::e_rw_buffer;
+            shader_resource.resource_type = GPUResourceType::e_rw_buffer;
         if (input_bind_desc.Type == D3D_SIT_TEXTURE && input_bind_desc.Dimension == D3D_SRV_DIMENSION_BUFFER)
-            shader_resource.resource_type = GPUResourceTypeFlag::e_buffer;
+            shader_resource.resource_type = GPUResourceType::e_buffer;
     }
 
     // vertex inputs
-    if (info.stage == GPUShaderStageFlag::e_vertex)
+    if (info.stage == GPUShaderStage::e_vertex)
     {
         shader_reflection.vertex_inputs.resize(shader_desc.InputParameters);
         for (uint32_t i = 0; i < shader_desc.InputParameters; i++)
@@ -140,7 +140,7 @@ DX12ShaderLibrary::DX12ShaderLibrary(GPUDevice const* device, GPUShaderLibraryCr
             vertex_input.format = Format_Map[input_param_desc.ComponentType + 3 * (channels - 1)];
         }
     }
-    else if (info.stage == GPUShaderStageFlag::e_compute)
+    else if (info.stage == GPUShaderStage::e_compute)
     {
         dx12_reflection->GetThreadGroupSize(&shader_reflection.thread_group_sizes[0],
             &shader_reflection.thread_group_sizes[1], &shader_reflection.thread_group_sizes[2]);

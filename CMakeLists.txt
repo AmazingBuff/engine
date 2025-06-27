@@ -35,7 +35,7 @@ target_include_directories(
     PUBLIC
     ${THIRD_PARTY_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
-    PRIVATE
+#    PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/
 )
 

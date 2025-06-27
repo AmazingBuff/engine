@@ -6,6 +6,7 @@
 #define GEOMETRY_H
 
 #include "type.h"
+#include "scene.h"
 #include "algorithm/intersect.h"
 
 #endif //GEOMETRY_H

@@ -6,9 +6,12 @@
 #define RENDER_API_H
 
 #include "render_type.h"
-#include "rendering/draw/render_system.h"
-#include "rendering/draw/render_scene.h"
-#include "rendering/draw/render_view.h"
+#include "render_entity.h"
+#include "draw/render_system.h"
+#include "draw/render_scene.h"
+#include "draw/render_view.h"
+#include "graph/render_graph.h"
+#include "graph/render_builder.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -21,6 +24,8 @@ void RENDER_destroy_render_scene(RenderScene* render_scene);
 RenderView* RENDER_create_render_view(RenderViewCreateInfo const& info);
 void RENDER_destroy_render_view(RenderView* render_view);
 
+RenderGraph* RENDER_create_render_graph(RenderGraphCreateInfo const& info);
+void RENDER_destroy_render_graph(RenderGraph* render_graph);
 
 AMAZING_NAMESPACE_END
 

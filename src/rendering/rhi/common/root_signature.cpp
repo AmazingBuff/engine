@@ -12,14 +12,14 @@ static bool is_static_sampler(GPUShaderResource const& resource, GPURootSignatur
     for (size_t i = 0; i < info.static_samplers.size(); i++)
     {
         if (resource.name == info.static_samplers[i].name)
-            return resource.resource_type == GPUResourceTypeFlag::e_sampler;
+            return resource.resource_type == GPUResourceType::e_sampler;
     }
     return false;
 }
 
 static bool is_push_constant(GPUShaderResource const& resource, GPURootSignatureCreateInfo const& info)
 {
-    if (resource.resource_type == GPUResourceTypeFlag::e_push_constant)
+    if (resource.resource_type == GPUResourceType::e_push_constant)
         return true;
 
     for (size_t i = 0; i < info.push_constant_names.size(); i++)
@@ -109,6 +109,36 @@ static void collect_resource(Vector<GPUShaderResource> const& input_resources, G
     }
 }
 
+// only for texture and buffer
+static GPUResourceState transfer_shader_resource_state(GPUResourceType type, GPUPipelineType pipeline)
+{
+    switch (type)
+    {
+    case GPUResourceType::e_buffer:
+    case GPUResourceType::e_texture:
+    {
+        switch (pipeline)
+        {
+        case GPUPipelineType::e_graphics:
+            return GPUResourceState::e_pixel_shader_resource;
+        case GPUPipelineType::e_compute:
+            return GPUResourceState::e_non_pixel_shader_resource;
+        default:
+            break;
+        }
+    }
+    case GPUResourceType::e_rw_buffer:
+    case GPUResourceType::e_rw_texture:
+        return GPUResourceState::e_unordered_access;
+    default:
+        break;
+    }
+    return GPUResourceState::e_undefined;
+}
+
+GPURootSignature::GPURootSignature() : m_ref_device(nullptr), m_pool(nullptr),
+    m_push_constants(nullptr), m_push_constant_count(0), m_pipeline_type(GPUPipelineType::e_graphics) {}
+
 GPURootSignature::~GPURootSignature()
 {
     if (m_push_constants)
@@ -144,9 +174,9 @@ void GPURootSignature::initialize(GPURootSignatureCreateInfo const& info)
 
         collect_resource(entry_reflection[i]->shader_resources, info, resources, push_constant_resources, static_sampler_resources);
 
-        if (entry_reflection[i]->stage & GPUShaderStageFlag::e_compute)
+        if (FLAG_IDENTITY(entry_reflection[i]->stage, GPUShaderStage::e_compute))
             m_pipeline_type = GPUPipelineType::e_compute;
-        else if (entry_reflection[i]->stage & GPUShaderStageFlag::e_ray_tracing)
+        else if (FLAG_IDENTITY(entry_reflection[i]->stage, GPUShaderStage::e_ray_tracing))
             m_pipeline_type = GPUPipelineType::e_ray_tracing;
         else
             m_pipeline_type = GPUPipelineType::e_graphics;
@@ -186,6 +216,25 @@ void GPURootSignature::initialize(GPURootSignatureCreateInfo const& info)
         m_static_samplers[index] = static_sampler_resource;
         index++;
     }
+}
+
+GPUResourceState GPURootSignature::fetch_shader_resource_state(const String& name) const
+{
+    GPUResourceState state = GPUResourceState::e_undefined;
+    any_of(m_tables, [&state, name, this](GPUParameterTable const& table)
+    {
+        return any_of(table.resources, [&state, name, this](GPUShaderResource const& resource)
+        {
+            if (resource.name == name)
+            {
+                state = transfer_shader_resource_state(resource.resource_type, m_pipeline_type);
+                return true;
+            }
+            return false;
+        });
+    });
+
+    return state;
 }
 
 AMAZING_NAMESPACE_END

@@ -85,8 +85,8 @@ DX12SwapChain::DX12SwapChain(GPUDevice const* device, GPUSwapChainCreateInfo con
         GPUTextureViewCreateInfo view_info{
             .texture = back_texture,
             .format = info.format,
-            .usage = GPUTextureViewUsageFlag::e_rtv_dsv,
-            .aspect = GPUTextureViewAspectFlag::e_color,
+            .usage = GPUTextureViewUsage::e_rtv_dsv,
+            .aspect = GPUTextureViewAspect::e_color,
             .type = GPUTextureType::e_2d,
             .array_layers = 1,
         };

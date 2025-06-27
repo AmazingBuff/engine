@@ -11,8 +11,11 @@
 AMAZING_NAMESPACE_BEGIN
 
 GPUFormat transfer_format(RenderFormat format);
-
-
+GPUShaderStage transfer_shader_stage(RenderShaderStage stage);
+GPUCullMode transfer_cull_mode(RenderCullMode cull_mode);
+GPUFillMode transfer_fill_mode(RenderFillMode fill_mode);
+GPUFrontFace transfer_front_face(RenderFrontFace front_face);
+GPUPrimitiveTopology transfer_primitive_topology(RenderPrimitiveTopology topology);
 
 AMAZING_NAMESPACE_END
 #endif //RENDER_UTIL_H

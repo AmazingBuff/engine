@@ -6,6 +6,7 @@
 #include "rendering/draw/draw_render_system.h"
 #include "rendering/draw/draw_render_scene.h"
 #include "rendering/draw/draw_render_view.h"
+#include "rendering/graph/draw_render_graph.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -35,6 +36,16 @@ RenderView* RENDER_create_render_view(RenderViewCreateInfo const& info)
 void RENDER_destroy_render_view(RenderView* render_view)
 {
     PLACEMENT_DELETE(DrawRenderView, static_cast<DrawRenderView*>(render_view));
+}
+
+RenderGraph* RENDER_create_render_graph(RenderGraphCreateInfo const& info)
+{
+    return PLACEMENT_NEW(DrawRenderGraph, sizeof(DrawRenderGraph), info);
+}
+
+void RENDER_destroy_render_graph(RenderGraph* render_graph)
+{
+    PLACEMENT_DELETE(DrawRenderGraph, static_cast<DrawRenderGraph*>(render_graph));
 }
 
 

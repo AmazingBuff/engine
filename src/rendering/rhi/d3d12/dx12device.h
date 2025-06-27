@@ -20,7 +20,7 @@ public:
     DX12Device(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info);
     ~DX12Device() override;
 
-    GPUQueue const* fetch_queue(GPUQueueType type, uint32_t index) const override;
+    [[nodiscard]] GPUQueue const* fetch_queue(GPUQueueType type, uint32_t index) const override;
 private:
     ID3D12Device* m_device;
     D3D12MA::Allocator* m_allocator;

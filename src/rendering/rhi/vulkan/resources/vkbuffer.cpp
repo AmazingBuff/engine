@@ -17,7 +17,7 @@ VKBuffer::VKBuffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
     VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
 
     size_t allocation_size = info.size;
-    if (info.type & GPUResourceTypeFlag::e_uniform_buffer)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_uniform_buffer))
     {
         size_t alignment = vk_adapter->m_adapter_detail.uniform_buffer_alignment;
         allocation_size = align_to(allocation_size, alignment);
@@ -38,12 +38,12 @@ VKBuffer::VKBuffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
     VmaAllocationCreateInfo vma_create_info{
         .usage = static_cast<VmaMemoryUsage>(info.usage),
     };
-    if (info.flags & GPUBufferFlagsFlag::e_dedicated)
+    if (FLAG_IDENTITY(info.flags, GPUBufferFlag::e_dedicated))
         vma_create_info.flags |= VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
-    if (info.flags & GPUBufferFlagsFlag::e_persistent_map)
+    if (FLAG_IDENTITY(info.flags, GPUBufferFlag::e_persistent_map))
         vma_create_info.flags |= VMA_ALLOCATION_CREATE_MAPPED_BIT;
-    if ((info.flags & GPUBufferFlagsFlag::e_host_visible && info.usage == GPUMemoryUsage::e_gpu_only) ||
-        (info.flags & GPUBufferFlagsFlag::e_persistent_map && info.usage == GPUMemoryUsage::e_gpu_only))
+    if ((FLAG_IDENTITY(info.flags, GPUBufferFlag::e_host_visible) && info.usage == GPUMemoryUsage::e_gpu_only) ||
+        (FLAG_IDENTITY(info.flags, GPUBufferFlag::e_persistent_map) && info.usage == GPUMemoryUsage::e_gpu_only))
         vma_create_info.flags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
     if (info.usage == GPUMemoryUsage::e_cpu_to_gpu)
     {
@@ -117,7 +117,7 @@ VKBuffer::~VKBuffer()
 
 void VKBuffer::map(size_t offset, size_t size, const void* data)
 {
-    if (m_info->flags & GPUBufferFlagsFlag::e_persistent_map)
+    if (FLAG_IDENTITY(m_info->flags, GPUBufferFlag::e_persistent_map))
         memcpy(static_cast<uint8_t*>(m_info->mapped_data) + offset, data, size);
     else
     {

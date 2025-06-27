@@ -10,6 +10,9 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+// for compatibility
+FLAG_ENUM(D3D12MA::ALLOCATION_FLAGS);
+
 void check_format_support(D3D12_RESOURCE_FLAGS usage, GPUAdapter::GPUFormatSupport format_support)
 {
     if (usage & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)
@@ -20,9 +23,9 @@ void check_format_support(D3D12_RESOURCE_FLAGS usage, GPUAdapter::GPUFormatSuppo
 
 D3D12_RESOURCE_DIMENSION DX12Texture::transfer_resource_dimension(GPUTextureCreateInfo const& info)
 {
-    if (info.flags & GPUTextureFlagsFlag::e_force_2d)
+    if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_force_2d))
         return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    else if (info.flags & GPUTextureFlagsFlag::e_force_3d)
+    else if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_force_3d))
         return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
     else
     {
@@ -37,9 +40,9 @@ D3D12_RESOURCE_DIMENSION DX12Texture::transfer_resource_dimension(GPUTextureCrea
 
 D3D12_TEXTURE_LAYOUT DX12Texture::transfer_resource_layout(GPUTextureCreateInfo const& info)
 {
-    if (info.flags & GPUTextureFlagsFlag::e_tiled_resource)
+    if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_tiled_resource))
         return D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE;
-    else if (info.flags & GPUTextureFlagsFlag::e_export_adapter)
+    else if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_export_adapter))
         return D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     else
         return D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -49,15 +52,15 @@ D3D12_RESOURCE_FLAGS DX12Texture::transfer_resource_flags(GPUTextureCreateInfo c
 {
     D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
     // uav
-    if (info.type & GPUResourceTypeFlag::e_rw_texture || info.mip_levels > 1)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_rw_texture) || info.mip_levels > 1)
         flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     // rtv
-    if (info.type & GPUResourceTypeFlag::e_render_target)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_render_target))
         flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-    else if (info.type & GPUResourceTypeFlag::e_depth_stencil)
+    else if (FLAG_IDENTITY(info.type, GPUResourceType::e_depth_stencil))
         flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
     // sharing
-    if (info.flags & GPUTextureFlagsFlag::e_export_adapter)
+    if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_export_adapter))
         flags |= D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER;
 
     return flags;
@@ -65,26 +68,26 @@ D3D12_RESOURCE_FLAGS DX12Texture::transfer_resource_flags(GPUTextureCreateInfo c
 
 GPUResourceState DX12Texture::transfer_states(GPUTextureCreateInfo const& info)
 {
-    GPUResourceState state(GPUResourceStateFlag::e_undefined);
-    if (info.state & GPUResourceStateFlag::e_copy_destination)
-        state = GPUResourceStateFlag::e_common;
-    else if (info.state & GPUResourceStateFlag::e_render_target)
+    GPUResourceState state = GPUResourceState::e_undefined;
+    if (FLAG_IDENTITY(info.state, GPUResourceState::e_copy_destination))
+        state = GPUResourceState::e_common;
+    else if (FLAG_IDENTITY(info.state, GPUResourceState::e_render_target))
     {
-        if (info.state > GPUResourceStateFlag::e_render_target)
-            state = info.state ^ GPUResourceStateFlag::e_render_target;
+        if (info.state > GPUResourceState::e_render_target)
+            state = info.state ^ GPUResourceState::e_render_target;
         else
-            state = GPUResourceStateFlag::e_render_target;
+            state = GPUResourceState::e_render_target;
     }
-    else if (info.state & GPUResourceStateFlag::e_depth_write)
+    else if (FLAG_IDENTITY(info.state, GPUResourceState::e_depth_write))
     {
-        if (info.state > GPUResourceStateFlag::e_depth_write)
-            state = info.state ^ GPUResourceStateFlag::e_depth_write;
+        if (info.state > GPUResourceState::e_depth_write)
+            state = info.state ^ GPUResourceState::e_depth_write;
         else
-            state = GPUResourceStateFlag::e_depth_write;
+            state = GPUResourceState::e_depth_write;
     }
 
-    if (info.flags & GPUTextureFlagsFlag::e_allow_display_target)
-        state = GPUResourceStateFlag::e_present;
+    if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_allow_display_target))
+        state = GPUResourceState::e_present;
 
     return state;
 }
@@ -147,7 +150,7 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
         .Format = dxgi_format,
     };
 
-    if (info.type == GPUResourceTypeFlag::e_depth_stencil)
+    if (info.type == GPUResourceType::e_depth_stencil)
     {
         clear_value.DepthStencil.Depth = info.clear_color.depth_stencil.depth;
         clear_value.DepthStencil.Stencil = info.clear_color.depth_stencil.stencil;
@@ -164,7 +167,7 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
     if (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET || desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
         p_clear_value = &clear_value;
 
-    if (info.flags & GPUTextureFlagsFlag::e_aliasing_resource)
+    if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_aliasing_resource))
     {
         D3D12AliasingTextureInfo* aliasing = Allocator<D3D12AliasingTextureInfo>::allocate(1);
         aliasing->resource_desc = desc;
@@ -172,7 +175,7 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
         m_info = aliasing;
         m_info->is_aliasing = 1;
     }
-    else if (info.flags & GPUTextureFlagsFlag::e_tiled_resource)
+    else if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_tiled_resource))
     {
         DX_CHECK_RESULT(dx12_device->m_device->CreateReservedResource(&desc, resource_state, p_clear_value, IID_PPV_ARGS(&m_resource)));
         uint16_t layers = desc.DepthOrArraySize;
@@ -235,11 +238,11 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
             .HeapType = D3D12_HEAP_TYPE_DEFAULT,
         };
 
-        if (info.flags & GPUTextureFlagsFlag::e_dedicated || info.sample_count > GPUSampleCount::e_1)
+        if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_dedicated) || info.sample_count > GPUSampleCount::e_1)
             alloc_desc.Flags |= D3D12MA::ALLOCATION_FLAG_COMMITTED;
-        if (info.sample_count == GPUSampleCount::e_1 && !(info.flags & GPUTextureFlagsFlag::e_export))
+        if (info.sample_count == GPUSampleCount::e_1 && !(info.flags & GPUTextureFlag::e_export))
             alloc_desc.Flags |= D3D12MA::ALLOCATION_FLAG_CAN_ALIAS;
-        if (info.flags & GPUTextureFlagsFlag::e_export)
+        if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_export))
             alloc_desc.ExtraHeapFlags |= D3D12_HEAP_FLAG_SHARED;
 
         if (SUCCEEDED(dx12_device->m_allocator->CreateResource(&alloc_desc, &desc, resource_state, p_clear_value, &m_allocation, IID_PPV_ARGS(&m_resource))))
@@ -282,7 +285,7 @@ DX12Texture::DX12Texture(GPUDevice const* device, GPUTextureCreateInfo const& in
     m_info->format = info.format;
     m_info->sample_count = info.sample_count;
     m_info->state = info.state;
-    m_info->is_cube = (info.type & GPUResourceTypeFlag::e_texture_cube) == GPUResourceTypeFlag::e_texture_cube ? 1 : 0;
+    m_info->is_cube = FLAG_IDENTITY(info.type, GPUResourceType::e_texture_cube)? 1 : 0;
 
     m_ref_device = device;
 }

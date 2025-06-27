@@ -120,9 +120,9 @@ void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
         .sample_quality = 0,
         .sample_count = GPUSampleCount::e_1,
         .format = Backend_Depth_Stencil_Format,
-        .state = GPUResourceStateFlag::e_depth_write,
-        .type = GPUResourceTypeFlag::e_depth_stencil,
-        .flags = GPUTextureFlagsFlag::e_dedicated,
+        .state = GPUResourceState::e_depth_write,
+        .type = GPUResourceType::e_depth_stencil,
+        .flags = GPUTextureFlag::e_dedicated,
         .clear_color{
             .depth_stencil{
                 .depth = 1.0,
@@ -137,8 +137,8 @@ void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend)
         .name = "depth texture view",
         .texture = t_depth_texture,
         .format = Backend_Depth_Stencil_Format,
-        .usage = GPUTextureViewUsageFlag::e_rtv_dsv,
-        .aspect = GPUTextureViewAspectFlag::e_depth,
+        .usage = GPUTextureViewUsage::e_rtv_dsv,
+        .aspect = GPUTextureViewAspect::e_depth,
         .type = GPUTextureType::e_2d,
         .base_array_layer = 0,
         .array_layers = 1,
@@ -189,27 +189,27 @@ ImageInfo load_image(const String& file_path)
     return { width, height, 4, image_data };
 }
 
-Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStageFlag stage)
+Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStage stage)
 {
     const wchar_t* shader_model = nullptr;
     switch (stage)
     {
-    case GPUShaderStageFlag::e_vertex:
+    case GPUShaderStage::e_vertex:
         shader_model = L"vs_6_0";
         break;
-    case GPUShaderStageFlag::e_fragment:
+    case GPUShaderStage::e_fragment:
         shader_model = L"ps_6_0";
         break;
-    case GPUShaderStageFlag::e_compute:
+    case GPUShaderStage::e_compute:
         shader_model = L"cs_6_0";
         break;
-    case GPUShaderStageFlag::e_geometry:
+    case GPUShaderStage::e_geometry:
         shader_model = L"gs_6_0";
         break;
-    case GPUShaderStageFlag::e_tessellation_control:
+    case GPUShaderStage::e_tessellation_control:
         shader_model = L"hs_6_0";
         break;
-    case GPUShaderStageFlag::e_tessellation_evaluation:
+    case GPUShaderStage::e_tessellation_evaluation:
         shader_model = L"ds_6_0";
         break;
     default:
@@ -281,8 +281,8 @@ void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
 
     // GPUTextureBarrier barrier{
     //     .texture = info.dst_texture,
-    //     .src_state = GPUResourceStateFlag::e_copy_destination,
-    //     .dst_state = GPUResourceStateFlag::e_shader_resource
+    //     .src_state = GPUResourceState::e_copy_destination,
+    //     .dst_state = GPUResourceState::e_shader_resource
     // };
     //
     // GPUResourceBarrierInfo barrier_info{
@@ -291,7 +291,7 @@ void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
     //
     // t_command_buffer[0]->resource_barrier(barrier_info);
 
-    t_command_buffer[0]->generate_mipmap(info.dst_texture, GPUResourceStateFlag::e_copy_destination, GPUResourceStateFlag::e_shader_resource);
+    t_command_buffer[0]->generate_mipmap(info.dst_texture, GPUResourceState::e_copy_destination, GPUResourceState::e_shader_resource);
 
     t_command_buffer[0]->end_command();
 

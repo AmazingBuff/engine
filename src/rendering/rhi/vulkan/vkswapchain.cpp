@@ -136,13 +136,13 @@ VKSwapChain::VKSwapChain(GPUDevice const* device, GPUSwapChainCreateInfo const& 
         back_texture->m_info->mip_levels = 1;
         back_texture->m_info->node_index = GPU_Node_Index;
         back_texture->m_info->owns_image = false;
-        back_texture->m_info->state = GPUResourceStateFlag::e_undefined;
+        back_texture->m_info->state = GPUResourceState::e_undefined;
 
         GPUTextureViewCreateInfo view_info{
             .texture = back_texture,
             .format = info.format,
-            .usage = GPUTextureViewUsageFlag::e_rtv_dsv,
-            .aspect = GPUTextureViewAspectFlag::e_color,
+            .usage = GPUTextureViewUsage::e_rtv_dsv,
+            .aspect = GPUTextureViewAspect::e_color,
             .type = GPUTextureType::e_2d,
             .array_layers = 1,
             .mip_levels = 1

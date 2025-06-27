@@ -4,17 +4,16 @@
 
 #pragma once
 
-#include "rendering/render_type.h"
 #include "rendering/rhi/create_info.h"
-#include "io/loader/scene_loader.h"
+#include "geometry/geometry.h"
 
 AMAZING_NAMESPACE_BEGIN
 
 struct RenderVertex
 {
     Vec3f position;
-    Vec3f normal;
     Vec2f texcoord;
+    Vec3f normal;
     Vec3f tangent;
     Vec3f bitangent;
 };
@@ -51,9 +50,4 @@ struct RenderGeometry
     RenderNode* root;
     Vector<RenderMesh> meshes;
 };
-
-RenderGeometry GPU_import_render_geometry(GPUDevice const* device, Scene const& scene);
-RenderGeometry GPU_import_render_geometry(GPUDevice const* device, const char* file);
-void GPU_destroy_render_geometry(RenderGeometry const& geometry);
-
 AMAZING_NAMESPACE_END

@@ -24,7 +24,7 @@ protected:
         void* mapped_data;
         GPUResourceType type;
         GPUMemoryUsage memory_usage;
-        GPUBufferFlags flags;
+        GPUBufferFlag flags;
     };
 
     GPUDevice const* m_ref_device;

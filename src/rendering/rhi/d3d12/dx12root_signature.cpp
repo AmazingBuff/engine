@@ -31,21 +31,21 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
     }
 
 
-    GPUShaderStage shader_stage(GPUShaderStageFlag::e_undefined);
+    GPUShaderStage shader_stage = GPUShaderStage::e_undefined;
     for (const GPUShaderEntry& shader : info.shaders)
         shader_stage |= shader.stage;
 
     // flags
     D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
-    if (shader_stage & GPUShaderStageFlag::e_vertex)
+    if (FLAG_IDENTITY(shader_stage, GPUShaderStage::e_vertex))
         flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 #define STAGE_FLAG_JUDGE(gpu_stage, flag) if (!(shader_stage & gpu_stage)) flags |= flag;
-    STAGE_FLAG_JUDGE(GPUShaderStageFlag::e_vertex, D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS);
-    STAGE_FLAG_JUDGE(GPUShaderStageFlag::e_hull, D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS);
-    STAGE_FLAG_JUDGE(GPUShaderStageFlag::e_domain, D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS);
-    STAGE_FLAG_JUDGE(GPUShaderStageFlag::e_geometry, D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
-    STAGE_FLAG_JUDGE(GPUShaderStageFlag::e_fragment, D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS);
+    STAGE_FLAG_JUDGE(GPUShaderStage::e_vertex, D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS);
+    STAGE_FLAG_JUDGE(GPUShaderStage::e_hull, D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS);
+    STAGE_FLAG_JUDGE(GPUShaderStage::e_domain, D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS);
+    STAGE_FLAG_JUDGE(GPUShaderStage::e_geometry, D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
+    STAGE_FLAG_JUDGE(GPUShaderStage::e_fragment, D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS);
 #undef STAGE_FLAG_JUDGE
 
     // tables
@@ -64,7 +64,7 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
         root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         const D3D12_DESCRIPTOR_RANGE1& cbv_srv_uav_range_cursor = cbv_srv_uav_ranges[i_range];
 
-        GPUShaderStage stages(GPUShaderStageFlag::e_undefined);
+        GPUShaderStage stages = GPUShaderStage::e_undefined;
         for (const GPUShaderResource& resource : parameter_table.resources)
         {
             stages |= resource.stage;
@@ -72,7 +72,7 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
                 D3D12_DESCRIPTOR_RANGE1& cbv_srv_uav_range = cbv_srv_uav_ranges[i_range];
                 cbv_srv_uav_range.RegisterSpace = resource.set;
                 cbv_srv_uav_range.BaseShaderRegister = resource.binding;
-                // allow mulitiple pass copy descritor operation, such as mipmap generation
+                // allow multiple pass copy descriptor operation, such as mipmap generation
                 cbv_srv_uav_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
                 cbv_srv_uav_range.NumDescriptors = resource.array_count;
                 cbv_srv_uav_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -81,7 +81,7 @@ DX12RootSignature::DX12RootSignature(GPUDevice const* device, GPURootSignatureCr
                 i_range++;
             }
         }
-        if (stages != GPUShaderStageFlag::e_undefined)
+        if (stages != GPUShaderStage::e_undefined)
         {
             root_parameter.ShaderVisibility = transfer_shader_stage(stages);
             root_parameter.DescriptorTable.pDescriptorRanges = &cbv_srv_uav_range_cursor;

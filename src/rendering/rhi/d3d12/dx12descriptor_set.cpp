@@ -39,16 +39,16 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDescriptorSetCreateInfo const& info) : m
     uint32_t sampler_count = 0;
     for (GPUShaderResource const& resource : parameter_table_resources)
     {
-        if (resource.resource_type == GPUResourceTypeFlag::e_sampler)
+        if (resource.resource_type == GPUResourceType::e_sampler)
             sampler_count++;
-        else if (resource.resource_type == GPUResourceTypeFlag::e_texture ||
-            resource.resource_type == GPUResourceTypeFlag::e_rw_texture ||
-            resource.resource_type == GPUResourceTypeFlag::e_buffer ||
-            resource.resource_type == GPUResourceTypeFlag::e_buffer_raw ||
-            resource.resource_type == GPUResourceTypeFlag::e_rw_buffer ||
-            resource.resource_type == GPUResourceTypeFlag::e_rw_buffer_raw ||
-            resource.resource_type == GPUResourceTypeFlag::e_texture_cube ||
-            resource.resource_type == GPUResourceTypeFlag::e_uniform_buffer)
+        else if (resource.resource_type == GPUResourceType::e_texture ||
+            resource.resource_type == GPUResourceType::e_rw_texture ||
+            resource.resource_type == GPUResourceType::e_buffer ||
+            resource.resource_type == GPUResourceType::e_buffer_raw ||
+            resource.resource_type == GPUResourceType::e_rw_buffer ||
+            resource.resource_type == GPUResourceType::e_rw_buffer_raw ||
+            resource.resource_type == GPUResourceType::e_texture_cube ||
+            resource.resource_type == GPUResourceType::e_uniform_buffer)
             cbv_srv_uav_count += descriptor_count_need(resource);
     }
 
@@ -76,21 +76,21 @@ DX12DescriptorSet::DX12DescriptorSet(GPUDescriptorSetCreateInfo const& info) : m
             const uint8_t texture_type = to_underlying(resource.texture_type);
             D3D12_CPU_DESCRIPTOR_HANDLE cbv_srv_uav_handle{};
             D3D12_CPU_DESCRIPTOR_HANDLE sampler_handle{};
-            switch (static_cast<GPUResourceTypeFlag>(resource.resource_type))
+            switch (static_cast<GPUResourceType>(resource.resource_type))
             {
-            case GPUResourceTypeFlag::e_texture:
+            case GPUResourceType::e_texture:
                 cbv_srv_uav_handle = dx12_device->m_descriptor_heap->m_null_descriptors->texture_srv[texture_type];
                 break;
-            case GPUResourceTypeFlag::e_buffer:
+            case GPUResourceType::e_buffer:
                 cbv_srv_uav_handle = dx12_device->m_descriptor_heap->m_null_descriptors->buffer_srv;
                 break;
-            case GPUResourceTypeFlag::e_rw_buffer:
+            case GPUResourceType::e_rw_buffer:
                 cbv_srv_uav_handle = dx12_device->m_descriptor_heap->m_null_descriptors->buffer_uav;
                 break;
-            case GPUResourceTypeFlag::e_uniform_buffer:
+            case GPUResourceType::e_uniform_buffer:
                 cbv_srv_uav_handle = dx12_device->m_descriptor_heap->m_null_descriptors->buffer_cbv;
                 break;
-            case GPUResourceTypeFlag::e_sampler:
+            case GPUResourceType::e_sampler:
                 sampler_handle = dx12_device->m_descriptor_heap->m_null_descriptors->sampler;
                 break;
             default:
@@ -170,9 +170,9 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
             continue;
 
         // update
-        switch (static_cast<GPUResourceTypeFlag>(shader_resource->resource_type))
+        switch (static_cast<GPUResourceType>(shader_resource->resource_type))
         {
-        case GPUResourceTypeFlag::e_sampler:
+        case GPUResourceType::e_sampler:
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
@@ -181,8 +181,8 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
             }
         }
         break;
-        case GPUResourceTypeFlag::e_texture:
-        case GPUResourceTypeFlag::e_texture_cube:
+        case GPUResourceType::e_texture:
+        case GPUResourceType::e_texture_cube:
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
@@ -191,7 +191,7 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
             }
         }
         break;
-        case GPUResourceTypeFlag::e_rw_texture:
+        case GPUResourceType::e_rw_texture:
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
@@ -200,7 +200,7 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
             }
         }
         break;
-        case GPUResourceTypeFlag::e_uniform_buffer:
+        case GPUResourceType::e_uniform_buffer:
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
@@ -209,8 +209,8 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
             }
         }
         break;
-        case GPUResourceTypeFlag::e_buffer:
-        case GPUResourceTypeFlag::e_buffer_raw:
+        case GPUResourceType::e_buffer:
+        case GPUResourceType::e_buffer_raw:
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
@@ -219,8 +219,8 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
             }
         }
         break;
-        case GPUResourceTypeFlag::e_rw_buffer:
-        case GPUResourceTypeFlag::e_rw_buffer_raw:
+        case GPUResourceType::e_rw_buffer:
+        case GPUResourceType::e_rw_buffer_raw:
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {

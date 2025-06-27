@@ -25,7 +25,48 @@ enum class RenderFormat : uint8_t
     e_d24s8
 };
 
+enum class RenderGraphTextureUsage : uint8_t
+{
+    e_srv,
+    e_uav
+};
+FLAG_ENUM(RenderGraphTextureUsage)
 
+enum class RenderShaderStage : uint8_t
+{
+    e_vertex,
+    e_tessellation_control,
+    e_tessellation_evaluation,
+    e_geometry,
+    e_fragment,
+    e_compute,
+    e_ray_tracing,
+};
+
+enum class RenderCullMode : uint8_t
+{
+    e_none,
+    e_front,
+    e_back
+};
+
+enum class RenderFillMode : uint8_t
+{
+    e_solid,
+    e_wire_frame
+};
+
+enum class RenderFrontFace : uint8_t
+{
+    e_counter_clockwise,
+    e_clockwise,
+};
+
+enum class RenderPrimitiveTopology : uint8_t
+{
+    e_triangle_list,
+    e_triangle_strip
+};
 
 AMAZING_NAMESPACE_END
 #endif //RENDER_ENUM_H

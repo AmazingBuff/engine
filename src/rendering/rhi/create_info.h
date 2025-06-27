@@ -144,7 +144,7 @@ struct GPUBufferCreateInfo
     GPUFormat format;
     GPUResourceState state;
     GPUResourceType type;
-    GPUBufferFlags flags;
+    GPUBufferFlag flags;
 };
 
 struct GPUTextureCreateInfo
@@ -160,7 +160,7 @@ struct GPUTextureCreateInfo
     GPUFormat format;
     GPUResourceState state;
     GPUResourceType type;
-    GPUTextureFlags flags;
+    GPUTextureFlag flags;
     GPUClearColor clear_color;
 };
 

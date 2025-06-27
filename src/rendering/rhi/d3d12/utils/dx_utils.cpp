@@ -127,43 +127,43 @@ DXGI_FORMAT transfer_format(GPUFormat format, bool shader)
 D3D12_RESOURCE_STATES transfer_resource_state(GPUResourceState state)
 {
     // these states cannot be combined with other states so we just do an == check
-    if (state == GPUResourceStateFlag::e_generic_read)
+    if (state == GPUResourceState::e_generic_read)
         return D3D12_RESOURCE_STATE_GENERIC_READ;
-    if (state == GPUResourceStateFlag::e_common)
+    if (state == GPUResourceState::e_common)
         return D3D12_RESOURCE_STATE_COMMON;
-    if (state == GPUResourceStateFlag::e_present)
+    if (state == GPUResourceState::e_present)
         return D3D12_RESOURCE_STATE_PRESENT;
 
     D3D12_RESOURCE_STATES ret = D3D12_RESOURCE_STATE_COMMON;
-    if (state & GPUResourceStateFlag::e_vertex_and_constant_buffer)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_vertex_and_constant_buffer))
         ret |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-    if (state & GPUResourceStateFlag::e_index_buffer)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_index_buffer))
         ret |= D3D12_RESOURCE_STATE_INDEX_BUFFER;
-    if (state & GPUResourceStateFlag::e_render_target)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_render_target))
         ret |= D3D12_RESOURCE_STATE_RENDER_TARGET;
-    if (state & GPUResourceStateFlag::e_unordered_access)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_unordered_access))
         ret |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-    if (state & GPUResourceStateFlag::e_depth_write)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_depth_write))
         ret |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    if (state & GPUResourceStateFlag::e_depth_read)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_depth_read))
         ret |= D3D12_RESOURCE_STATE_DEPTH_READ;
-    if (state & GPUResourceStateFlag::e_non_pixel_shader_resource)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_non_pixel_shader_resource))
         ret |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-    if (state & GPUResourceStateFlag::e_pixel_shader_resource)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_pixel_shader_resource))
         ret |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-    if (state & GPUResourceStateFlag::e_stream_out)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_stream_out))
         ret |= D3D12_RESOURCE_STATE_STREAM_OUT;
-    if (state & GPUResourceStateFlag::e_indirect_argument)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_indirect_argument))
         ret |= D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
-    if (state & GPUResourceStateFlag::e_copy_destination)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_copy_destination))
         ret |= D3D12_RESOURCE_STATE_COPY_DEST;
-    if (state & GPUResourceStateFlag::e_copy_source)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_copy_source))
         ret |= D3D12_RESOURCE_STATE_COPY_SOURCE;
-    if (state & GPUResourceStateFlag::e_acceleration_structure)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_acceleration_structure))
         ret |= D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-    if (state & GPUResourceStateFlag::e_shading_rate_source)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_shading_rate_source))
         ret |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
-    if (state & GPUResourceStateFlag::e_resolve_destination)
+    if (FLAG_IDENTITY(state, GPUResourceState::e_resolve_destination))
         ret |= D3D12_RESOURCE_STATE_RESOLVE_DEST;
 
     return ret;
@@ -213,20 +213,19 @@ D3D12_TEXTURE_ADDRESS_MODE transfer_address_mode(GPUAddressMode mode)
 
 D3D12_DESCRIPTOR_RANGE_TYPE transfer_resource_type(GPUResourceType type)
 {
-    GPUResourceTypeFlag flag = static_cast<GPUResourceTypeFlag>(type);
-    switch (flag)
+    switch (type)
     {
-    case GPUResourceTypeFlag::e_uniform_buffer:
-    case GPUResourceTypeFlag::e_push_constant:
+    case GPUResourceType::e_uniform_buffer:
+    case GPUResourceType::e_push_constant:
         return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-    case GPUResourceTypeFlag::e_rw_buffer:
-    case GPUResourceTypeFlag::e_rw_texture:
+    case GPUResourceType::e_rw_buffer:
+    case GPUResourceType::e_rw_texture:
         return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-    case GPUResourceTypeFlag::e_sampler:
+    case GPUResourceType::e_sampler:
         return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-    case GPUResourceTypeFlag::e_ray_tracing:
-    case GPUResourceTypeFlag::e_buffer:
-    case GPUResourceTypeFlag::e_texture:
+    case GPUResourceType::e_ray_tracing:
+    case GPUResourceType::e_buffer:
+    case GPUResourceType::e_texture:
         return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     default:
         RENDERING_LOG_ERROR("unsupported resource type!");
@@ -238,17 +237,15 @@ D3D12_SHADER_VISIBILITY transfer_shader_stage(GPUShaderStage stage)
 {
     D3D12_SHADER_VISIBILITY ret = D3D12_SHADER_VISIBILITY_ALL;
     uint32_t stage_count = 0;
-    if (stage == GPUShaderStageFlag::e_compute || stage == GPUShaderStageFlag::e_ray_tracing)
+    if (stage == GPUShaderStage::e_compute || stage == GPUShaderStage::e_ray_tracing)
         return D3D12_SHADER_VISIBILITY_ALL;
 
-#define SHADER_STAGE_JUDGE(gpu_phase, dx12_phase)  if (stage & (gpu_phase)) { ret = dx12_phase; ++stage_count; }
-
-    SHADER_STAGE_JUDGE(GPUShaderStageFlag::e_vertex, D3D12_SHADER_VISIBILITY_VERTEX)
-        SHADER_STAGE_JUDGE(GPUShaderStageFlag::e_geometry, D3D12_SHADER_VISIBILITY_GEOMETRY)
-        SHADER_STAGE_JUDGE(GPUShaderStageFlag::e_hull, D3D12_SHADER_VISIBILITY_HULL)
-        SHADER_STAGE_JUDGE(GPUShaderStageFlag::e_domain, D3D12_SHADER_VISIBILITY_DOMAIN)
-        SHADER_STAGE_JUDGE(GPUShaderStageFlag::e_fragment, D3D12_SHADER_VISIBILITY_PIXEL)
-
+#define SHADER_STAGE_JUDGE(gpu_phase, dx12_phase)  if (FLAG_IDENTITY(stage, gpu_phase)) { ret = dx12_phase; ++stage_count; }
+    SHADER_STAGE_JUDGE(GPUShaderStage::e_vertex, D3D12_SHADER_VISIBILITY_VERTEX);
+    SHADER_STAGE_JUDGE(GPUShaderStage::e_geometry, D3D12_SHADER_VISIBILITY_GEOMETRY);
+    SHADER_STAGE_JUDGE(GPUShaderStage::e_hull, D3D12_SHADER_VISIBILITY_HULL);
+    SHADER_STAGE_JUDGE(GPUShaderStage::e_domain, D3D12_SHADER_VISIBILITY_DOMAIN);
+    SHADER_STAGE_JUDGE(GPUShaderStage::e_fragment, D3D12_SHADER_VISIBILITY_PIXEL);
 #undef SHADER_STAGE_JUDGE
 
         return stage_count > 1 ? D3D12_SHADER_VISIBILITY_ALL : ret;

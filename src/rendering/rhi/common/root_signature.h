@@ -12,8 +12,9 @@ AMAZING_NAMESPACE_BEGIN
 class GPURootSignature
 {
 public:
-    GPURootSignature() : m_ref_device(nullptr), m_pool(nullptr), m_push_constants(nullptr), m_push_constant_count(0), m_pipeline_type(GPUPipelineType::e_graphics) {}
+    GPURootSignature();
     virtual ~GPURootSignature();
+    [[nodiscard]] GPUResourceState fetch_shader_resource_state(const String& name) const;
 protected:
     void initialize(GPURootSignatureCreateInfo const& info);
 protected:

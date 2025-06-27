@@ -26,8 +26,8 @@ class Mesh final : public Primitive
 {
 public:
     DynamicVector<Vec3f> vertices;
-    DynamicVector<Vec3f> normals;
     DynamicVector<Vec2f> texcoords;
+    DynamicVector<Vec3f> normals;
     DynamicVector<Vec3f> tangents;
     DynamicVector<Vec3f> bitangents;
     DynamicVector<Index3i> triangles;

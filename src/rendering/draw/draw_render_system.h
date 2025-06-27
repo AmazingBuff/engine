@@ -9,8 +9,10 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+struct RenderGeometry;
+struct RenderGraphResource;
+struct RenderGraphPipeline;
 class RenderDriver;
-class RenderAssetManager;
 
 class DrawRenderSystem final : public RenderSystem
 {
@@ -21,10 +23,16 @@ public:
     RenderEntity import_scene(Scene const& scene) override;
     RenderEntity import_scene(const char *file) override;
 
+    RenderEntity create_pipeline(RenderGraphPipelineCreateInfo const& info) override;
     RenderEntity create_texture(RenderGraphTextureCreateInfo const& info) override;
 private:
     RenderDriver* m_render_driver;
-    RenderAssetManager* m_render_asset_manager;
+
+    HashMap<RenderEntity, RenderGeometry> m_render_geometries;
+    HashMap<RenderEntity, RenderGraphPipeline> m_render_graph_pipelines;
+    HashMap<RenderEntity, RenderGraphResource> m_render_graph_resources;
+
+    friend class DrawRenderScene;
 };
 
 AMAZING_NAMESPACE_END

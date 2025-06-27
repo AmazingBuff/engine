@@ -174,19 +174,19 @@ enum class GPUSampleCount : uint8_t
     e_64 = 64
 };
 
-enum class GPUFilterType : uint8_t
+enum class [[refl]] GPUFilterType : uint8_t
 {
     e_nearset,
     e_linear,
 };
 
-enum class GPUMipMapMode : uint8_t
+enum class [[refl]] GPUMipMapMode : uint8_t
 {
     e_nearset,
     e_linear,
 };
 
-enum class GPUAddressMode : uint8_t
+enum class [[refl]] GPUAddressMode : uint8_t
 {
     e_repeat,
     e_mirror,
@@ -332,7 +332,7 @@ enum class GPUStoreAction : uint8_t
 
 
 // flags
-enum class GPUShaderStageFlag : uint8_t
+enum class GPUShaderStage : uint8_t
 {
     e_undefined = 0,
     e_vertex = 1,
@@ -347,9 +347,9 @@ enum class GPUShaderStageFlag : uint8_t
     e_hull = e_tessellation_control,
     e_domain = e_tessellation_evaluation,
 };
-using GPUShaderStage = BitFlag<GPUShaderStageFlag>;
+FLAG_ENUM(GPUShaderStage)
 
-enum class GPUResourceTypeFlag : uint32_t
+enum class GPUResourceType : uint32_t
 {
     e_sampler = 1 << 0,
     e_texture = 1 << 1,
@@ -377,9 +377,9 @@ enum class GPUResourceTypeFlag : uint32_t
     e_rw_texel_buffer = 1 << 26,
     e_combined_image_sampler = 1 << 27, // sampler 2d
 };
-using GPUResourceType = BitFlag<GPUResourceTypeFlag>;
+FLAG_ENUM(GPUResourceType)
 
-enum class GPUResourceStateFlag : uint32_t
+enum class GPUResourceState : uint32_t
 {
     e_undefined = 0,
     e_vertex_and_constant_buffer = 1 << 0,
@@ -402,18 +402,18 @@ enum class GPUResourceStateFlag : uint32_t
     e_shading_rate_source = 1 << 15,
     e_resolve_destination = 1 << 16,
 };
-using GPUResourceState = BitFlag<GPUResourceStateFlag>;
+FLAG_ENUM(GPUResourceState)
 
-enum class GPUBufferFlagsFlag : uint8_t
+enum class GPUBufferFlag : uint8_t
 {
     e_none = 0,
     e_dedicated = 1 << 0,
     e_persistent_map = 1 << 1,
     e_host_visible = 1 << 2,
 };
-using GPUBufferFlags = BitFlag<GPUBufferFlagsFlag>;
+FLAG_ENUM(GPUBufferFlag)
 
-enum class GPUTextureFlagsFlag : uint32_t
+enum class GPUTextureFlag : uint32_t
 {
     e_none = 0,
     e_dedicated = 1 << 0,
@@ -429,25 +429,25 @@ enum class GPUTextureFlagsFlag : uint32_t
     e_aliasing_resource = 1 << 10,
     e_tiled_resource = 1 << 11,
 };
-using GPUTextureFlags = BitFlag<GPUTextureFlagsFlag>;
+FLAG_ENUM(GPUTextureFlag)
 
-enum class GPUTextureViewUsageFlag : uint8_t
+enum class GPUTextureViewUsage : uint8_t
 {
     e_srv = 1,
     e_rtv_dsv = 2,
     e_uav = 4,
 };
-using GPUTextureViewUsage = BitFlag<GPUTextureViewUsageFlag>;
+FLAG_ENUM(GPUTextureViewUsage)
 
-enum class GPUTextureViewAspectFlag : uint8_t
+enum class GPUTextureViewAspect : uint8_t
 {
     e_color = 1,
     e_depth = 2,
     e_stencil = 4,
 };
-using GPUTextureViewAspect = BitFlag<GPUTextureViewAspectFlag>;
+FLAG_ENUM(GPUTextureViewAspect)
 
-enum class GPUDynamicStateFlag : uint64_t
+enum class GPUDynamicState : uint64_t
 {
     e_undefined = 0,
     e_cull_mode = 1ull << 0,
@@ -501,23 +501,7 @@ enum class GPUDynamicStateFlag : uint64_t
     e_shading_rate_image_enable = 1ull << 44,
     e_tier3 = (1ull << 45) - 1,
 };
-using GPUDynamicState = BitFlag<GPUDynamicStateFlag>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+FLAG_ENUM(GPUDynamicState)
 
 
 

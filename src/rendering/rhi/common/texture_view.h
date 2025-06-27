@@ -12,7 +12,7 @@ AMAZING_NAMESPACE_BEGIN
 class GPUTextureView
 {
 public:
-    GPUTextureView() : m_ref_texture(nullptr), m_usage(GPUTextureViewUsageFlag::e_srv), m_format(GPUFormat::e_undefined) {}
+    GPUTextureView() : m_ref_texture(nullptr), m_usage(GPUTextureViewUsage::e_srv), m_format(GPUFormat::e_undefined) {}
     virtual ~GPUTextureView() = default;
 
 protected:

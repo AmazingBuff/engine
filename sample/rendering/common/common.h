@@ -6,7 +6,7 @@
 
 #include <SDL3/SDL.h>
 #include <renderdoc/renderdoc_app.h>
-#include <../../../src/rendering/rhi/wrapper.h>
+#include <rendering/rhi/wrapper.h>
 #include <io/read.h>
 #include <event/sdl_event.h>
 #include <camera/orbital_camera.h>
@@ -53,5 +53,5 @@ void create_api_object(HWND hwnd, HINSTANCE hinstance, GPUBackend backend);
 void destroy_api_object();
 
 ImageInfo load_image(const String& file_path);
-Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStageFlag stage);
+Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStage stage);
 void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info);

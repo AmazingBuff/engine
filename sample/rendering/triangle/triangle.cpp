@@ -12,20 +12,20 @@ void create_pipeline()
     // graphics pipeline
     Vector<char> shader = read_file(RES_DIR"shader/triangle/triangle.hlsl");
 
-    Vector<char> vs_compile = compile_shader(shader, L"vs", GPUShaderStageFlag::e_vertex);
-    Vector<char> fs_compile = compile_shader(shader, L"ps", GPUShaderStageFlag::e_fragment);
+    Vector<char> vs_compile = compile_shader(shader, L"vs", GPUShaderStage::e_vertex);
+    Vector<char> fs_compile = compile_shader(shader, L"ps", GPUShaderStage::e_fragment);
 
     GPUShaderLibraryCreateInfo vs_desc{
         .name = "VertexShaderLibrary",
         .code = reinterpret_cast<uint32_t*>(vs_compile.data()),
         .code_size = static_cast<uint32_t>(vs_compile.size()),
-        .stage = GPUShaderStageFlag::e_vertex,
+        .stage = GPUShaderStage::e_vertex,
     };
     GPUShaderLibraryCreateInfo fs_desc{
         .name = "FragmentShaderLibrary",
         .code = reinterpret_cast<uint32_t*>(fs_compile.data()),
         .code_size = static_cast<uint32_t>(fs_compile.size()),
-        .stage = GPUShaderStageFlag::e_fragment,
+        .stage = GPUShaderStage::e_fragment,
     };
 
     GPUShaderLibrary* vertex_shader = GPU_create_shader_library(t_device, vs_desc);
@@ -35,13 +35,13 @@ void create_pipeline()
     GPUShaderEntry vertex_shader_entry{
         .library = vertex_shader,
         .entry = "vs",
-        .stage = GPUShaderStageFlag::e_vertex,
+        .stage = GPUShaderStage::e_vertex,
     };
 
     GPUShaderEntry fragment_shader_entry{
         .library = fragment_shader,
         .entry = "ps",
-        .stage = GPUShaderStageFlag::e_fragment,
+        .stage = GPUShaderStage::e_fragment,
     };
 
     GPURootSignatureCreateInfo rs_desc{
@@ -109,7 +109,8 @@ void draw(SDL_Window* window)
         // barrier
         GPUTextureBarrier draw_barrier{
             .texture = texture,
-            .dst_state = GPUResourceStateFlag::e_render_target,
+            .src_state = GPUResourceState::e_undefined,
+            .dst_state = GPUResourceState::e_render_target,
         };
         GPUResourceBarrierInfo barrier_info{
             .texture_barriers = {draw_barrier}
@@ -143,7 +144,8 @@ void draw(SDL_Window* window)
         // barrier
         GPUTextureBarrier present_barrier{
             .texture = texture,
-            .dst_state = GPUResourceStateFlag::e_present,
+            .src_state = GPUResourceState::e_render_target,
+            .dst_state = GPUResourceState::e_present,
         };
         GPUResourceBarrierInfo barrier{
             .texture_barriers = {present_barrier}

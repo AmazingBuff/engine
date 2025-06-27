@@ -40,11 +40,11 @@ VKTextureView::VKTextureView(GPUTextureViewCreateInfo const& info) : m_rtv_dsv_v
     }
 
     VkImageAspectFlags aspect_flags = VK_IMAGE_ASPECT_NONE;
-    if (info.aspect & GPUTextureViewAspectFlag::e_color)
+    if (FLAG_IDENTITY(info.aspect, GPUTextureViewAspect::e_color))
         aspect_flags |= VK_IMAGE_ASPECT_COLOR_BIT;
-    if (info.aspect & GPUTextureViewAspectFlag::e_depth)
+    if (FLAG_IDENTITY(info.aspect, GPUTextureViewAspect::e_depth))
         aspect_flags |= VK_IMAGE_ASPECT_DEPTH_BIT;
-    if (info.aspect & GPUTextureViewAspectFlag::e_stencil)
+    if (FLAG_IDENTITY(info.aspect, GPUTextureViewAspect::e_stencil))
         aspect_flags |= VK_IMAGE_ASPECT_STENCIL_BIT;
 
     VkImageViewCreateInfo view_create_info{
@@ -67,14 +67,14 @@ VKTextureView::VKTextureView(GPUTextureViewCreateInfo const& info) : m_rtv_dsv_v
         }
     };
     // srv
-    if (info.usage & GPUTextureViewUsageFlag::e_srv)
+    if (FLAG_IDENTITY(info.usage, GPUTextureViewUsage::e_srv))
         VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImageView(vk_device->m_device, &view_create_info, VK_Allocation_Callbacks_Ptr, &m_srv_view));
 
     // rtv & dsv
-    if (info.usage & GPUTextureViewUsageFlag::e_rtv_dsv)
+    if (FLAG_IDENTITY(info.usage, GPUTextureViewUsage::e_rtv_dsv))
         VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImageView(vk_device->m_device, &view_create_info, VK_Allocation_Callbacks_Ptr, &m_rtv_dsv_view));
 
-    if (info.usage & GPUTextureViewUsageFlag::e_uav)
+    if (FLAG_IDENTITY(info.usage, GPUTextureViewUsage::e_uav))
     {
         // all cube map will be used as image 2d array for image load / store ops
         if (view_create_info.viewType == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY || view_create_info.viewType == VK_IMAGE_VIEW_TYPE_CUBE)

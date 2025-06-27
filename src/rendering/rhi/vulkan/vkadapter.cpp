@@ -244,23 +244,23 @@ void VKAdapter::record_adapter_detail()
 #endif
 #if VK_EXT_extended_dynamic_state
     if (dynamic_state_features.extendedDynamicState)
-        m_adapter_detail.dynamic_states |= GPUDynamicStateFlag::e_tier1;
+        m_adapter_detail.dynamic_states |= GPUDynamicState::e_tier1;
 #endif
-#define DYNAMIC_STATES_ADD(feature, flag) m_adapter_detail.dynamic_states |= feature ? flag : GPUDynamicStateFlag::e_undefined;
+#define DYNAMIC_STATES_ADD(feature, flag) m_adapter_detail.dynamic_states |= feature ? flag : GPUDynamicState::e_undefined;
 #if VK_EXT_extended_dynamic_state2
     if (dynamic_state_2_features.extendedDynamicState2)
     {
-        m_adapter_detail.dynamic_states |= GPUDynamicStateFlag::e_raster_discard;
-        m_adapter_detail.dynamic_states |= GPUDynamicStateFlag::e_depth_bias;
-        m_adapter_detail.dynamic_states |= GPUDynamicStateFlag::e_primitive_restart;
+        m_adapter_detail.dynamic_states |= GPUDynamicState::e_raster_discard;
+        m_adapter_detail.dynamic_states |= GPUDynamicState::e_depth_bias;
+        m_adapter_detail.dynamic_states |= GPUDynamicState::e_primitive_restart;
     }
 
-    DYNAMIC_STATES_ADD(dynamic_state_2_features.extendedDynamicState2LogicOp, GPUDynamicStateFlag::e_logic_op);
-    DYNAMIC_STATES_ADD(dynamic_state_2_features.extendedDynamicState2PatchControlPoints, GPUDynamicStateFlag::e_patch_control_points);
+    DYNAMIC_STATES_ADD(dynamic_state_2_features.extendedDynamicState2LogicOp, GPUDynamicState::e_logic_op);
+    DYNAMIC_STATES_ADD(dynamic_state_2_features.extendedDynamicState2PatchControlPoints, GPUDynamicState::e_patch_control_points);
 #endif
 #if VK_EXT_extended_dynamic_state3
-    DYNAMIC_STATES_ADD(dynamic_state_3_features.extendedDynamicState3TessellationDomainOrigin, GPUDynamicStateFlag::e_tessellation_domain_origin);
-    DYNAMIC_STATES_ADD(dynamic_state_3_features.extendedDynamicState3DepthClampEnable, GPUDynamicStateFlag::e_depth_clip_enable);
+    DYNAMIC_STATES_ADD(dynamic_state_3_features.extendedDynamicState3TessellationDomainOrigin, GPUDynamicState::e_tessellation_domain_origin);
+    DYNAMIC_STATES_ADD(dynamic_state_3_features.extendedDynamicState3DepthClampEnable, GPUDynamicState::e_depth_clip_enable);
     // todo: add more dynamic state
 
 #endif

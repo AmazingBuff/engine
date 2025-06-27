@@ -96,16 +96,16 @@ void VKDescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_t 
 
         if (resource)
         {
-            switch (static_cast<GPUResourceTypeFlag>(resource->resource_type))
+            switch (resource->resource_type)
             {
-            case GPUResourceTypeFlag::e_rw_texture:
-            case GPUResourceTypeFlag::e_texture:
+            case GPUResourceType::e_rw_texture:
+            case GPUResourceType::e_texture:
             {
                 for (uint32_t j = 0; j < data.array_count; ++j)
                 {
                     VKTextureView const* texture_view = static_cast<VKTextureView const*>(data.textures[j]);
                     VulkanDescriptorUpdateData& update_data = m_update_data[resource->binding + j];
-                    if (resource->resource_type == GPUResourceTypeFlag::e_rw_texture)
+                    if (resource->resource_type == GPUResourceType::e_rw_texture)
                     {
                         update_data.image_info.imageView = texture_view->m_uav_view;
                         update_data.image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -119,7 +119,7 @@ void VKDescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_t 
                 }
                 break;
             }
-            case GPUResourceTypeFlag::e_sampler:
+            case GPUResourceType::e_sampler:
             {
                 for (uint32_t j = 0; j < data.array_count; ++j)
                 {
@@ -129,11 +129,11 @@ void VKDescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_t 
                 }
                 break;
             }
-            case GPUResourceTypeFlag::e_uniform_buffer:
-            case GPUResourceTypeFlag::e_buffer:
-            case GPUResourceTypeFlag::e_buffer_raw:
-            case GPUResourceTypeFlag::e_rw_buffer:
-            case GPUResourceTypeFlag::e_rw_buffer_raw:
+            case GPUResourceType::e_uniform_buffer:
+            case GPUResourceType::e_buffer:
+            case GPUResourceType::e_buffer_raw:
+            case GPUResourceType::e_rw_buffer:
+            case GPUResourceType::e_rw_buffer_raw:
             {
                 for (uint32_t j = 0; j < data.array_count; ++j)
                 {

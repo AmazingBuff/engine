@@ -28,9 +28,9 @@ void check_format_support(VkImageUsageFlags usage, GPUAdapter::GPUFormatSupport 
 
 VkImageType VKTexture::transfer_image_type(GPUTextureCreateInfo const& info)
 {
-    if (info.flags & GPUTextureFlagsFlag::e_force_2d)
+    if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_force_2d))
         return VK_IMAGE_TYPE_2D;
-    else if (info.flags & GPUTextureFlagsFlag::e_force_3d)
+    else if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_force_3d))
         return VK_IMAGE_TYPE_3D;
     else
     {
@@ -83,19 +83,19 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
     };
 
     // usage
-    if (info.type & GPUResourceTypeFlag::e_render_target)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_render_target))
         image_create_info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     else if (is_depth_stencil_format(info.format))
         image_create_info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-    if ((info.type & GPUResourceTypeFlag::e_texture_cube) == GPUResourceTypeFlag::e_texture_cube)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_texture_cube))
         image_create_info.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     if (image_create_info.imageType == VK_IMAGE_TYPE_3D)
         image_create_info.flags |= VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT_KHR;
 
     if (image_create_info.usage & VK_IMAGE_USAGE_SAMPLED_BIT || image_create_info.usage & VK_IMAGE_USAGE_STORAGE_BIT)
         image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    if (info.flags & GPUTextureFlagsFlag::e_tiled_resource)
+    if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_tiled_resource))
     {
         image_create_info.flags |= VK_IMAGE_CREATE_SPARSE_BINDING_BIT;
         image_create_info.flags |= VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT;
@@ -110,14 +110,14 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
 
     bool is_allocation_dedicated = false;
     bool can_alias_alloc = false;
-    if (info.flags & GPUTextureFlagsFlag::e_aliasing_resource || info.flags & GPUTextureFlagsFlag::e_tiled_resource)
+    if (info.flags & GPUTextureFlag::e_aliasing_resource || info.flags & GPUTextureFlag::e_tiled_resource)
         VK_CHECK_RESULT(vk_device->m_device_table.vkCreateImage(vk_device->m_device, &image_create_info, VK_Allocation_Callbacks_Ptr, &m_image))
     else
     {
         VmaAllocationCreateInfo allocation_create_info{
             .usage = VMA_MEMORY_USAGE_GPU_ONLY,
         };
-        if (info.flags & GPUTextureFlagsFlag::e_dedicated)
+        if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_dedicated))
             allocation_create_info.flags |= VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
         allocation_create_info.flags |= VMA_ALLOCATION_CREATE_CAN_ALIAS_BIT;
 
@@ -129,7 +129,7 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
     }
 
     // fill tile info
-    if (info.flags & GPUTextureFlagsFlag::e_tiled_resource)
+    if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_tiled_resource))
     {
         // todo: may have some problems
         VkMemoryRequirements sparse_memory_requirements;
@@ -217,9 +217,9 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
 
     // fill
     m_info->aspect_mask = transfer_image_aspect(image_create_info.format, true);
-    m_info->owns_image = info.flags & GPUTextureFlagsFlag::e_aliasing_resource ? 0 : 1;
+    m_info->owns_image = FLAG_IDENTITY(info.flags, GPUTextureFlag::e_aliasing_resource) ? 0 : 1;
     m_info->is_allocation_dedicated = is_allocation_dedicated;
-    m_info->is_aliasing = info.flags & GPUTextureFlagsFlag::e_aliasing_resource ? 1 : 0;
+    m_info->is_aliasing = FLAG_IDENTITY(info.flags, GPUTextureFlag::e_aliasing_resource) ? 1 : 0;
     m_info->can_alias = can_alias_alloc || m_info->is_aliasing;
     m_info->sample_count = info.sample_count;
     m_info->width = info.width;
@@ -227,15 +227,16 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
     m_info->depth = info.depth;
     m_info->mip_levels = info.mip_levels;
     m_info->array_layers = info.array_layers;
-    m_info->is_cube = (info.type & GPUResourceTypeFlag::e_texture_cube) == GPUResourceTypeFlag::e_texture_cube;
+    m_info->is_cube = FLAG_IDENTITY(info.type, GPUResourceType::e_texture_cube);
     m_info->format = info.format;
-    m_info->state = GPUResourceStateFlag::e_undefined;
+    m_info->state = GPUResourceState::e_undefined;
 
     // transfer image layout
     vk_device->m_internal_command_pool->reset();
     vk_device->m_internal_command_buffer->begin_command();
     GPUTextureBarrier barrier{
         .texture = this,
+        .src_state = GPUResourceState::e_undefined,
         .dst_state = info.state,
     };
     GPUResourceBarrierInfo barrier_info{

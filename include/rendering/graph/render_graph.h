@@ -9,15 +9,16 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-using RenderGraphPassSetup = Functional<void(RenderSystem*)>;
-using RenderGraphPassExecute = Functional<void(RenderView*)>;
-
 class RenderGraph
 {
 public:
+    RenderGraph() : m_ref_render_system(nullptr) {}
     virtual ~RenderGraph() = default;
 
     virtual void add_pass(const char* pass_name, RenderGraphPassSetup&& setup, RenderGraphPassExecute&& execute) = 0;
+    virtual void compile() = 0;
+protected:
+    RenderSystem const* m_ref_render_system;
 };
 
 AMAZING_NAMESPACE_END

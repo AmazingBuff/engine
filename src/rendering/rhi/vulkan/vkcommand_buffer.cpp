@@ -240,21 +240,21 @@ void VKCommandBuffer::begin_query(GPUQueryPool const* pool, GPUQueryInfo const& 
     VKQueryPool const* vk_query_pool = static_cast<VKQueryPool const*>(pool);
 
     VkPipelineStageFlagBits pipeline_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    if (info.shader_stage == GPUShaderStageFlag::e_vertex)
+    if (info.shader_stage == GPUShaderStage::e_vertex)
         pipeline_stage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
-    if (info.shader_stage == GPUShaderStageFlag::e_tessellation_control)
+    if (info.shader_stage == GPUShaderStage::e_tessellation_control)
         pipeline_stage = VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
-    if (info.shader_stage == GPUShaderStageFlag::e_tessellation_evaluation)
+    if (info.shader_stage == GPUShaderStage::e_tessellation_evaluation)
         pipeline_stage = VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
-    if (info.shader_stage == GPUShaderStageFlag::e_geometry)
+    if (info.shader_stage == GPUShaderStage::e_geometry)
         pipeline_stage = VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-    if (info.shader_stage == GPUShaderStageFlag::e_fragment)
+    if (info.shader_stage == GPUShaderStage::e_fragment)
         pipeline_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    if (info.shader_stage == GPUShaderStageFlag::e_compute)
+    if (info.shader_stage == GPUShaderStage::e_compute)
         pipeline_stage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-    if (info.shader_stage == GPUShaderStageFlag::e_ray_tracing)
+    if (info.shader_stage == GPUShaderStage::e_ray_tracing)
         pipeline_stage = VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
-    if (info.shader_stage == GPUShaderStageFlag::e_all_graphics)
+    if (info.shader_stage == GPUShaderStage::e_all_graphics)
         pipeline_stage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
     switch (vk_query_pool->m_query_type)
@@ -307,8 +307,8 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
             buffer_barrier[i].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
             buffer_barrier[i].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         }
-        if (barrier.src_state == GPUResourceStateFlag::e_unordered_access &&
-            barrier.dst_state == GPUResourceStateFlag::e_unordered_access)
+        if (barrier.src_state == GPUResourceState::e_unordered_access &&
+            barrier.dst_state == GPUResourceState::e_unordered_access)
         {
             buffer_barrier[i].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
             buffer_barrier[i].dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
@@ -336,12 +336,12 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         image_barrier[i].subresourceRange.levelCount = barrier.subresource_barrier ? 1 : VK_REMAINING_MIP_LEVELS;
         image_barrier[i].subresourceRange.baseArrayLayer = barrier.subresource_barrier ? barrier.array_layer : 0;
         image_barrier[i].subresourceRange.layerCount = barrier.subresource_barrier ? 1 : VK_REMAINING_ARRAY_LAYERS;
-        if (barrier.queue_acquire && barrier.src_state != GPUResourceStateFlag::e_undefined)
+        if (barrier.queue_acquire && barrier.src_state != GPUResourceState::e_undefined)
         {
             image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
             image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
         }
-        else if (barrier.queue_release && barrier.src_state != GPUResourceStateFlag::e_undefined)
+        else if (barrier.queue_release && barrier.src_state != GPUResourceState::e_undefined)
         {
             image_barrier[i].srcQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(vk_queue->m_type)];
             image_barrier[i].dstQueueFamilyIndex = vk_adapter->m_queue_family_indices[to_underlying(barrier.queue_type)];
@@ -352,8 +352,8 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
             image_barrier[i].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         }
 
-        if (barrier.src_state == GPUResourceStateFlag::e_unordered_access &&
-            barrier.dst_state == GPUResourceStateFlag::e_unordered_access)
+        if (barrier.src_state == GPUResourceState::e_unordered_access &&
+            barrier.dst_state == GPUResourceState::e_unordered_access)
         {
             image_barrier[i].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
             image_barrier[i].dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;

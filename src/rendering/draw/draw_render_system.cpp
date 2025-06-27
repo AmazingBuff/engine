@@ -3,10 +3,20 @@
 //
 
 #include "draw_render_system.h"
+#include "../../../include/rendering/render_entity.h"
 #include "rendering/acceleration/render_driver.h"
-#include "rendering/acceleration/render_asset_manager.h"
+#include "rendering/acceleration/render_geometry.h"
+#include "rendering/graph/resource/render_graph_resources.h"
 
 AMAZING_NAMESPACE_BEGIN
+
+static RenderEntity generate_render_entity()
+{
+    static std::atomic<uint32_t> id = 1;
+    RenderEntity ret(id.load(std::memory_order_acquire));
+    ++id;
+    return ret;
+}
 
 DrawRenderSystem::DrawRenderSystem(RenderSystemCreateInfo const& info)
 {
@@ -15,29 +25,46 @@ DrawRenderSystem::DrawRenderSystem(RenderSystemCreateInfo const& info)
         .frame_count = RENDER_Frame_Count,
     };
     m_render_driver = PLACEMENT_NEW(RenderDriver, sizeof(RenderDriver), driver_info);
-
-    m_render_asset_manager = PLACEMENT_NEW(RenderAssetManager, sizeof(RenderAssetManager), m_render_driver);
 }
 
 DrawRenderSystem::~DrawRenderSystem()
 {
-    PLACEMENT_DELETE(RenderAssetManager, m_render_asset_manager);
+    for (auto& [entity, geometry] : m_render_geometries)
+        m_render_driver->destroy_render_geometry(geometry);
+    for (auto& [entity, pipeline] : m_render_graph_pipelines)
+        m_render_driver->destroy_pipeline(pipeline);
+
     PLACEMENT_DELETE(RenderDriver, m_render_driver);
 }
 
 RenderEntity DrawRenderSystem::import_scene(Scene const& scene)
 {
-    return m_render_asset_manager->import_scene(scene);
+    RenderGeometry geometry = m_render_driver->import_render_geometry(scene);
+    RenderEntity entity = generate_render_entity();
+    m_render_geometries[entity] = std::move(geometry);
+    return entity;
 }
 
 RenderEntity DrawRenderSystem::import_scene(const char* file)
 {
-    return m_render_asset_manager->import_scene(file);
+    RenderGeometry geometry = m_render_driver->import_render_geometry(file);
+    RenderEntity entity = generate_render_entity();
+    m_render_geometries[entity] = std::move(geometry);
+    return entity;
+}
+
+RenderEntity DrawRenderSystem::create_pipeline(RenderGraphPipelineCreateInfo const& info)
+{
+    RenderGraphPipeline pipeline = m_render_driver->create_pipeline(info);
+    RenderEntity entity = generate_render_entity();
+    m_render_graph_pipelines[entity] = std::move(pipeline);
+    return entity;
 }
 
 RenderEntity DrawRenderSystem::create_texture(RenderGraphTextureCreateInfo const& info)
 {
-    return {};
+    RenderEntity entity = generate_render_entity();
+    return entity;
 }
 
 AMAZING_NAMESPACE_END

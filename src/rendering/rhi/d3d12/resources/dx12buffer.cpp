@@ -11,6 +11,9 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+// for compatibility
+FLAG_ENUM(D3D12MA::ALLOCATION_FLAGS);
+
 DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info) : m_resource(nullptr), m_allocation(nullptr), m_gpu_address(0), m_handle{}, m_srv_offset(0), m_uav_offset(0)
 {
     DX12Device const* dx12_device = static_cast<DX12Device const*>(device);
@@ -18,7 +21,7 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
 
     // allocate info
     size_t allocate_size = info.size;
-    if (info.type & GPUResourceTypeFlag::e_uniform_buffer)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_uniform_buffer))
     {
         size_t min_alignment = dx12_adapter->m_adapter_detail.uniform_buffer_alignment;
         allocate_size = align_to(allocate_size, min_alignment);
@@ -40,7 +43,7 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
         .Flags = D3D12_RESOURCE_FLAG_NONE
     };
 
-    if (info.type & GPUResourceTypeFlag::e_rw_buffer)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_rw_buffer))
         buffer_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     if (info.usage == GPUMemoryUsage::e_gpu_to_cpu)
         buffer_desc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
@@ -56,18 +59,17 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
 
     GPUResourceState state = info.state;
     if (info.usage == GPUMemoryUsage::e_cpu_to_gpu || info.usage == GPUMemoryUsage::e_cpu_only)
-        state = GPUResourceStateFlag::e_generic_read;
+        state = GPUResourceState::e_generic_read;
     else if (info.usage == GPUMemoryUsage::e_gpu_to_cpu)
-        state = GPUResourceStateFlag::e_copy_destination;
+        state = GPUResourceState::e_copy_destination;
 
     D3D12_RESOURCE_STATES buffer_state = transfer_resource_state(state);
     D3D12MA::ALLOCATION_DESC buffer_allocation_desc{
         .HeapType = transfer_heap_type(info.usage),
     };
 
-    if (info.flags & GPUBufferFlagsFlag::e_dedicated)
+    if (FLAG_IDENTITY(info.flags, GPUBufferFlag::e_dedicated))
         buffer_allocation_desc.Flags |= D3D12MA::ALLOCATION_FLAG_COMMITTED;
-
 
     if (buffer_allocation_desc.HeapType != D3D12_HEAP_TYPE_DEFAULT &&
         (buffer_desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
@@ -89,7 +91,7 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
     }
 
     void* mapped_data = nullptr;
-    if (info.flags & GPUBufferFlagsFlag::e_persistent_map)
+    if (FLAG_IDENTITY(info.flags, GPUBufferFlag::e_persistent_map))
     {
         if (FAILED(m_resource->Map(0, nullptr, &mapped_data)))
             RENDERING_LOG_WARNING("map buffer failed!");
@@ -99,13 +101,13 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
 
     // create descriptors
     DX12DescriptorHeap::D3D12DescriptorHeap* heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
-    uint32_t handle_count = ((info.type & GPUResourceTypeFlag::e_uniform_buffer) ? 1 : 0) +
-        ((info.type & GPUResourceTypeFlag::e_buffer) ? 1 : 0) +
-        ((info.type & GPUResourceTypeFlag::e_rw_buffer) ? 1 : 0);
+    uint32_t handle_count = (FLAG_IDENTITY(info.type, GPUResourceType::e_uniform_buffer) ? 1 : 0) +
+        (FLAG_IDENTITY(info.type, GPUResourceType::e_buffer) ? 1 : 0) +
+        (FLAG_IDENTITY(info.type, GPUResourceType::e_rw_buffer) ? 1 : 0);
     m_handle = DX12DescriptorHeap::consume_descriptor_handle(heap, handle_count).cpu;
 
     // cbv
-    if (info.type & GPUResourceTypeFlag::e_uniform_buffer)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_uniform_buffer))
     {
         D3D12_CPU_DESCRIPTOR_HANDLE cbv = m_handle;
         m_srv_offset = heap->descriptor_size;
@@ -118,7 +120,7 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
     }
 
     // srv
-    if (info.type & GPUResourceTypeFlag::e_buffer)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_buffer))
     {
         D3D12_CPU_DESCRIPTOR_HANDLE srv = { m_handle.ptr + m_srv_offset };
         m_uav_offset = m_srv_offset + heap->descriptor_size;
@@ -135,7 +137,7 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
             }
         };
 
-        if ((info.type & GPUResourceTypeFlag::e_buffer_raw) == GPUResourceTypeFlag::e_buffer_raw)
+        if (FLAG_IDENTITY(info.type, GPUResourceType::e_buffer_raw))
         {
             if (info.format != GPUFormat::e_undefined)
                 RENDERING_LOG_WARNING("raw buffer use r32 typeless format. format will be ignored!");
@@ -151,7 +153,7 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
     }
 
     // uav
-    if (info.type & GPUResourceTypeFlag::e_rw_buffer)
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_rw_buffer))
     {
         D3D12_CPU_DESCRIPTOR_HANDLE uav = { m_handle.ptr + m_uav_offset };
 
@@ -167,7 +169,7 @@ DX12Buffer::DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info)
             },
         };
 
-        if ((info.type & GPUResourceTypeFlag::e_rw_buffer_raw) == GPUResourceTypeFlag::e_rw_buffer_raw)
+        if (FLAG_IDENTITY(info.type, GPUResourceType::e_rw_buffer_raw))
         {
             if (info.format != GPUFormat::e_undefined)
                 RENDERING_LOG_WARNING("raw buffer use r32 typeless format. format will be ignored!");
@@ -227,9 +229,9 @@ DX12Buffer::~DX12Buffer()
     DX12Device const* dx12_device = static_cast<DX12Device const*>(m_ref_device);
     if (m_handle.ptr != 0)
     {
-        uint32_t handle_count = ((m_info->type & GPUResourceTypeFlag::e_uniform_buffer) ? 1 : 0) +
-            ((m_info->type & GPUResourceTypeFlag::e_buffer) ? 1 : 0) +
-            ((m_info->type & GPUResourceTypeFlag::e_rw_buffer) ? 1 : 0);
+        uint32_t handle_count = (FLAG_IDENTITY(m_info->type, GPUResourceType::e_uniform_buffer) ? 1 : 0) +
+            (FLAG_IDENTITY(m_info->type, GPUResourceType::e_buffer) ? 1 : 0) +
+            (FLAG_IDENTITY(m_info->type, GPUResourceType::e_rw_buffer) ? 1 : 0);
         DX12DescriptorHeap::return_descriptor_handle(dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], m_handle, handle_count);
     }
 
@@ -240,7 +242,7 @@ DX12Buffer::~DX12Buffer()
 
 void DX12Buffer::map(size_t offset, size_t size, const void* data)
 {
-    if (m_info->flags & GPUBufferFlagsFlag::e_persistent_map)
+    if (FLAG_IDENTITY(m_info->flags, GPUBufferFlag::e_persistent_map))
         memcpy(static_cast<uint8_t*>(m_info->mapped_data) + offset, data, size);
     else
     {

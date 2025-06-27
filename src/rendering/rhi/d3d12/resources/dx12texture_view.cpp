@@ -16,14 +16,14 @@ DX12TextureView::DX12TextureView(GPUTextureViewCreateInfo const& info) : m_rtv_d
     DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_texture->m_ref_device);
 
     const GPUTextureViewUsage usage = info.usage;
-    uint32_t handle_count = ((usage & GPUTextureViewUsageFlag::e_srv) ? 1 : 0) + ((usage & GPUTextureViewUsageFlag::e_uav) ? 1 : 0);
+    uint32_t handle_count = (FLAG_IDENTITY(usage, GPUTextureViewUsage::e_srv) ? 1 : 0) + (FLAG_IDENTITY(usage, GPUTextureViewUsage::e_uav) ? 1 : 0);
     if (handle_count > 0)
     {
         DX12DescriptorHeap::D3D12DescriptorHeap* heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
         m_srv_uva_handle = DX12DescriptorHeap::consume_descriptor_handle(heap, handle_count).cpu;
 
         // srv
-        if (usage & GPUTextureViewUsageFlag::e_srv)
+        if (FLAG_IDENTITY(usage, GPUTextureViewUsage::e_srv))
         {
             D3D12_CPU_DESCRIPTOR_HANDLE srv = m_srv_uva_handle;
             D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{
@@ -112,7 +112,7 @@ DX12TextureView::DX12TextureView(GPUTextureViewCreateInfo const& info) : m_rtv_d
         }
 
         // uav
-        if (usage & GPUTextureViewUsageFlag::e_uav)
+        if (FLAG_IDENTITY(usage, GPUTextureViewUsage::e_uav))
         {
             D3D12_CPU_DESCRIPTOR_HANDLE      uav{ m_srv_uva_handle.ptr + m_uav_offset };
             D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc{
@@ -168,7 +168,7 @@ DX12TextureView::DX12TextureView(GPUTextureViewCreateInfo const& info) : m_rtv_d
     }
 
     // rtv dsv
-    if (usage & GPUTextureViewUsageFlag::e_rtv_dsv)
+    if (FLAG_IDENTITY(usage, GPUTextureViewUsage::e_rtv_dsv))
     {
         const bool is_dsv = is_depth_stencil_format(info.format);
         if (is_dsv)
@@ -301,7 +301,7 @@ DX12TextureView::~DX12TextureView()
     DX12Texture const* dx12_texture = static_cast<DX12Texture const*>(m_ref_texture);
     DX12Device const* dx12_device = static_cast<DX12Device const*>(dx12_texture->m_ref_device);
 
-    if (m_rtv_dsv_handle.ptr != 0 && m_usage & GPUTextureViewUsageFlag::e_rtv_dsv)
+    if (m_rtv_dsv_handle.ptr != 0 && FLAG_IDENTITY(m_usage, GPUTextureViewUsage::e_rtv_dsv))
     {
         DX12DescriptorHeap::D3D12DescriptorHeap* heap;
         if (is_depth_stencil_format(m_format))
@@ -313,7 +313,7 @@ DX12TextureView::~DX12TextureView()
 
     if (m_srv_uva_handle.ptr != 0)
     {
-        uint32_t handle_count = ((m_usage & GPUTextureViewUsageFlag::e_srv) ? 1 : 0) + ((m_usage & GPUTextureViewUsageFlag::e_uav) ? 1 : 0);
+        uint32_t handle_count = (FLAG_IDENTITY(m_usage, GPUTextureViewUsage::e_srv) ? 1 : 0) + (FLAG_IDENTITY(m_usage, GPUTextureViewUsage::e_uav) ? 1 : 0);
         DX12DescriptorHeap::D3D12DescriptorHeap* heap = dx12_device->m_descriptor_heap->m_cpu_heaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
         DX12DescriptorHeap::return_descriptor_handle(heap, m_srv_uva_handle, handle_count);
     }

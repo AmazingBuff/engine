@@ -588,10 +588,10 @@ void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
         GPUMemoryUsage memory_usage = buffer->m_info->memory_usage;
         GPUResourceType resource_type = buffer->m_info->type;
         if (memory_usage == GPUMemoryUsage::e_gpu_only || memory_usage == GPUMemoryUsage::e_gpu_to_cpu ||
-            (memory_usage == GPUMemoryUsage::e_cpu_to_gpu && (resource_type & GPUResourceTypeFlag::e_rw_buffer)))
+            (memory_usage == GPUMemoryUsage::e_cpu_to_gpu && !!(resource_type & GPUResourceType::e_rw_buffer)))
         {
-            if (barrier.src_state == GPUResourceStateFlag::e_unordered_access &&
-                barrier.dst_state == GPUResourceStateFlag::e_unordered_access)
+            if (barrier.src_state == GPUResourceState::e_unordered_access &&
+                barrier.dst_state == GPUResourceState::e_unordered_access)
             {
                 resource.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
                 resource.UAV.pResource = buffer->m_resource;
@@ -621,8 +621,8 @@ void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
     {
         D3D12_RESOURCE_BARRIER& resource = resource_barriers[transition_count];
         DX12Texture const* texture = static_cast<DX12Texture const*>(barrier.texture);
-        if (barrier.src_state == GPUResourceStateFlag::e_unordered_access &&
-            barrier.dst_state == GPUResourceStateFlag::e_unordered_access)
+        if (barrier.src_state == GPUResourceState::e_unordered_access &&
+            barrier.dst_state == GPUResourceState::e_unordered_access)
         {
             resource.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             resource.UAV.pResource = texture->m_resource;
@@ -649,7 +649,7 @@ void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
 
             if (resource.Transition.StateBefore == D3D12_RESOURCE_STATE_COMMON &&
                 resource.Transition.StateAfter == D3D12_RESOURCE_STATE_COMMON &&
-                (barrier.src_state == GPUResourceStateFlag::e_present || barrier.dst_state == GPUResourceStateFlag::e_present))
+                (barrier.src_state == GPUResourceState::e_present || barrier.dst_state == GPUResourceState::e_present))
                 continue;
         }
         texture->m_info->state = barrier.dst_state;
@@ -689,14 +689,14 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
         GPUShaderLibraryCreateInfo shader_library_info{
             .code = reinterpret_cast<uint32_t const*>(shader),
             .code_size = array_size(DX12_Mipmap_Shader),
-            .stage = GPUShaderStageFlag::e_compute
+            .stage = GPUShaderStage::e_compute
         };
         DX12ShaderLibrary compute_shader(dx12_device, shader_library_info);
 
         GPUShaderEntry compute_entry{
             .library = &compute_shader,
             .entry = "mipmap",
-            .stage = GPUShaderStageFlag::e_compute,
+            .stage = GPUShaderStage::e_compute,
         };
 
         GPUSamplerCreateInfo sampler_info{
@@ -731,7 +731,7 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
 
         uint32_t layer_count = dx12_texture->m_info->array_layers;
         uint32_t mip_levels = dx12_texture->m_info->mip_levels;
-        if (src_state != GPUResourceStateFlag::e_non_pixel_shader_resource)
+        if (src_state != GPUResourceState::e_non_pixel_shader_resource)
         {
             for (uint32_t layer = 0; layer < layer_count; layer++)
             {
@@ -864,7 +864,7 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
             }
         }
 
-        if (dst_state != GPUResourceStateFlag::e_non_pixel_shader_resource)
+        if (dst_state != GPUResourceState::e_non_pixel_shader_resource)
         {
             D3D12_RESOURCE_BARRIER barrier{
                 .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,

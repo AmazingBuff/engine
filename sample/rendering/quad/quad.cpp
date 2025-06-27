@@ -38,17 +38,17 @@ void create_pipeline()
         .sample_quality = 0,
         .sample_count = GPUSampleCount::e_1,
         .format = GPUFormat::e_r8g8b8a8_unorm,
-        .state = GPUResourceStateFlag::e_copy_destination,
-        .type = GPUResourceTypeFlag::e_texture,
-        .flags = GPUTextureFlagsFlag::e_dedicated,
+        .state = GPUResourceState::e_copy_destination,
+        .type = GPUResourceType::e_texture,
+        .flags = GPUTextureFlag::e_dedicated,
     };
     texture = GPU_create_texture(t_device, texture_create_info);
 
     GPUTextureViewCreateInfo texture_view_create_info{
         .texture = texture,
         .format = GPUFormat::e_r8g8b8a8_unorm,
-        .usage = GPUTextureViewUsageFlag::e_srv,
-        .aspect = GPUTextureViewAspectFlag::e_color,
+        .usage = GPUTextureViewUsage::e_srv,
+        .aspect = GPUTextureViewAspect::e_color,
         .type = GPUTextureType::e_2d,
         .base_array_layer = 0,
         .array_layers = 1,
@@ -60,7 +60,7 @@ void create_pipeline()
     GPUBufferCreateInfo buffer_create_info{
         .size = image.data.size(),
         .usage = GPUMemoryUsage::e_cpu_only,
-        .flags = GPUBufferFlagsFlag::e_persistent_map,
+        .flags = GPUBufferFlag::e_persistent_map,
     };
     GPUBuffer* buffer = GPU_create_buffer(t_device, buffer_create_info);
     buffer->map(0, image.data.size(), image.data.data());
@@ -80,20 +80,20 @@ void create_pipeline()
     // graphics pipeline
     Vector<char> shader = read_file(RES_DIR"shader/quad/quad.hlsl");
 
-    Vector<char> vs_compile = compile_shader(shader, L"vs", GPUShaderStageFlag::e_vertex);
-    Vector<char> fs_compile = compile_shader(shader, L"ps", GPUShaderStageFlag::e_fragment);
+    Vector<char> vs_compile = compile_shader(shader, L"vs", GPUShaderStage::e_vertex);
+    Vector<char> fs_compile = compile_shader(shader, L"ps", GPUShaderStage::e_fragment);
 
     GPUShaderLibraryCreateInfo vs_desc{
         .name = "VertexShaderLibrary",
         .code = reinterpret_cast<uint32_t*>(vs_compile.data()),
         .code_size = static_cast<uint32_t>(vs_compile.size()),
-        .stage = GPUShaderStageFlag::e_vertex,
+        .stage = GPUShaderStage::e_vertex,
     };
     GPUShaderLibraryCreateInfo fs_desc{
         .name = "FragmentShaderLibrary",
         .code = reinterpret_cast<uint32_t*>(fs_compile.data()),
         .code_size = static_cast<uint32_t>(fs_compile.size()),
-        .stage = GPUShaderStageFlag::e_fragment,
+        .stage = GPUShaderStage::e_fragment,
     };
 
     GPUShaderLibrary* vertex_shader = GPU_create_shader_library(t_device, vs_desc);
@@ -103,13 +103,13 @@ void create_pipeline()
     GPUShaderEntry vertex_shader_entry{
         .library = vertex_shader,
         .entry = "vs",
-        .stage = GPUShaderStageFlag::e_vertex,
+        .stage = GPUShaderStage::e_vertex,
     };
 
     GPUShaderEntry fragment_shader_entry{
         .library = fragment_shader,
         .entry = "ps",
-        .stage = GPUShaderStageFlag::e_fragment,
+        .stage = GPUShaderStage::e_fragment,
     };
 
     GPURootSignatureCreateInfo rs_desc{
@@ -130,7 +130,7 @@ void create_pipeline()
     GPUDescriptorData texture_set_data;
     texture_set_data.array_count = 1;
     texture_set_data.textures = &texture_view;
-    texture_set_data.resource_type = GPUResourceTypeFlag::e_texture;
+    texture_set_data.resource_type = GPUResourceType::e_texture;
     texture_set_data.binding = 0;
     texture_set->update(&texture_set_data, 1);
 
@@ -142,7 +142,7 @@ void create_pipeline()
         GPUDescriptorData sampler_set_data;
         sampler_set_data.array_count = 1;
         sampler_set_data.samplers = &sampler;
-        sampler_set_data.resource_type = GPUResourceTypeFlag::e_sampler;
+        sampler_set_data.resource_type = GPUResourceType::e_sampler;
         sampler_set_data.binding = 0;
         sampler_set->update(&sampler_set_data, 1);
     }
@@ -212,7 +212,8 @@ void draw(SDL_Window* window)
         // barrier
         GPUTextureBarrier draw_barrier{
             .texture = texture,
-            .dst_state = GPUResourceStateFlag::e_render_target,
+            .src_state = GPUResourceState::e_undefined,
+            .dst_state = GPUResourceState::e_render_target,
         };
         GPUResourceBarrierInfo barrier_info{
             .texture_barriers = {draw_barrier}
@@ -249,7 +250,8 @@ void draw(SDL_Window* window)
         // barrier
         GPUTextureBarrier present_barrier{
             .texture = texture,
-            .dst_state = GPUResourceStateFlag::e_present,
+            .src_state = GPUResourceState::e_render_target,
+            .dst_state = GPUResourceState::e_present,
         };
         GPUResourceBarrierInfo barrier{
             .texture_barriers = {present_barrier}

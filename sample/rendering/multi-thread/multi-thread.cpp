@@ -59,43 +59,39 @@ void create_pipeline()
         .sample_quality = 0,
         .sample_count = GPUSampleCount::e_1,
         .format = Backend_Format,
-        .state = GPUResourceStateFlag::e_render_target,
-        .type = GPUResourceTypeFlag::e_render_target,
-        .flags = GPUTextureFlagsFlag::e_dedicated
+        .state = GPUResourceState::e_render_target,
+        .type = GPUResourceType::e_render_target | GPUResourceType::e_texture | GPUResourceType::e_rw_texture,
+        .flags = GPUTextureFlag::e_dedicated
     };
-    texture_create_info.type |= GPUResourceTypeFlag::e_texture;
-    texture_create_info.type |= GPUResourceTypeFlag::e_rw_texture;
     texture = GPU_create_texture(device, texture_create_info);
 
     GPUTextureViewCreateInfo texture_view_create_info{
         .texture = texture,
         .format = Backend_Format,
-        .usage = GPUTextureViewUsageFlag::e_rtv_dsv,
-        .aspect = GPUTextureViewAspectFlag::e_color,
+        .usage = GPUTextureViewUsage::e_rtv_dsv | GPUTextureViewUsage::e_srv | GPUTextureViewUsage::e_uav,
+        .aspect = GPUTextureViewAspect::e_color,
         .type = GPUTextureType::e_2d,
         .base_array_layer = 0,
         .array_layers = 1,
         .base_mip_level = 0,
         .mip_levels = 1
     };
-    texture_view_create_info.usage |= GPUTextureViewUsageFlag::e_srv;
-    texture_view_create_info.usage |= GPUTextureViewUsageFlag::e_uav;
     texture_view = GPU_create_texture_view(texture_view_create_info);
 
     Vector<char> shader = read_file(RES_DIR"shader/triangle/triangle.hlsl");
 
-    Vector<char> vs_compile = compile_shader(shader, L"vs", GPUShaderStageFlag::e_vertex);
-    Vector<char> fs_compile = compile_shader(shader, L"ps", GPUShaderStageFlag::e_fragment);
+    Vector<char> vs_compile = compile_shader(shader, L"vs", GPUShaderStage::e_vertex);
+    Vector<char> fs_compile = compile_shader(shader, L"ps", GPUShaderStage::e_fragment);
 
     GPUShaderLibraryCreateInfo vs_desc{
         .code = reinterpret_cast<uint32_t*>(vs_compile.data()),
         .code_size = static_cast<uint32_t>(vs_compile.size()),
-        .stage = GPUShaderStageFlag::e_vertex,
+        .stage = GPUShaderStage::e_vertex,
     };
     GPUShaderLibraryCreateInfo fs_desc{
         .code = reinterpret_cast<uint32_t*>(fs_compile.data()),
         .code_size = static_cast<uint32_t>(fs_compile.size()),
-        .stage = GPUShaderStageFlag::e_fragment,
+        .stage = GPUShaderStage::e_fragment,
     };
 
     GPUShaderLibrary* vertex_shader = GPU_create_shader_library(device, vs_desc);
@@ -105,13 +101,13 @@ void create_pipeline()
     GPUShaderEntry vertex_shader_entry{
         .library = vertex_shader,
         .entry = "vs",
-        .stage = GPUShaderStageFlag::e_vertex,
+        .stage = GPUShaderStage::e_vertex,
     };
 
     GPUShaderEntry fragment_shader_entry{
         .library = fragment_shader,
         .entry = "ps",
-        .stage = GPUShaderStageFlag::e_fragment,
+        .stage = GPUShaderStage::e_fragment,
     };
 
     GPURootSignatureCreateInfo rs_desc{
@@ -137,12 +133,12 @@ void create_pipeline()
     // compute pipeline
     Vector<char> compute_shader = read_file(RES_DIR"shader/post-processing/blur.hlsl");
 
-    Vector<char> cs_compile = compile_shader(compute_shader, L"mean_blur", GPUShaderStageFlag::e_compute);
+    Vector<char> cs_compile = compile_shader(compute_shader, L"mean_blur", GPUShaderStage::e_compute);
 
     GPUShaderLibraryCreateInfo cs_desc{
         .code = reinterpret_cast<uint32_t*>(cs_compile.data()),
         .code_size = static_cast<uint32_t>(cs_compile.size()),
-        .stage = GPUShaderStageFlag::e_compute,
+        .stage = GPUShaderStage::e_compute,
     };
 
     GPUShaderLibrary* cs = GPU_create_shader_library(device, cs_desc);
@@ -150,7 +146,7 @@ void create_pipeline()
     GPUShaderEntry compute_shader_entry{
         .library = cs,
         .entry = "mean_blur",
-        .stage = GPUShaderStageFlag::e_compute,
+        .stage = GPUShaderStage::e_compute,
     };
 
     GPURootSignatureCreateInfo compute_rs_desc{
@@ -179,25 +175,23 @@ void create_pipeline()
         .sample_quality = 0,
         .sample_count = GPUSampleCount::e_1,
         .format = Backend_Format,
-        .state = GPUResourceStateFlag::e_unordered_access,
-        .type = GPUResourceTypeFlag::e_rw_texture,
-        .flags = GPUTextureFlagsFlag::e_dedicated
+        .state = GPUResourceState::e_unordered_access,
+        .type = GPUResourceType::e_rw_texture | GPUResourceType::e_texture,
+        .flags = GPUTextureFlag::e_dedicated
     };
-    rw_texture_create_info.type |= GPUResourceTypeFlag::e_texture;
     rw_texture = GPU_create_texture(device, rw_texture_create_info);
 
     GPUTextureViewCreateInfo rw_texture_view_create_info{
         .texture = rw_texture,
         .format = Backend_Format,
-        .usage = GPUTextureViewUsageFlag::e_uav,
-        .aspect = GPUTextureViewAspectFlag::e_color,
+        .usage = GPUTextureViewUsage::e_uav | GPUTextureViewUsage::e_srv,
+        .aspect = GPUTextureViewAspect::e_color,
         .type = GPUTextureType::e_2d,
         .base_array_layer = 0,
         .array_layers = 1,
         .base_mip_level = 0,
         .mip_levels = 1
     };
-    rw_texture_view_create_info.usage |= GPUTextureViewUsageFlag::e_srv;
     rw_texture_view = GPU_create_texture_view(rw_texture_view_create_info);
 
     GPUDescriptorSetCreateInfo descriptor_set_create_info{
@@ -208,7 +202,7 @@ void create_pipeline()
     second_compute_srv_set = GPU_create_descriptor_set(descriptor_set_create_info);
 
     GPUDescriptorData descriptor_data{
-        .resource_type = GPUResourceTypeFlag::e_texture,
+        .resource_type = GPUResourceType::e_texture,
         .binding = 0,
         .textures = &texture_view,
         .array_count = 1
@@ -221,7 +215,7 @@ void create_pipeline()
     compute_uav_set = GPU_create_descriptor_set(descriptor_set_create_info);
     second_compute_uav_set = GPU_create_descriptor_set(descriptor_set_create_info);
 
-    descriptor_data.resource_type = GPUResourceTypeFlag::e_rw_texture;
+    descriptor_data.resource_type = GPUResourceType::e_rw_texture;
     descriptor_data.textures = &rw_texture_view;
     compute_uav_set->update(&descriptor_data, 1);
     descriptor_data.textures = &texture_view;
@@ -230,18 +224,18 @@ void create_pipeline()
     // back pipeline
     Vector<char> back_shader = read_file(RES_DIR"shader/quad/quad.hlsl");
 
-    Vector<char> back_vs_compile = compile_shader(back_shader, L"vs", GPUShaderStageFlag::e_vertex);
-    Vector<char> back_fs_compile = compile_shader(back_shader, L"ps", GPUShaderStageFlag::e_fragment);
+    Vector<char> back_vs_compile = compile_shader(back_shader, L"vs", GPUShaderStage::e_vertex);
+    Vector<char> back_fs_compile = compile_shader(back_shader, L"ps", GPUShaderStage::e_fragment);
 
     GPUShaderLibraryCreateInfo back_vs_desc{
         .code = reinterpret_cast<uint32_t*>(back_vs_compile.data()),
         .code_size = static_cast<uint32_t>(back_vs_compile.size()),
-        .stage = GPUShaderStageFlag::e_vertex,
+        .stage = GPUShaderStage::e_vertex,
     };
     GPUShaderLibraryCreateInfo back_fs_desc{
         .code = reinterpret_cast<uint32_t*>(back_fs_compile.data()),
         .code_size = static_cast<uint32_t>(back_fs_compile.size()),
-        .stage = GPUShaderStageFlag::e_fragment,
+        .stage = GPUShaderStage::e_fragment,
     };
 
     GPUShaderLibrary* back_vertex_shader = GPU_create_shader_library(device, back_vs_desc);
@@ -251,13 +245,13 @@ void create_pipeline()
     GPUShaderEntry back_vertex_shader_entry{
         .library = back_vertex_shader,
         .entry = "vs",
-        .stage = GPUShaderStageFlag::e_vertex,
+        .stage = GPUShaderStage::e_vertex,
     };
 
     GPUShaderEntry back_fragment_shader_entry{
         .library = back_fragment_shader,
         .entry = "ps",
-        .stage = GPUShaderStageFlag::e_fragment,
+        .stage = GPUShaderStage::e_fragment,
     };
 
     GPURootSignatureCreateInfo back_rs_desc{
@@ -287,7 +281,7 @@ void create_pipeline()
     GPUDescriptorData back_texture_set_data;
     back_texture_set_data.array_count = 1;
     back_texture_set_data.textures = &texture_view;
-    back_texture_set_data.resource_type = GPUResourceTypeFlag::e_texture;
+    back_texture_set_data.resource_type = GPUResourceType::e_texture;
     back_texture_set_data.binding = 0;
     back_texture_set->update(&back_texture_set_data, 1);
 
@@ -379,8 +373,8 @@ void work_thread()
 
         GPUTextureBarrier compute_barrier{
             .texture = texture,
-            .src_state = GPUResourceStateFlag::e_render_target,
-            .dst_state = GPUResourceStateFlag::e_non_pixel_shader_resource,
+            .src_state = GPUResourceState::e_render_target,
+            .dst_state = GPUResourceState::e_non_pixel_shader_resource,
         };
         GPUResourceBarrierInfo srv_barrier{
             .texture_barriers = {compute_barrier}
@@ -415,13 +409,13 @@ void work_thread()
         // barrier
         GPUTextureBarrier second_srv_barrier{
             .texture = rw_texture,
-            .src_state = GPUResourceStateFlag::e_unordered_access,
-            .dst_state = GPUResourceStateFlag::e_non_pixel_shader_resource,
+            .src_state = GPUResourceState::e_unordered_access,
+            .dst_state = GPUResourceState::e_non_pixel_shader_resource,
         };
         GPUTextureBarrier second_uav_barrier{
             .texture = texture,
-            .src_state = GPUResourceStateFlag::e_non_pixel_shader_resource,
-            .dst_state = GPUResourceStateFlag::e_unordered_access,
+            .src_state = GPUResourceState::e_non_pixel_shader_resource,
+            .dst_state = GPUResourceState::e_unordered_access,
         };
         GPUResourceBarrierInfo second_barrier_info{
             .texture_barriers = {second_srv_barrier, second_uav_barrier}
@@ -509,13 +503,13 @@ void present_thread()
 
         GPUTextureBarrier rw_barrier{
             .texture = texture,
-            .src_state = GPUResourceStateFlag::e_unordered_access,
-            .dst_state = GPUResourceStateFlag::e_pixel_shader_resource,
+            .src_state = GPUResourceState::e_unordered_access,
+            .dst_state = GPUResourceState::e_pixel_shader_resource,
         };
         GPUTextureBarrier back_srv_barrier{
             .texture = back_texture,
-            .src_state = GPUResourceStateFlag::e_undefined,
-            .dst_state = GPUResourceStateFlag::e_render_target,
+            .src_state = GPUResourceState::e_undefined,
+            .dst_state = GPUResourceState::e_render_target,
         };
         GPUResourceBarrierInfo back_barrier{
             .texture_barriers = {rw_barrier, back_srv_barrier}
@@ -548,18 +542,18 @@ void present_thread()
 
         GPUTextureBarrier back_present_barrier{
             .texture = back_texture,
-            .src_state = GPUResourceStateFlag::e_render_target,
-            .dst_state = GPUResourceStateFlag::e_present,
+            .src_state = GPUResourceState::e_render_target,
+            .dst_state = GPUResourceState::e_present,
         };
         GPUTextureBarrier t_barrier{
             .texture = texture,
-            .src_state = GPUResourceStateFlag::e_non_pixel_shader_resource,
-            .dst_state = GPUResourceStateFlag::e_render_target,
+            .src_state = GPUResourceState::e_non_pixel_shader_resource,
+            .dst_state = GPUResourceState::e_render_target,
         };
         GPUTextureBarrier u_barrier{
             .texture = rw_texture,
-            .src_state = GPUResourceStateFlag::e_pixel_shader_resource,
-            .dst_state = GPUResourceStateFlag::e_unordered_access,
+            .src_state = GPUResourceState::e_pixel_shader_resource,
+            .dst_state = GPUResourceState::e_unordered_access,
         };
         GPUResourceBarrierInfo present_barrier{
             .texture_barriers = {back_present_barrier, t_barrier, u_barrier}

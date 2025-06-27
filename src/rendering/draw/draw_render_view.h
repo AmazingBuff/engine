@@ -13,6 +13,9 @@ class DrawRenderView final : public RenderView
 {
 public:
     explicit DrawRenderView(RenderViewCreateInfo const& info);
+    ~DrawRenderView() override = default;
+
+
 };
 
 AMAZING_NAMESPACE_END

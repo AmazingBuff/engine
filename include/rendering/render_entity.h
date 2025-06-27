@@ -13,16 +13,18 @@ AMAZING_NAMESPACE_BEGIN
 class RenderEntity
 {
 public:
-    RenderEntity() = default;
+    RenderEntity() : m_id(0) {}
+    explicit RenderEntity(const uint32_t id) : m_id(id) {}
     ~RenderEntity() = default;
 
-    NODISCARD uint32_t id() const { return m_id; }
-    NODISCARD bool is_valid() const { return m_id != 0; }
+    NODISCARD uint32_t id() const { return *m_id; }
+    NODISCARD uint32_t use_count() const { return m_id.use_count(); }
+    NODISCARD bool is_valid() const { return *m_id != 0; }
 
     NODISCARD bool operator==(RenderEntity const& other) const { return m_id == other.m_id; }
     NODISCARD bool operator!=(RenderEntity const& other) const { return m_id != other.m_id; }
 private:
-    uint32_t m_id;
+    SharedPtr<uint32_t> m_id;
 };
 
 AMAZING_NAMESPACE_END

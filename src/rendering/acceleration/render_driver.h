@@ -7,8 +7,14 @@
 
 #include "rendering/render_type.h"
 #include "rendering/rhi/create_info.h"
+#include <refl/refl.h>
 
 AMAZING_NAMESPACE_BEGIN
+
+struct Scene;
+struct RenderGeometry;
+struct RenderGraphTexture;
+struct RenderGraphPipeline;
 
 struct RenderDriverCreateInfo
 {
@@ -22,23 +28,28 @@ public:
     explicit RenderDriver(RenderDriverCreateInfo const& info);
     ~RenderDriver();
 
-private:
+    [[nodiscard]] RenderGeometry import_render_geometry(Scene const& scene) const;
+    RenderGeometry import_render_geometry(const char* file_name) const;
+    void destroy_render_geometry(RenderGeometry const& geometry) const;
+
+    [[nodiscard]] RenderGraphPipeline create_pipeline(RenderGraphPipelineCreateInfo const& info) const;
+    void destroy_pipeline(RenderGraphPipeline const& pipeline) const;
+
+public:
     struct RenderDriverInfo
     {
         RenderBackend backend;
         uint32_t frame_count;
     } m_driver_info;
-
+private:
     GPUInstance* m_instance;
     GPUDevice* m_device;
-    GPUQueue* m_graphics_queue;
-    GPUQueue* m_compute_queue;
-    Vector<GPUCommandPool*> m_command_pools;
-    Vector<GPUCommandBuffer*> m_command_buffers;
-    Vector<GPUCommandPool*> m_compute_pools;
-    Vector<GPUCommandBuffer*> m_compute_buffers;
+
+    // todo: add external control to select sampler
+    GPUSampler* m_static_samplers[Reflect::MetaInfo<GPUFilterType>::enum_count() * Reflect::MetaInfo<GPUAddressMode>::enum_count()];
 
     friend class RenderAssetManager;
+    friend class RenderCommand;
 };
 
 AMAZING_NAMESPACE_END

@@ -17,3 +17,4 @@ endfunction()
 
 add_geometry_sample(convex_hull)
 add_geometry_sample(intersect)
+add_geometry_sample(construct)
