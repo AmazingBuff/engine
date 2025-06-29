@@ -24,8 +24,8 @@ public:
     void add_pass(const char* pass_name, RenderGraphPassSetup&& setup, RenderGraphPassExecute&& execute) override;
     void compile() override;
 private:
-    HashMap<String, RenderGraphPassNode*> m_render_graph_passes;
-    HashMap<String, RenderGraphResourceNode*> m_nodes;
+    HashMap<String, RenderGraphPassNode*> m_pass_nodes;
+    HashMap<String, RenderGraphResourceNode*> m_resource_nodes;
     HashSet<RenderGraphResourceEdge*> m_edges;
 
     Vector<Vector<RenderGraphPassNode*>> m_parallel_groups;

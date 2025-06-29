@@ -5,6 +5,8 @@ project(
     LANGUAGES CXX C
 )
 
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")

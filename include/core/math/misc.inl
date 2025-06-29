@@ -23,8 +23,8 @@ Interval<Edge>& Interval<Edge>::intersect(const Interval& rhs)
 template <typename Edge>
 bool merge(const Interval<Edge>& lhs, const Interval<Edge>& rhs, Interval<Edge>& r)
 {
-    Edge min = std::min(lhs.m_min, rhs.m_min);
-    Edge max = std::max(lhs.m_max, rhs.m_max);
+    Edge min = std::min(lhs.min(), rhs.min());
+    Edge max = std::max(lhs.max(), rhs.max());
     r = Interval<Edge>(min, max);
     return true;
 }
@@ -32,10 +32,10 @@ bool merge(const Interval<Edge>& lhs, const Interval<Edge>& rhs, Interval<Edge>&
 template <typename Edge>
 bool intersect(const Interval<Edge>& lhs, const Interval<Edge>& rhs, Interval<Edge>& r)
 {
-    if (rhs.m_max <= lhs.m_max && rhs.m_max >= lhs.m_min)
+    if (rhs.max() <= lhs.max() && rhs.max() >= lhs.min())
     {
-        Edge min = std::max(lhs.m_min, rhs.m_min);
-        Edge max = std::min(lhs.m_max, rhs.m_max);
+        Edge min = std::max(lhs.min(), rhs.min());
+        Edge max = std::min(lhs.max(), rhs.max());
         r = Interval<Edge>(min, max);
         return true;
     }

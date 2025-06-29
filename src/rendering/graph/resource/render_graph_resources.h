@@ -28,12 +28,6 @@ enum class RenderGraphResourceIOType : uint8_t
     e_read_write,
 };
 
-enum class RenderGraphResourceType : uint8_t
-{
-    e_buffer,
-    e_image,
-};
-
 struct RenderGraphResource
 {
     RenderGraphResourceType resource_type;
@@ -50,8 +44,8 @@ struct RenderGraphResource
 
 struct RenderGraphResourceBarrier
 {
-    GPUResourceState m_src_state;
-    GPUResourceState m_dst_state;
+    GPUResourceState src_state;
+    GPUResourceState dst_state;
 };
 
 AMAZING_NAMESPACE_END

@@ -42,14 +42,17 @@ public:
         uint32_t frame_count;
     } m_driver_info;
 private:
-    GPUInstance* m_instance;
-    GPUDevice* m_device;
+    GPUInstance const* m_instance;
+    GPUDevice const* m_device;
+    GPUQueue const* m_graphics_queue;
+    GPUQueue const* m_compute_queue;
 
     // todo: add external control to select sampler
-    GPUSampler* m_static_samplers[Reflect::MetaInfo<GPUFilterType>::enum_count() * Reflect::MetaInfo<GPUAddressMode>::enum_count()];
+    GPUSampler const* m_static_samplers[Reflect::MetaInfo<GPUFilterType>::enum_count() * Reflect::MetaInfo<GPUAddressMode>::enum_count()];
 
     friend class RenderAssetManager;
-    friend class RenderCommand;
+    friend class RenderGraphicsCommand;
+    friend class RenderComputeCommand;
 };
 
 AMAZING_NAMESPACE_END

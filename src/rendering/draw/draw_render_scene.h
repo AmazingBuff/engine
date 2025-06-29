@@ -27,10 +27,10 @@ public:
     void attach_view(RenderView const* view) override;
     void render() override;
 private:
-    RenderCommand m_render_command;
+    void render_graphics(RenderGraphPassNode* node, RenderGraphPipeline const* pipeline);
+    void render_compute(RenderGraphPassNode* node, RenderGraphPipeline const* pipeline);
+private:
     HashSet<RenderEntity> m_render_entities;
-    HashMap<RenderGraphPassNode*, RenderGraphPipeline> m_render_graph_pipelines;
-    HashMap<RenderGraphResourceNode*, RenderGraphResource> m_render_graph_resources;
 };
 
 

@@ -21,7 +21,7 @@ public:
 
     virtual RenderEntity create_pipeline(RenderGraphPipelineCreateInfo const& info) = 0;
 
-    virtual RenderEntity create_texture(RenderGraphTextureCreateInfo const& info) = 0;
+    virtual RenderEntity create_image(RenderGraphImageCreateInfo const& info) = 0;
 };
 
 

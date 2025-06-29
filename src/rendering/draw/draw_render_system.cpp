@@ -34,7 +34,7 @@ DrawRenderSystem::~DrawRenderSystem()
     for (auto& [entity, pipeline] : m_render_graph_pipelines)
         m_render_driver->destroy_pipeline(pipeline);
 
-    PLACEMENT_DELETE(RenderDriver, m_render_driver);
+    PLACEMENT_DELETE(RenderDriver, const_cast<RenderDriver*>(m_render_driver));
 }
 
 RenderEntity DrawRenderSystem::import_scene(Scene const& scene)
@@ -61,7 +61,7 @@ RenderEntity DrawRenderSystem::create_pipeline(RenderGraphPipelineCreateInfo con
     return entity;
 }
 
-RenderEntity DrawRenderSystem::create_texture(RenderGraphTextureCreateInfo const& info)
+RenderEntity DrawRenderSystem::create_image(RenderGraphImageCreateInfo const& info)
 {
     RenderEntity entity = generate_render_entity();
     return entity;

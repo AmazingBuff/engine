@@ -25,12 +25,27 @@ enum class RenderFormat : uint8_t
     e_d24s8
 };
 
-enum class RenderGraphTextureUsage : uint8_t
+enum class RenderGraphImageUsage : uint8_t
 {
-    e_srv,
-    e_uav
+    e_srv = 1,
+    e_uav = 2,
+    e_rtv = 4,
 };
-FLAG_ENUM(RenderGraphTextureUsage)
+FLAG_ENUM(RenderGraphImageUsage)
+
+enum class RenderGraphBufferUsage : uint8_t
+{
+    e_srv = 1,
+    e_uav = 2,
+    e_cbv = 4,
+};
+FLAG_ENUM(RenderGraphBufferUsage)
+
+enum class RenderGraphResourceType : uint8_t
+{
+    e_buffer,
+    e_image,
+};
 
 enum class RenderShaderStage : uint8_t
 {

@@ -17,17 +17,21 @@ public:
     Interval(const Edge& l, const Edge& r) : m_min(l), m_max(r) {}
     Edge& min() { return m_min; }
     Edge& max() { return m_max; }
+    Edge const& min() const { return m_min; }
+    Edge const& max() const { return m_max; }
 
     Interval& merge(const Interval& rhs);
     Interval& intersect(const Interval& rhs);
-
-    friend bool merge(const Interval& lhs, const Interval& rhs, Interval& r);
-    friend bool intersect(const Interval& lhs, const Interval& rhs, Interval& r);
-
 private:
     Edge m_min;
     Edge m_max;
 };
+
+template <typename Edge>
+bool merge(const Interval<Edge>& lhs, const Interval<Edge>& rhs, Interval<Edge>& r);
+
+template <typename Edge>
+bool intersect(const Interval<Edge>& lhs, const Interval<Edge>& rhs, Interval<Edge>& r);
 
 #include "misc.inl"
 AMAZING_NAMESPACE_END

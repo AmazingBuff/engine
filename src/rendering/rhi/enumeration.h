@@ -174,19 +174,19 @@ enum class GPUSampleCount : uint8_t
     e_64 = 64
 };
 
-enum class [[refl]] GPUFilterType : uint8_t
+enum class REFLECT GPUFilterType : uint8_t
 {
     e_nearset,
     e_linear,
 };
 
-enum class [[refl]] GPUMipMapMode : uint8_t
+enum class REFLECT GPUMipMapMode : uint8_t
 {
     e_nearset,
     e_linear,
 };
 
-enum class [[refl]] GPUAddressMode : uint8_t
+enum class REFLECT GPUAddressMode : uint8_t
 {
     e_repeat,
     e_mirror,

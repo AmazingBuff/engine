@@ -166,6 +166,10 @@ RenderDriver::RenderDriver(RenderDriverCreateInfo const& info) : m_driver_info{}
 
     m_device = GPU_create_device(adapter, device_create_info);
 
+    m_graphics_queue = const_cast<GPUQueue*>(m_device->fetch_queue(GPUQueueType::e_graphics, 0));
+    m_compute_queue = const_cast<GPUQueue*>(m_device->fetch_queue(GPUQueueType::e_compute, 0));
+
+
     constexpr uint32_t filter_count = Reflect::MetaInfo<GPUFilterType>::enum_count();
     constexpr uint32_t address_mode_count = Reflect::MetaInfo<GPUAddressMode>::enum_count();
     for (uint32_t i = 0; i < filter_count; i++)
@@ -191,8 +195,11 @@ RenderDriver::RenderDriver(RenderDriverCreateInfo const& info) : m_driver_info{}
 
 RenderDriver::~RenderDriver()
 {
-    GPU_destroy_device(m_device);
-    GPU_destroy_instance(m_instance);
+    for (GPUSampler const* sampler : m_static_samplers)
+        GPU_destroy_sampler(const_cast<GPUSampler*>(sampler));
+
+    GPU_destroy_device(const_cast<GPUDevice*>(m_device));
+    GPU_destroy_instance(const_cast<GPUInstance*>(m_instance));
 }
 
 RenderGeometry RenderDriver::import_render_geometry(Scene const& scene) const

@@ -62,7 +62,7 @@ struct RenderGraphCreateInfo
     RenderSystem const* render_system;
 };
 
-struct RenderGraphTextureCreateInfo
+struct RenderGraphImageCreateInfo
 {
     uint32_t width;
     uint32_t height;
@@ -70,7 +70,7 @@ struct RenderGraphTextureCreateInfo
     uint32_t array_layers;
     uint32_t mip_levels;
     RenderFormat format;
-    RenderGraphTextureUsage usage;
+    RenderGraphImageUsage usage;
 };
 
 struct RenderGraphPipelineCreateInfo
