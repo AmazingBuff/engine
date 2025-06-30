@@ -5,13 +5,13 @@
 #include "draw_render_builder.h"
 #include "rendering/draw/draw_render_system.h"
 #include "rendering/graph/resource/render_graph_pass_node.h"
-#include "rendering/graph/resource/render_graph_buffer_node.h"
-#include "rendering/graph/resource/render_graph_image_node.h"
+#include "rendering/graph/resource/render_graph_resource_node.h"
 #include "rendering/graph/resource/render_graph_resource_edge.h"
 #include "rendering/rhi/common/buffer.h"
 
 AMAZING_NAMESPACE_BEGIN
-    DrawRenderBuilder::DrawRenderBuilder(DrawRenderGraph* graph, RenderGraphPassNode* pass_node)
+
+DrawRenderBuilder::DrawRenderBuilder(DrawRenderGraph* graph, RenderGraphPassNode* pass_node)
     : m_ref_render_graph(graph), m_ref_graph_pass_node(pass_node) {}
 
 DrawRenderBuilder::~DrawRenderBuilder()
@@ -33,6 +33,21 @@ void DrawRenderBuilder::bind_pipeline(RenderEntity const& entity)
 
 void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
 {
+    RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
+
+    GPUResourceState state = GPUResourceState::e_undefined;
+    switch (m_ref_graph_pass_node->m_ref_pipeline->pipeline_type)
+    {
+    case GPUPipelineType::e_graphics:
+        state = GPUResourceState::e_pixel_shader_resource;
+        break;
+    case GPUPipelineType::e_compute:
+        state = GPUResourceState::e_non_pixel_shader_resource;
+        break;
+    default:
+        break;
+    }
+
     auto it = m_ref_render_graph->m_resource_nodes.find(name);
     if (it == m_ref_render_graph->m_resource_nodes.end())
     {
@@ -46,20 +61,21 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
             {
             case RenderGraphResourceType::e_buffer:
                 // todo: add srv check
-                node = PLACEMENT_NEW(RenderGraphBufferCbvNode, sizeof(RenderGraphBufferCbvNode), resource);
+                node = PLACEMENT_NEW(RenderGraphBufferNode, sizeof(RenderGraphBufferNode), resource);
                 break;
             case RenderGraphResourceType::e_image:
-                node = PLACEMENT_NEW(RenderGraphImageSrvNode, sizeof(RenderGraphImageSrvNode), resource);
+                node = PLACEMENT_NEW(RenderGraphImageNode, sizeof(RenderGraphImageNode), resource);
                 break;
             }
         }
         else
             RENDERING_LOG_ERROR("unregistered render entity! the entity is {}", entity.id());
 
+
         node->attach_entity(entity);
         m_ref_render_graph->m_resource_nodes.emplace(name, node);
 
-        RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge));
+        RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge), state);
         edge->link(node, m_ref_graph_pass_node);
         m_ref_render_graph->m_edges.emplace(edge);
         m_ref_graph_pass_node->add_input_edge(edge);
@@ -73,7 +89,7 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
             return true;
         }))
         {
-            RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge));
+            RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge), state);
             edge->link(it->second, m_ref_graph_pass_node);
             m_ref_render_graph->m_edges.emplace(edge);
             m_ref_graph_pass_node->add_input_edge(edge);
@@ -83,6 +99,18 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
 
 void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
 {
+    RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
+
+    GPUResourceState state = GPUResourceState::e_undefined;
+    switch (m_ref_graph_pass_node->m_ref_pipeline->pipeline_type)
+    {
+    case GPUPipelineType::e_graphics:
+        state = GPUResourceState::e_render_target;
+        break;
+    default:
+        break;
+    }
+
     auto it = m_ref_render_graph->m_resource_nodes.find(name);
     if (it == m_ref_render_graph->m_resource_nodes.end())
     {
@@ -98,7 +126,7 @@ void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
                 RENDERING_LOG_ERROR("unsupported buffer for write! the entity is {}", entity.id());
                 break;
             case RenderGraphResourceType::e_image:
-                node = PLACEMENT_NEW(RenderGraphImageRtvNode, sizeof(RenderGraphImageRtvNode), resource);
+                node = PLACEMENT_NEW(RenderGraphImageNode, sizeof(RenderGraphImageNode), resource);
                 break;
             }
         }
@@ -108,7 +136,7 @@ void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
         node->attach_entity(entity);
         m_ref_render_graph->m_resource_nodes.emplace(name, node);
 
-        RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge));
+        RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge), state);
         edge->link(m_ref_graph_pass_node, node);
         m_ref_render_graph->m_edges.emplace(edge);
         m_ref_graph_pass_node->add_output_edge(edge);
@@ -119,6 +147,8 @@ void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
 
 void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
 {
+    RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
+
     auto it = m_ref_render_graph->m_resource_nodes.find(name);
     if (it == m_ref_render_graph->m_resource_nodes.end())
     {
@@ -131,10 +161,10 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
             switch (resource.resource_type)
             {
             case RenderGraphResourceType::e_buffer:
-                node = PLACEMENT_NEW(RenderGraphBufferUavNode, sizeof(RenderGraphBufferUavNode), resource);
+                node = PLACEMENT_NEW(RenderGraphBufferNode, sizeof(RenderGraphBufferNode), resource);
                 break;
             case RenderGraphResourceType::e_image:
-                node = PLACEMENT_NEW(RenderGraphImageUavNode, sizeof(RenderGraphImageUavNode), resource);
+                node = PLACEMENT_NEW(RenderGraphImageNode, sizeof(RenderGraphImageNode), resource);
                 break;
             }
         }
@@ -144,12 +174,12 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
         node->attach_entity(entity);
         m_ref_render_graph->m_resource_nodes.emplace(name, node);
 
-        RenderGraphResourceEdge* from_edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge));
+        RenderGraphResourceEdge* from_edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge), GPUResourceState::e_unordered_access);
         from_edge->link(node, m_ref_graph_pass_node);
         m_ref_render_graph->m_edges.emplace(from_edge);
         m_ref_graph_pass_node->add_input_edge(from_edge);
 
-        RenderGraphResourceEdge* to_edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge));
+        RenderGraphResourceEdge* to_edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge), GPUResourceState::e_unordered_access);
         to_edge->link(m_ref_graph_pass_node, node);
         m_ref_render_graph->m_edges.emplace(to_edge);
         m_ref_graph_pass_node->add_output_edge(to_edge);
@@ -163,7 +193,7 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
             return true;
         }))
         {
-            RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge));
+            RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge), GPUResourceState::e_unordered_access);
             edge->link(it->second, m_ref_graph_pass_node);
             m_ref_render_graph->m_edges.emplace(edge);
             m_ref_graph_pass_node->add_input_edge(edge);
@@ -176,7 +206,7 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
             return true;
         }))
         {
-            RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge));
+            RenderGraphResourceEdge* edge = PLACEMENT_NEW(RenderGraphResourceEdge, sizeof(RenderGraphResourceEdge), GPUResourceState::e_unordered_access);
             edge->link(m_ref_graph_pass_node, it->second);
             m_ref_render_graph->m_edges.emplace(edge);
             m_ref_graph_pass_node->add_output_edge(edge);

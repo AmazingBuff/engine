@@ -14,7 +14,6 @@ class GPURootSignature
 public:
     GPURootSignature();
     virtual ~GPURootSignature();
-    [[nodiscard]] GPUResourceState fetch_shader_resource_state(const String& name) const;
 protected:
     void initialize(GPURootSignatureCreateInfo const& info);
 protected:

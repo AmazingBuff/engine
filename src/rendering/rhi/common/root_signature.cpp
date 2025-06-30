@@ -218,23 +218,4 @@ void GPURootSignature::initialize(GPURootSignatureCreateInfo const& info)
     }
 }
 
-GPUResourceState GPURootSignature::fetch_shader_resource_state(const String& name) const
-{
-    GPUResourceState state = GPUResourceState::e_undefined;
-    any_of(m_tables, [&state, name, this](GPUParameterTable const& table)
-    {
-        return any_of(table.resources, [&state, name, this](GPUShaderResource const& resource)
-        {
-            if (resource.name == name)
-            {
-                state = transfer_shader_resource_state(resource.resource_type, m_pipeline_type);
-                return true;
-            }
-            return false;
-        });
-    });
-
-    return state;
-}
-
 AMAZING_NAMESPACE_END

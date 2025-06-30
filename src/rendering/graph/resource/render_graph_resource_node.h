@@ -14,15 +14,12 @@ AMAZING_NAMESPACE_BEGIN
 class RenderGraphResourceNode : public RenderGraphNode
 {
 public:
-    explicit RenderGraphResourceNode(RenderGraphResource const& resource) : m_ref_resource(resource), m_barrier{} {}
+    explicit RenderGraphResourceNode(RenderGraphResource const& resource) : m_ref_resource(resource) {}
     ~RenderGraphResourceNode() override = default;
 
     NODISCARD virtual RenderGraphResourceType type() const = 0;
-
-    void insert_barrier(RenderGraphResourceBarrier const& barrier) { m_barrier = barrier; }
 protected:
     RenderGraphResource const& m_ref_resource;
-    RenderGraphResourceBarrier m_barrier;
 
     friend class DrawRenderScene;
 };
@@ -34,9 +31,6 @@ public:
     ~RenderGraphBufferNode() override = default;
 
     NODISCARD RenderGraphResourceType type() const override { return RenderGraphResourceType::e_buffer; }
-
-    NODISCARD RenderGraphBufferUsage src_usage() const;
-    NODISCARD RenderGraphBufferUsage dst_usage() const;
 };
 
 class RenderGraphImageNode final : public RenderGraphResourceNode
@@ -46,9 +40,6 @@ public:
     ~RenderGraphImageNode() override = default;
 
     NODISCARD RenderGraphResourceType type() const override { return RenderGraphResourceType::e_image; }
-
-    NODISCARD RenderGraphImageUsage src_usage() const;
-    NODISCARD RenderGraphImageUsage dst_usage() const;
 };
 
 AMAZING_NAMESPACE_END

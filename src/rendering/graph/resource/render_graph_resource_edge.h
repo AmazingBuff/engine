@@ -12,8 +12,10 @@ AMAZING_NAMESPACE_BEGIN
 class RenderGraphResourceEdge final : public DependencyEdge
 {
 public:
-    RenderGraphResourceEdge() = default;
-
+    explicit RenderGraphResourceEdge(GPUResourceState state) : m_state(state) {}
+    NODISCARD GPUResourceState state() const { return m_state; }
+private:
+    GPUResourceState m_state;
 };
 
 AMAZING_NAMESPACE_END

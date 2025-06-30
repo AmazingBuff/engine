@@ -95,7 +95,7 @@ void RenderCommand::resource_barrier(RenderGraphResource const* resources, Rende
 }
 
 
-RenderGraphicsCommand::RenderGraphicsCommand(RenderDriver const* driver)
+RenderGraphicsCommand::RenderGraphicsCommand(RenderDriver const* driver) : m_graphics_encoder(nullptr)
 {
     m_frame_count = driver->m_driver_info.frame_count;
     initialize_command(driver->m_graphics_queue);
@@ -126,6 +126,20 @@ void RenderGraphicsCommand::submit(RenderCommandSubmitInfo const& info)
     refresh_frame();
 }
 
+void RenderGraphicsCommand::begin_pass(GPUGraphicsPassCreateInfo const& info)
+{
+    m_graphics_encoder = m_command_buffers[m_frame_index]->begin_graphics_pass(info);
+}
+
+void RenderGraphicsCommand::end_pass()
+{
+    m_command_buffers[m_frame_index]->end_graphics_pass(m_graphics_encoder);
+}
+
+void RenderGraphicsCommand::bind_pipeline(GPUGraphicsPipeline const* pipeline) const
+{
+    m_graphics_encoder->bind_pipeline(pipeline);
+}
 
 RenderComputeCommand::RenderComputeCommand(RenderDriver const* driver)
 {

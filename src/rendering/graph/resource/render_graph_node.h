@@ -17,7 +17,7 @@ public:
     ~RenderGraphNode() override = default;
 
     void attach_entity(RenderEntity const& entity) { m_entity = entity; }
-    RenderEntity const& entity() const { return m_entity; }
+    NODISCARD RenderEntity const& entity() const { return m_entity; }
 private:
     RenderEntity m_entity;
 };

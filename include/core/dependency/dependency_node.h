@@ -22,8 +22,8 @@ public:
     void add_input_edge(DependencyEdge* edge);
     void add_output_edge(DependencyEdge* edge);
 
-    const HashSet<DependencyEdge*>& input_edges() const;
-    const HashSet<DependencyEdge*>& output_edges() const;
+    NODISCARD const HashSet<DependencyEdge*>& input_edges() const;
+    NODISCARD const HashSet<DependencyEdge*>& output_edges() const;
 protected:
     HashSet<DependencyEdge*> m_in_dependency_edges;
     HashSet<DependencyEdge*> m_out_dependency_edges;

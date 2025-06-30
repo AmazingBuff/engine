@@ -5,21 +5,11 @@
 #include "draw_render_graph.h"
 #include "draw_render_builder.h"
 #include "resource/render_graph_pass_node.h"
-#include "resource/render_graph_buffer_node.h"
-#include "resource/render_graph_image_node.h"
+#include "resource/render_graph_resource_node.h"
+#include "resource/render_graph_resource_edge.h"
 #include "core/dependency/dependency_edge.h"
-#include "rendering/rhi/common/root_signature.h"
 
 AMAZING_NAMESPACE_BEGIN
-
-GPUResourceState transfer_resource_state(const String& name, RenderGraphPipeline const* pipeline, bool input /* or output*/)
-{
-    GPUResourceState state = pipeline->root_signature->fetch_shader_resource_state(name);
-    if (input && state == GPUResourceState::e_undefined)
-        return GPUResourceState::e_render_target;
-
-    return state;
-}
 
 DrawRenderGraph::DrawRenderGraph(RenderGraphCreateInfo const& info)
 {
@@ -52,36 +42,30 @@ void DrawRenderGraph::compile()
     // the prev and next of resource node must be render pass node
     for (auto& [name, node] : m_resource_nodes)
     {
-        RENDERING_ASSERT(node->input_edges().size() <= 1, "resource input node must less than 1!");
-
-        // skip uav node
-        switch (node->type())
-        {
-        case RenderGraphResourceType::e_buffer:
-            {
-                if (static_cast<RenderGraphBufferNode*>(node)->usage() == RenderGraphBufferUsage::e_uav)
-                    continue;
-                break;
-            }
-        case RenderGraphResourceType::e_image:
-            {
-                if (static_cast<RenderGraphImageNode*>(node)->usage() == RenderGraphImageUsage::e_uav)
-                    continue;
-                break;
-            }
-        }
-
         RenderGraphPassNode* input_node = nullptr;
         for (DependencyEdge const* in : node->input_edges())
-            input_node = static_cast<RenderGraphPassNode*>(in->from());
+        {
+            // skip uav edge
+            if (static_cast<RenderGraphResourceEdge const*>(in)->state() != GPUResourceState::e_unordered_access)
+            {
+                if (input_node == nullptr)
+                    input_node = static_cast<RenderGraphPassNode*>(in->from());
+                else
+                    RENDERING_LOG_ERROR("resource input node(exclude uav) must less than 1!");
+            }
+        }
 
         if (input_node != nullptr)
         {
             Vector<RenderGraphPassNode*> output_nodes;
             for (DependencyEdge const* out : node->output_edges())
             {
-                RenderGraphPassNode* out_node = static_cast<RenderGraphPassNode*>(out->to());
-                output_nodes.push_back(out_node);
+                // skip uav edge
+                if (static_cast<RenderGraphResourceEdge const*>(out)->state() != GPUResourceState::e_unordered_access)
+                {
+                    RenderGraphPassNode* out_node = static_cast<RenderGraphPassNode*>(out->to());
+                    output_nodes.push_back(out_node);
+                }
             }
 
             for (RenderGraphPassNode* out_node : output_nodes)
@@ -135,27 +119,42 @@ void DrawRenderGraph::compile()
     // todo: cull pass
 
     // insert barrier
-    for (auto& [name, node] : m_resource_nodes)
+    for (Vector<RenderGraphPassNode*> const& group : m_parallel_groups)
     {
-        RENDERING_ASSERT(node->input_edges().size() <= 1, "resource input node must less than 1!");
-
-        RenderGraphPassNode* input_node = nullptr;
-        for (DependencyEdge const* in : node->input_edges())
-            input_node = static_cast<RenderGraphPassNode*>(in->from());
-
-        GPUResourceState src_state = GPUResourceState::e_undefined;
-        if (input_node != nullptr)
-            src_state = transfer_resource_state(name, input_node->m_ref_pipeline, true);
-
-        // todo: adjust state handle
-        GPUResourceState dst_state = GPUResourceState::e_undefined;
-        for (DependencyEdge const* out : node->output_edges())
+        for (RenderGraphPassNode* node : group)
         {
-            RenderGraphPassNode* out_node = static_cast<RenderGraphPassNode*>(out->to());
-            dst_state |= transfer_resource_state(name, out_node->m_ref_pipeline, false);
+            for (DependencyEdge const* in : node->input_edges())
+            {
+                RenderGraphResourceNode* input_node = static_cast<RenderGraphResourceNode*>(in->from());
+                RenderGraphResourceEdge const* cur_edge = static_cast<RenderGraphResourceEdge const*>(in);
+                RenderGraphResourceEdge const* prev_edge = nullptr;
+                uint32_t node_priority = 0;
+                for (DependencyEdge const* in_in : input_node->input_edges())
+                {
+                    RenderGraphPassNode* in_node = static_cast<RenderGraphPassNode*>(in_in->to());
+                    uint32_t in_priority = priority[in_node];
+                    if (in_priority > node_priority)
+                    {
+                        node_priority = in_priority;
+                        prev_edge = static_cast<RenderGraphResourceEdge const*>(in_in);
+                    }
+                }
+                GPUResourceState src_state = GPUResourceState::e_undefined;
+                if (prev_edge != nullptr)
+                    src_state = prev_edge->state();
+                node->insert_barrier(input_node, {src_state, cur_edge->state()});
+            }
+            for (DependencyEdge const* out : node->output_edges())
+            {
+                RenderGraphResourceEdge const* cur_edge = static_cast<RenderGraphResourceEdge const*>(out);
+                GPUResourceState dst_state = cur_edge->state();
+                if (dst_state != GPUResourceState::e_unordered_access)
+                {
+                    RenderGraphResourceNode* output_node = static_cast<RenderGraphResourceNode*>(out->to());
+                    node->insert_barrier(output_node, {GPUResourceState::e_undefined, dst_state});
+                }
+            }
         }
-
-        node->insert_barrier({src_state, dst_state});
     }
 }
 

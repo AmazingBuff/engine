@@ -24,11 +24,10 @@ public:
     void add_entity(RenderEntity const& entity) override;
     void remove_entity(RenderEntity const& entity) override;
     void attach_graph(RenderGraph const* graph) override;
-    void attach_view(RenderView const* view) override;
     void render() override;
 private:
-    void render_graphics(RenderGraphPassNode* node, RenderGraphPipeline const* pipeline);
-    void render_compute(RenderGraphPassNode* node, RenderGraphPipeline const* pipeline);
+    void render_graphics(RenderGraphPassNode* node);
+    void render_compute(RenderGraphPassNode* node);
 private:
     HashSet<RenderEntity> m_render_entities;
 };

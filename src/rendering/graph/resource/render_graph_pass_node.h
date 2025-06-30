@@ -6,6 +6,7 @@
 #define RENDER_GRAPH_PASS_NODE_H
 
 #include "render_graph_node.h"
+#include "render_graph_resources.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -15,13 +16,14 @@ public:
     RenderGraphPassNode() : m_ref_pipeline(nullptr) {}
     ~RenderGraphPassNode() override = default;
 
-    void add_execute(RenderGraphPassExecute&& execute);
+    void add_execute(RenderGraphPassExecute&& execute) { m_execute = execute; }
+    void insert_barrier(RenderGraphResourceNode const* node, RenderGraphResourceBarrier const& barrier) { m_barriers[node] = barrier; }
 private:
     RenderGraphPipeline const* m_ref_pipeline;
     RenderGraphPassExecute m_execute;
+    HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_barriers;
 
     friend class DrawRenderBuilder;
-    friend class DrawRenderGraph;
     friend class DrawRenderScene;
 };
 
