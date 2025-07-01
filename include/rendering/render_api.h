@@ -21,9 +21,6 @@ void RENDER_destroy_render_system(RenderSystem* render_system);
 RenderScene* RENDER_create_render_scene(RenderSceneCreateInfo const& info);
 void RENDER_destroy_render_scene(RenderScene* render_scene);
 
-RenderView* RENDER_create_render_view(RenderViewCreateInfo const& info);
-void RENDER_destroy_render_view(RenderView* render_view);
-
 RenderGraph* RENDER_create_render_graph(RenderGraphCreateInfo const& info);
 void RENDER_destroy_render_graph(RenderGraph* render_graph);
 

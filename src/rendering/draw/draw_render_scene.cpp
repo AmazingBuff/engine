@@ -55,7 +55,7 @@ void DrawRenderScene::render()
 {
     DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(m_ref_render_system);
     DrawRenderGraph const* render_graph = static_cast<DrawRenderGraph const*>(m_ref_render_graph);
-    RenderDriver const* render_driver = render_system->m_render_driver;
+    RenderDriver const& render_driver = render_system->m_render_driver;
 
     uint32_t frame_index = 0;
     for (auto& group : render_graph->m_parallel_groups)
@@ -78,12 +78,11 @@ void DrawRenderScene::render()
     }
 }
 
-void DrawRenderScene::render_graphics(RenderGraphPassNode* node)
+void DrawRenderScene::render_graphics(RenderGraphPassNode* node) const
 {
     DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(m_ref_render_system);
-    RenderDriver const* render_driver = render_system->m_render_driver;
+    RenderGraphicsCommand& command = const_cast<RenderGraphicsCommand&>(render_system->m_graphics_command);
 
-    RenderGraphicsCommand command(render_driver);
     command.begin_frame();
 
     uint32_t node_count = node->input_edges().size();
@@ -129,14 +128,21 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node)
         graphics_pass_create_info.color_attachments[i] = color_attachment;
     }
 
-    command.bind_pipeline(node->m_ref_pipeline->graphics_pipeline);
+    command.bind_pipeline(node->m_ref_pipeline);
 
-    RenderViewCreateInfo view_create_info{
-        .render_system = render_system
-    };
-    DrawRenderView view(view_create_info);
+    DrawRenderGraphicsView view(command);
 
     node->m_execute(&view);
+
+    auto geometry_it = render_system->m_render_geometries.find(view.m_geometry_entity);
+    if (geometry_it != render_system->m_render_geometries.end())
+    {
+        // draw
+        RenderGeometry const& geometry = geometry_it->second;
+
+    }
+    else
+        RENDERING_LOG_ERROR("can't find geometry entity in this scene! entity is {}", view.m_geometry_entity.id());
 
     command.end_frame();
 }

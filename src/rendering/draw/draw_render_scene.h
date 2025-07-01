@@ -26,7 +26,7 @@ public:
     void attach_graph(RenderGraph const* graph) override;
     void render() override;
 private:
-    void render_graphics(RenderGraphPassNode* node);
+    void render_graphics(RenderGraphPassNode* node) const;
     void render_compute(RenderGraphPassNode* node);
 private:
     HashSet<RenderEntity> m_render_entities;

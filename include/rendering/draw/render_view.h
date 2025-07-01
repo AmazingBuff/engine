@@ -15,6 +15,10 @@ class RenderView
 public:
     virtual ~RenderView() = default;
 
+    virtual void set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) = 0;
+    virtual void set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
+    virtual void set_push_constant(String const& name, void const* data) = 0;
+    virtual void bind_scene_geometry(RenderEntity const& entity) = 0;
 };
 
 

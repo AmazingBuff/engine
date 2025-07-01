@@ -28,11 +28,6 @@ struct RenderSceneCreateInfo
     RenderSystem const* render_system;
 };
 
-struct RenderViewCreateInfo
-{
-    RenderSystem const* render_system;
-};
-
 
 struct RenderShaderDescriptor
 {

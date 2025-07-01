@@ -6,13 +6,13 @@
 #define DRAW_RENDER_SYSTEM_H
 
 #include "rendering/draw/render_system.h"
+#include "rendering/acceleration/render_command.h"
 
 AMAZING_NAMESPACE_BEGIN
 
 struct RenderGeometry;
 struct RenderGraphResource;
 struct RenderGraphPipeline;
-class RenderDriver;
 
 class DrawRenderSystem final : public RenderSystem
 {
@@ -26,7 +26,9 @@ public:
     RenderEntity create_pipeline(RenderGraphPipelineCreateInfo const& info) override;
     RenderEntity create_image(RenderGraphImageCreateInfo const& info) override;
 private:
-    RenderDriver const* m_render_driver;
+    RenderDriver m_render_driver;
+    RenderGraphicsCommand m_graphics_command;
+    RenderComputeCommand m_compute_command;
 
     HashMap<RenderEntity, RenderGeometry> m_render_geometries;
     HashMap<RenderEntity, RenderGraphPipeline> m_render_graph_pipelines;

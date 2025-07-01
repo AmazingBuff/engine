@@ -3,11 +3,13 @@
 //
 
 #include "render_command.h"
-#include "render_driver.h"
 #include "rendering/rhi/wrapper.h"
 #include "rendering/graph/resource/render_graph_resources.h"
 
 AMAZING_NAMESPACE_BEGIN
+
+RenderCommand::RenderCommand(RenderDriver const& driver) : m_ref_driver(driver),
+    m_ref_pipeline(nullptr), m_frame_index(0), m_frame_count(0) {}
 
 void RenderCommand::initialize_command(GPUQueue const* queue)
 {
@@ -36,6 +38,11 @@ void RenderCommand::end_frame()
 void RenderCommand::refresh_frame()
 {
     m_frame_index = (m_frame_index + 1) % m_frame_count;
+}
+
+void RenderCommand::bind_pipeline(RenderGraphPipeline const* pipeline)
+{
+    m_ref_pipeline = pipeline;
 }
 
 void RenderCommand::resource_barrier(RenderGraphResource const* resources, RenderGraphResourceBarrier const* info, uint32_t count)
@@ -95,12 +102,10 @@ void RenderCommand::resource_barrier(RenderGraphResource const* resources, Rende
 }
 
 
-RenderGraphicsCommand::RenderGraphicsCommand(RenderDriver const* driver) : m_graphics_encoder(nullptr)
+RenderGraphicsCommand::RenderGraphicsCommand(RenderDriver const& driver) : RenderCommand(driver), m_graphics_encoder(nullptr)
 {
-    m_frame_count = driver->m_driver_info.frame_count;
-    initialize_command(driver->m_graphics_queue);
-
-    m_ref_driver = driver;
+    m_frame_count = m_ref_driver.m_driver_info.frame_count;
+    initialize_command(m_ref_driver.m_graphics_queue);
 }
 
 RenderGraphicsCommand::~RenderGraphicsCommand()
@@ -121,7 +126,7 @@ void RenderGraphicsCommand::submit(RenderCommandSubmitInfo const& info)
         .signal_fence = info.signal_fence,
     };
 
-    m_ref_driver->m_graphics_queue->submit(submit_info);
+    m_ref_driver.m_graphics_queue->submit(submit_info);
 
     refresh_frame();
 }
@@ -136,17 +141,12 @@ void RenderGraphicsCommand::end_pass()
     m_command_buffers[m_frame_index]->end_graphics_pass(m_graphics_encoder);
 }
 
-void RenderGraphicsCommand::bind_pipeline(GPUGraphicsPipeline const* pipeline) const
-{
-    m_graphics_encoder->bind_pipeline(pipeline);
-}
 
-RenderComputeCommand::RenderComputeCommand(RenderDriver const* driver)
-{
-    m_frame_count = driver->m_driver_info.frame_count;
-    initialize_command(driver->m_compute_queue);
 
-    m_ref_driver = driver;
+RenderComputeCommand::RenderComputeCommand(RenderDriver const& driver) : RenderCommand(driver), m_compute_encoder(nullptr)
+{
+    m_frame_count = m_ref_driver.m_driver_info.frame_count;
+    initialize_command(m_ref_driver.m_compute_queue);
 }
 
 RenderComputeCommand::~RenderComputeCommand()
@@ -167,9 +167,19 @@ void RenderComputeCommand::submit(RenderCommandSubmitInfo const& info)
         .signal_fence = info.signal_fence,
     };
 
-    m_ref_driver->m_compute_queue->submit(submit_info);
+    m_ref_driver.m_compute_queue->submit(submit_info);
 
     refresh_frame();
+}
+
+void RenderComputeCommand::begin_pass(GPUComputePassCreateInfo const& info)
+{
+    m_compute_encoder = m_command_buffers[m_frame_index]->begin_compute_pass(info);
+}
+
+void RenderComputeCommand::end_pass()
+{
+    m_command_buffers[m_frame_index]->end_compute_pass(m_compute_encoder);
 }
 
 
