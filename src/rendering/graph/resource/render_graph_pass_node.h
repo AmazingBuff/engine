@@ -15,15 +15,16 @@ class RenderGraphPassNode final : public RenderGraphNode
 public:
     RenderGraphPassNode() : m_ref_pipeline(nullptr) {}
     ~RenderGraphPassNode() override = default;
-
-    void add_execute(RenderGraphPassExecute&& execute) { m_execute = execute; }
-    void insert_barrier(RenderGraphResourceNode const* node, RenderGraphResourceBarrier const& barrier) { m_barriers[node] = barrier; }
 private:
     RenderGraphPipeline const* m_ref_pipeline;
     RenderGraphPassExecute m_execute;
-    HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_barriers;
+    HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_input_barriers;
+    HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_output_barriers;
+    HashMap<uint32_t, Vector<String>> m_descriptors;
+    HashMap<uint32_t, GPUDescriptorSet*> m_descriptor_sets;
 
     friend class DrawRenderBuilder;
+    friend class DrawRenderGraph;
     friend class DrawRenderScene;
 };
 

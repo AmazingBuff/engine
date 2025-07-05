@@ -16,6 +16,7 @@ static constexpr uint32_t GPU_Vendor_String_Length = 256;
 static constexpr uint32_t GPU_Debug_Name_Length = 256;
 static constexpr uint32_t GPU_Max_Render_Target = 8;
 static constexpr uint32_t GPU_Max_Push_Constant_Size = 128;
+static constexpr uint32_t GPU_Max_Descriptor_Set_Count = 16;
 
 class GPUSurface;
 class GPUInstance;

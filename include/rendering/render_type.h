@@ -68,6 +68,14 @@ struct RenderGraphImageCreateInfo
     RenderGraphImageUsage usage;
 };
 
+struct RenderGraphBufferCreateInfo
+{
+    uint32_t size;
+    RenderGraphBufferUsage usage;
+    RenderFormat format;
+    RenderGraphBufferType type;
+};
+
 struct RenderGraphPipelineCreateInfo
 {
     // universal info

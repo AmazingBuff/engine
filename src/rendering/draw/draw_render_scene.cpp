@@ -7,14 +7,14 @@
 #include "draw_render_view.h"
 #include "core/dependency/dependency_edge.h"
 #include "rendering/acceleration/render_driver.h"
+#include "rendering/acceleration/render_geometry.h"
 #include "rendering/graph/draw_render_graph.h"
 #include "rendering/graph/resource/render_graph_pass_node.h"
 #include "rendering/graph/resource/render_graph_resource_node.h"
 #include "rendering/graph/resource/render_graph_resource_edge.h"
 
 AMAZING_NAMESPACE_BEGIN
-
-DrawRenderScene::DrawRenderScene(RenderSceneCreateInfo const& info)
+    DrawRenderScene::DrawRenderScene(RenderSceneCreateInfo const& info)
 {
     m_ref_render_system = info.render_system;
 }
@@ -85,13 +85,26 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node) const
 
     command.begin_frame();
 
-    uint32_t node_count = node->input_edges().size();
+    uint32_t node_count = node->m_input_barriers.size() + node->m_output_barriers.size();
     RenderGraphResource* resources = STACK_NEW(RenderGraphResource, node_count);
     RenderGraphResourceBarrier* barriers = STACK_NEW(RenderGraphResourceBarrier, node_count);
 
     uint32_t node_index = 0;
-    for (auto& [resource_node, barrier] : node->m_barriers)
+    for (auto& [resource_node, barrier] : node->m_input_barriers)
     {
+        resources[node_index] = resource_node->m_ref_resource;
+        barriers[node_index] = barrier;
+        node_index++;
+    }
+
+    uint32_t render_target_count = node->m_output_barriers.size();
+    RenderGraphResource* render_targets = STACK_NEW(RenderGraphResource, render_target_count);
+    uint32_t render_target_index = 0;
+    for (auto& [resource_node, barrier] : node->m_output_barriers)
+    {
+        render_targets[render_target_index] = resource_node->m_ref_resource;
+        render_target_index++;
+
         resources[node_index] = resource_node->m_ref_resource;
         barriers[node_index] = barrier;
         node_index++;
@@ -99,26 +112,17 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node) const
 
     command.resource_barrier(resources, barriers, node_count);
 
-    // get render target
-    Vector<RenderGraphResourceNode*> render_target_nodes;
-    for (DependencyEdge const* out : node->output_edges())
-    {
-        RenderGraphResourceEdge const* edge = static_cast<RenderGraphResourceEdge const*>(out);
-        if (edge->state() == GPUResourceState::e_render_target)
-            render_target_nodes.push_back(static_cast<RenderGraphResourceNode*>(out->to()));
-    }
-
     // todo: add depth attachment
     GPUGraphicsPassCreateInfo graphics_pass_create_info{
         .sample_count = GPUSampleCount::e_1,
         .depth_stencil_attachment = nullptr
     };
 
-    graphics_pass_create_info.color_attachment_count = render_target_nodes.size();
-    for (uint32_t i = 0; i < render_target_nodes.size(); i++)
+    graphics_pass_create_info.color_attachment_count = render_target_count;
+    for (uint32_t i = 0; i < render_target_count; i++)
     {
         GPUColorAttachment color_attachment{
-            .texture_view = render_target_nodes[i]->m_ref_resource.image.texture_view,
+            .texture_view = render_targets[i].image.texture_view,
             .resolve_view = nullptr,
             .load = GPULoadAction::e_clear,
             .store = GPUStoreAction::e_store,

@@ -29,15 +29,6 @@ void RENDER_destroy_render_scene(RenderScene* render_scene)
     PLACEMENT_DELETE(DrawRenderScene, static_cast<DrawRenderScene*>(render_scene));
 }
 
-RenderView* RENDER_create_render_view(RenderViewCreateInfo const& info)
-{
-    return PLACEMENT_NEW(DrawRenderView, sizeof(DrawRenderView), info);
-}
-void RENDER_destroy_render_view(RenderView* render_view)
-{
-    PLACEMENT_DELETE(DrawRenderView, static_cast<DrawRenderView*>(render_view));
-}
-
 RenderGraph* RENDER_create_render_graph(RenderGraphCreateInfo const& info)
 {
     return PLACEMENT_NEW(DrawRenderGraph, sizeof(DrawRenderGraph), info);

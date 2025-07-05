@@ -8,6 +8,7 @@
 #include "rendering/graph/resource/render_graph_resource_node.h"
 #include "rendering/graph/resource/render_graph_resource_edge.h"
 #include "rendering/rhi/common/buffer.h"
+#include "rendering/rhi/common/root_signature.h"
 
 AMAZING_NAMESPACE_BEGIN
 
@@ -48,6 +49,20 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
         break;
     }
 
+    for (auto& [resources, set_index] : m_ref_graph_pass_node->m_ref_pipeline->root_signature->set_tables())
+    {
+        if (!any_of(resources, [&](GPUShaderResource const& resource)
+        {
+            if (resource.name == name)
+            {
+                m_ref_graph_pass_node->m_descriptors[set_index].push_back(resource.name);
+                return true;
+            }
+            return false;
+        }))
+            RENDERING_LOG_WARNING("no supported resource! the resource name is {}", name);
+    }
+
     auto it = m_ref_render_graph->m_resource_nodes.find(name);
     if (it == m_ref_render_graph->m_resource_nodes.end())
     {
@@ -60,7 +75,6 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
             switch (resource.resource_type)
             {
             case RenderGraphResourceType::e_buffer:
-                // todo: add srv check
                 node = PLACEMENT_NEW(RenderGraphBufferNode, sizeof(RenderGraphBufferNode), resource);
                 break;
             case RenderGraphResourceType::e_image:
@@ -100,6 +114,20 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
 void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
 {
     RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
+
+    for (auto& [resources, set_index] : m_ref_graph_pass_node->m_ref_pipeline->root_signature->set_tables())
+    {
+        if (!any_of(resources, [&](GPUShaderResource const& resource)
+        {
+            if (resource.name == name)
+            {
+                m_ref_graph_pass_node->m_descriptors[set_index].push_back(resource.name);
+                return true;
+            }
+            return false;
+        }))
+            RENDERING_LOG_WARNING("no supported resource! the resource name is {}", name);
+    }
 
     GPUResourceState state = GPUResourceState::e_undefined;
     switch (m_ref_graph_pass_node->m_ref_pipeline->pipeline_type)
@@ -148,6 +176,20 @@ void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
 void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
 {
     RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
+
+    for (auto& [resources, set_index] : m_ref_graph_pass_node->m_ref_pipeline->root_signature->set_tables())
+    {
+        if (!any_of(resources, [&](GPUShaderResource const& resource)
+        {
+            if (resource.name == name)
+            {
+                m_ref_graph_pass_node->m_descriptors[set_index].push_back(resource.name);
+                return true;
+            }
+            return false;
+        }))
+            RENDERING_LOG_WARNING("no supported resource! the resource name is {}", name);
+    }
 
     auto it = m_ref_render_graph->m_resource_nodes.find(name);
     if (it == m_ref_render_graph->m_resource_nodes.end())

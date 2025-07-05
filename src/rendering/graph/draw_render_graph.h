@@ -19,7 +19,7 @@ class DrawRenderGraph final : public RenderGraph, public DependencyGraph
 {
 public:
     explicit DrawRenderGraph(RenderGraphCreateInfo const& info);
-    ~DrawRenderGraph() override = default;
+    ~DrawRenderGraph() override;
 
     void add_pass(const char* pass_name, RenderGraphPassSetup&& setup, RenderGraphPassExecute&& execute) override;
     void compile() override;

@@ -76,7 +76,7 @@ void RenderCommand::resource_barrier(RenderGraphResource const* resources, Rende
         case RenderGraphResourceType::e_buffer:
         {
             GPUBufferBarrier buffer_barrier{
-                .buffer = resources[i].buffer,
+                .buffer = resources[i].buffer.buffer,
                 .src_state = info[i].src_state,
                 .dst_state = info[i].dst_state,
             };

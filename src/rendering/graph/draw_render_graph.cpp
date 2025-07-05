@@ -8,12 +8,33 @@
 #include "resource/render_graph_resource_node.h"
 #include "resource/render_graph_resource_edge.h"
 #include "core/dependency/dependency_edge.h"
+#include "rendering/rhi/wrapper.h"
 
 AMAZING_NAMESPACE_BEGIN
 
 DrawRenderGraph::DrawRenderGraph(RenderGraphCreateInfo const& info)
 {
     m_ref_render_system = info.render_system;
+}
+
+DrawRenderGraph::~DrawRenderGraph()
+{
+    for (auto& [name, node] : m_pass_nodes)
+    {
+        for (auto& [set_index, set] : node->m_descriptor_sets)
+            GPU_destroy_descriptor_set(set);
+        PLACEMENT_DELETE(RenderGraphPassNode, node);
+    }
+
+    for (auto& [name, node] : m_resource_nodes)
+    {
+        PLACEMENT_DELETE(RenderGraphResourceNode, node);
+    }
+
+    for_each(m_edges, [](RenderGraphResourceEdge* edge)
+    {
+        PLACEMENT_DELETE(RenderGraphResourceEdge, edge);
+    });
 }
 
 void DrawRenderGraph::add_pass(const char* pass_name, RenderGraphPassSetup&& setup, RenderGraphPassExecute&& execute)
@@ -24,7 +45,7 @@ void DrawRenderGraph::add_pass(const char* pass_name, RenderGraphPassSetup&& set
         DrawRenderBuilder builder(this, pass_node);
         setup(&builder);
 
-        pass_node->add_execute(std::move(execute));
+        pass_node->m_execute = execute;
         m_pass_nodes[pass_name] = pass_node;
     }
 }
@@ -118,11 +139,11 @@ void DrawRenderGraph::compile()
 
     // todo: cull pass
 
-    // insert barrier
     for (Vector<RenderGraphPassNode*> const& group : m_parallel_groups)
     {
         for (RenderGraphPassNode* node : group)
         {
+            // insert barrier
             for (DependencyEdge const* in : node->input_edges())
             {
                 RenderGraphResourceNode* input_node = static_cast<RenderGraphResourceNode*>(in->from());
@@ -142,7 +163,7 @@ void DrawRenderGraph::compile()
                 GPUResourceState src_state = GPUResourceState::e_undefined;
                 if (prev_edge != nullptr)
                     src_state = prev_edge->state();
-                node->insert_barrier(input_node, {src_state, cur_edge->state()});
+                node->m_input_barriers[input_node] = {src_state, cur_edge->state()};
             }
             for (DependencyEdge const* out : node->output_edges())
             {
@@ -151,9 +172,48 @@ void DrawRenderGraph::compile()
                 if (dst_state != GPUResourceState::e_unordered_access)
                 {
                     RenderGraphResourceNode* output_node = static_cast<RenderGraphResourceNode*>(out->to());
-                    node->insert_barrier(output_node, {GPUResourceState::e_undefined, dst_state});
+                    node->m_output_barriers[output_node] = {GPUResourceState::e_undefined, dst_state};
                 }
             }
+
+            // update resource
+            for_each(node->m_descriptors, [&](Pair<uint32_t, Vector<String>> const& descriptor)
+            {
+                GPUDescriptorSetCreateInfo desc{
+                    .root_signature = node->m_ref_pipeline->root_signature,
+                    .set_index = descriptor.first,
+                };
+                GPUDescriptorSet* descriptor_set = GPU_create_descriptor_set(desc);
+
+                Vector<GPUDescriptorData> resource_data;
+                resource_data.reserve(descriptor.second.size());
+                for_each(descriptor.second, [&](String const& name)
+                {
+                    auto resource_it = m_resource_nodes.find(name);
+                    if (resource_it != m_resource_nodes.end())
+                    {
+                        RenderGraphResource const& resource = resource_it->second->m_ref_resource;
+
+                        GPUDescriptorData descriptor_data{
+                            .name = name,
+                            .array_count = 1
+                        };
+                        switch (resource_it->second->type())
+                        {
+                        case RenderGraphResourceType::e_image:
+                            descriptor_data.textures = &resource.image.texture_view;
+                            break;
+                        case RenderGraphResourceType::e_buffer:
+                            descriptor_data.buffers = &resource.buffer.buffer;
+                            break;
+                        }
+
+                        resource_data.emplace_back(descriptor_data);
+                    }
+                    descriptor_set->update(resource_data.data(), resource_data.size());
+                    node->m_descriptor_sets[descriptor.first] = descriptor_set;
+                });
+            });
         }
     }
 }

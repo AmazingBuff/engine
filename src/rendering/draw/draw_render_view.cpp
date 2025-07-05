@@ -10,6 +10,11 @@ AMAZING_NAMESPACE_BEGIN
 
 DrawRenderGraphicsView::DrawRenderGraphicsView(RenderGraphicsCommand& command) : m_graphics_command(command) {}
 
+void DrawRenderGraphicsView::set_uniform(RenderEntity const& entity)
+{
+    //m_graphics_command.m_graphics_encoder->set_uniform(entity);
+}
+
 void DrawRenderGraphicsView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
 {
     m_graphics_command.m_graphics_encoder->set_viewport(x, y, width, height, min_depth, max_depth);

@@ -22,6 +22,7 @@ protected:
     RenderGraphResource const& m_ref_resource;
 
     friend class DrawRenderScene;
+    friend class DrawRenderGraph;
 };
 
 class RenderGraphBufferNode final : public RenderGraphResourceNode

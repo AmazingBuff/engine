@@ -275,15 +275,9 @@ RenderGeometry RenderDriver::import_render_geometry(Scene const& scene) const
     GPUBuffer* index_buffer = GPU_create_buffer(m_device, info);
     index_buffer->map(0, sizeof(triangles), triangles.data());
 
-    info.size = transform_offset;
-    info.type = GPUResourceType::e_uniform_buffer;
-    info.flags = GPUBufferFlag::e_persistent_map;
-    GPUBuffer* uniform_buffer = GPU_create_buffer(m_device, info);
-    uniform_buffer->map(0, transform_offset, transforms.data());
 
     geometry.vertex_buffer = vertex_buffer;
     geometry.index_buffer = index_buffer;
-    geometry.uniform_buffer = uniform_buffer;
 
     return geometry;
 }
@@ -340,7 +334,6 @@ RenderGeometry RenderDriver::import_render_geometry(const char* file_name) const
     geometry.meshes.reserve(count.mesh_count);
     geometry.root = import_node(scene->mRootNode, scene, geometry.meshes, vertices, triangles, transforms, mesh_offset, vertex_offset, triangle_offset, transform_offset);
 
-
     GPUBufferCreateInfo info{
         .size = sizeof(vertices),
         .usage = GPUMemoryUsage::e_cpu_to_gpu,
@@ -355,15 +348,8 @@ RenderGeometry RenderDriver::import_render_geometry(const char* file_name) const
     GPUBuffer* index_buffer = GPU_create_buffer(m_device, info);
     index_buffer->map(0, sizeof(triangles), triangles.data());
 
-    info.size = transform_offset * sizeof(Affine3f);
-    info.type = GPUResourceType::e_uniform_buffer;
-    info.flags = GPUBufferFlag::e_persistent_map;
-    GPUBuffer* uniform_buffer = GPU_create_buffer(m_device, info);
-    uniform_buffer->map(0, info.size, transforms.data());
-
     geometry.vertex_buffer = vertex_buffer;
     geometry.index_buffer = index_buffer;
-    geometry.uniform_buffer = uniform_buffer;
 
     return geometry;
 }

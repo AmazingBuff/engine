@@ -41,6 +41,13 @@ enum class RenderGraphBufferUsage : uint8_t
 };
 FLAG_ENUM(RenderGraphBufferUsage)
 
+enum class RenderGraphBufferType : uint8_t
+{
+    e_dedicated,
+    e_persistent_map,
+    e_host_visible,
+};
+
 enum class RenderGraphResourceType : uint8_t
 {
     e_buffer,

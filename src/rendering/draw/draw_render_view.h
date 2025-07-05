@@ -17,6 +17,7 @@ public:
     explicit DrawRenderGraphicsView(RenderGraphicsCommand& command);
     ~DrawRenderGraphicsView() override = default;
 
+    void set_uniform(RenderEntity const& entity) override;
     void set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
     void set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
     void set_push_constant(String const& name, void const* data) override;

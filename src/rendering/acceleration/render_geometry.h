@@ -45,7 +45,6 @@ struct RenderGeometry
 {
     GPUBuffer const* vertex_buffer;
     GPUBuffer const* index_buffer;
-    GPUBuffer const* uniform_buffer; // for transform
 
     RenderNode* root;
     Vector<RenderMesh> meshes;

@@ -14,6 +14,7 @@ class GPURootSignature
 public:
     GPURootSignature();
     virtual ~GPURootSignature();
+    NODISCARD Vector<GPUParameterTable> const& set_tables() const { return m_tables;}
 protected:
     void initialize(GPURootSignatureCreateInfo const& info);
 protected:
