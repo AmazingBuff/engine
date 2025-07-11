@@ -51,8 +51,8 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
             "installDir": "${sourceDir}/install/${presetName}",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "C:/env/libclang/bin/clang.exe",
-                "CMAKE_CXX_COMPILER": "C:/env/libclang/bin/clang++.exe"
+                "CMAKE_C_COMPILER": "clang.exe",
+                "CMAKE_CXX_COMPILER": "clang++.exe"
             }
         },
         {

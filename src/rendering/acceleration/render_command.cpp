@@ -124,7 +124,7 @@ void RenderCommand::copy_resource(RenderGraphResource const& src_resource, Rende
         RENDERING_ASSERT(src_is_buffer == true, "can't copy data to a buffer from a image!");
         transfer_info.dst_buffer.buffer = dst_resource.buffer.buffer;
         transfer_info.dst_buffer.offset = 0;
-        transfer_info.dst_buffer.size = dst_resource.buffer.buffer->descriptor()->size;
+        transfer_info.dst_buffer.size = dst_resource.buffer.buffer->description()->size;
         transfer_info.type = GPUResourceTransferType::e_buffer_to_buffer;
         break;
     case RenderGraphResourceType::e_image:

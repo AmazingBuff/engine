@@ -30,15 +30,15 @@ public:
     void resource_barrier(GPUResourceBarrierInfo const& info) const override;
     void generate_mipmap(GPUTexture const* texture, const GPUResourceState& src_state, const GPUResourceState& dst_state) override;
 private:
-    void reset_root_signature(GPUPipelineType type, ID3D12RootSignature* root_signature);
+    void reset_root_signature(GPUPipelineType type, ID3D12RootSignature* root_signature) const;
 private:
     ID3D12GraphicsCommandList4* m_command_list;
     // cbv srv uav heap, sampler heap
-    const DX12DescriptorHeap::D3D12DescriptorHeap* m_bound_descriptor_heaps[2];
+    DX12DescriptorHeap::D3D12DescriptorHeap const* m_bound_descriptor_heaps[2];
     // for multi device rendering
     uint32_t m_bound_heap_index;
 
-    const ID3D12RootSignature* m_bound_root_signature;
+    mutable ID3D12RootSignature const* m_bound_root_signature;
 
     friend class DX12Queue;
     friend class DX12GraphicsPassEncoder;

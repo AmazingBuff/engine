@@ -12,7 +12,7 @@ AMAZING_NAMESPACE_BEGIN
 class GPUGraphicsPassEncoder
 {
 public:
-    GPUGraphicsPassEncoder() = default;
+    GPUGraphicsPassEncoder() : m_ref_command_buffer(nullptr) {}
     virtual ~GPUGraphicsPassEncoder() = default;
 
     virtual void bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t binding_count) = 0;
@@ -26,6 +26,8 @@ public:
     virtual void draw_instance(uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance) = 0;
     virtual void draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) = 0;
     virtual void draw_indexed_instance(uint32_t index_count, uint32_t instance_count, uint32_t first_index, uint32_t first_vertex, uint32_t first_instance) = 0;
+protected:
+    GPUCommandBuffer const* m_ref_command_buffer;
 };
 
 AMAZING_NAMESPACE_END

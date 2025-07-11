@@ -611,13 +611,13 @@ RenderGraphResource RenderDriver::create_image(RenderGraphImageCreateInfo const&
 
     GPUTexture* texture = GPU_create_texture(m_device, texture_info);
 
-    GPUTexture::GPUTextureInfo const* descriptor = texture->descriptor();
+    GPUTexture::GPUTextureInfo const* description = texture->description();
 
     GPUTextureViewCreateInfo view_info{
         .texture = texture,
         .format = transfer_format(info.format),
         .usage = transfer_texture_view_usage(info.usage),
-        .aspect = static_cast<GPUTextureViewAspect>(descriptor->aspect_mask),
+        .aspect = static_cast<GPUTextureViewAspect>(description->aspect_mask),
         .type = transfer_texture_type(info.type),
         .base_array_layer = 0,
         .array_layers = info.array_layers,
@@ -681,10 +681,10 @@ void RenderDriver::copy_to_swap_chain(RenderGraphResource const& resource, Rende
     switch (resource.resource_type)
     {
     case RenderGraphResourceType::e_image:
-        resource_barrier.src_state = resource.image.texture->descriptor()->state;
+        resource_barrier.src_state = resource.image.texture->description()->state;
         break;
     case RenderGraphResourceType::e_buffer:
-        resource_barrier.src_state = resource.buffer.buffer->descriptor()->state;
+        resource_barrier.src_state = resource.buffer.buffer->description()->state;
         break;
     }
 

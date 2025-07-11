@@ -62,7 +62,7 @@ public:
     GPUTexture() : m_ref_device(nullptr), m_info(nullptr) {}
     virtual ~GPUTexture() = default;
 
-    GPUTextureInfo const* descriptor() const { return m_info; }
+    NODISCARD GPUTextureInfo const* description() const { return m_info; }
 protected:
     GPUDevice const* m_ref_device;
     GPUTextureInfo* m_info;

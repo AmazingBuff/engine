@@ -19,7 +19,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-VKCommandBuffer::VKCommandBuffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info)
+VKCommandBuffer::VKCommandBuffer(GPUCommandPool const* pool, GPUCommandBufferCreateInfo const& info) : m_command_buffer(nullptr)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(pool);
     VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
@@ -206,8 +206,7 @@ GPUGraphicsPassEncoder* VKCommandBuffer::begin_graphics_pass(GPUGraphicsPassCrea
 
     vk_device->m_device_table.vkCmdBeginRenderPass(m_command_buffer, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    VKGraphicsPassEncoder* graphics_pass_encoder = PLACEMENT_NEW(VKGraphicsPassEncoder, sizeof(VKGraphicsPassEncoder));
-    graphics_pass_encoder->m_command = this;
+    VKGraphicsPassEncoder* graphics_pass_encoder = PLACEMENT_NEW(VKGraphicsPassEncoder, sizeof(VKGraphicsPassEncoder), this);
     return graphics_pass_encoder;
 }
 
@@ -222,8 +221,7 @@ void VKCommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
 
 GPUComputePassEncoder* VKCommandBuffer::begin_compute_pass(GPUComputePassCreateInfo const& info)
 {
-    VKComputePassEncoder* encoder = PLACEMENT_NEW(VKComputePassEncoder, sizeof(VKComputePassEncoder));
-    encoder->m_command = this;
+    VKComputePassEncoder* encoder = PLACEMENT_NEW(VKComputePassEncoder, sizeof(VKComputePassEncoder), this);
     return encoder;
 }
 

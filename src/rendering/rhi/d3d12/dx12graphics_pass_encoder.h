@@ -14,6 +14,7 @@ class DX12CommandBuffer;
 class DX12GraphicsPassEncoder final : public GPUGraphicsPassEncoder
 {
 public:
+    explicit DX12GraphicsPassEncoder(DX12CommandBuffer const* command);
     void bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t binding_count) override;
     void bind_index_buffer(GPUBufferBinding const& binding) override;
     void bind_descriptor_set(GPUDescriptorSet const* set) override;
@@ -25,13 +26,6 @@ public:
     void draw_instance(uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance) override;
     void draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
     void draw_indexed_instance(uint32_t index_count, uint32_t instance_count, uint32_t first_index, uint32_t first_vertex, uint32_t first_instance) override;
-private:
-    DX12GraphicsPassEncoder();
-
-private:
-    DX12CommandBuffer* m_command_buffer;
-
-    friend class DX12CommandBuffer;
 };
 
 AMAZING_NAMESPACE_END

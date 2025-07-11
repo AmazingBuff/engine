@@ -28,7 +28,7 @@ public:
     virtual void map(size_t offset, size_t size, const void* data = nullptr) const = 0;
     virtual void unmap() const = 0;
 
-    GPUBufferInfo const* descriptor() const { return m_info; }
+    NODISCARD GPUBufferInfo const* description() const { return m_info; }
 protected:
     GPUDevice const* m_ref_device;
     GPUBufferInfo* m_info;

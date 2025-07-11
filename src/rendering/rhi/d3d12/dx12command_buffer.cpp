@@ -524,8 +524,7 @@ GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCr
 
     m_command_list->BeginRenderPass(info.color_attachment_count, render_target_desc, depth_stencil_desc, D3D12_RENDER_PASS_FLAG_NONE);
 
-    DX12GraphicsPassEncoder* encoder = PLACEMENT_NEW(DX12GraphicsPassEncoder, sizeof(DX12GraphicsPassEncoder));
-    encoder->m_command_buffer = this;
+    DX12GraphicsPassEncoder* encoder = PLACEMENT_NEW(DX12GraphicsPassEncoder, sizeof(DX12GraphicsPassEncoder), this);
     return encoder;
 }
 
@@ -537,8 +536,7 @@ void DX12CommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
 
 GPUComputePassEncoder* DX12CommandBuffer::begin_compute_pass(GPUComputePassCreateInfo const& info)
 {
-    DX12ComputePassEncoder* encoder = PLACEMENT_NEW(DX12ComputePassEncoder, sizeof(DX12ComputePassEncoder));
-    encoder->m_command_buffer = this;
+    DX12ComputePassEncoder* encoder = PLACEMENT_NEW(DX12ComputePassEncoder, sizeof(DX12ComputePassEncoder), this);
     return encoder;
 }
 
@@ -935,7 +933,7 @@ void DX12CommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUReso
     dx12_texture->m_info->state = dst_state;
 }
 
-void DX12CommandBuffer::reset_root_signature(GPUPipelineType type, ID3D12RootSignature* root_signature)
+void DX12CommandBuffer::reset_root_signature(GPUPipelineType type, ID3D12RootSignature* root_signature) const
 {
     if (m_bound_root_signature != root_signature)
     {

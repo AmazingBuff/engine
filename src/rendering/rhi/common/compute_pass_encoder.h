@@ -12,13 +12,15 @@ AMAZING_NAMESPACE_BEGIN
 class GPUComputePassEncoder
 {
 public:
-    GPUComputePassEncoder() = default;
+    GPUComputePassEncoder() : m_ref_command_buffer(nullptr) {}
     virtual ~GPUComputePassEncoder() = default;
 
     virtual void bind_descriptor_set(GPUDescriptorSet const* set) = 0;
     virtual void bind_pipeline(GPUComputePipeline const* pipeline) = 0;
     virtual void set_push_constant(GPURootSignature const* root_signature, String const& name, void const* data) = 0;
     virtual void dispatch(uint32_t x, uint32_t y, uint32_t z) = 0;
+protected:
+    GPUCommandBuffer const* m_ref_command_buffer;
 };
 
 AMAZING_NAMESPACE_END

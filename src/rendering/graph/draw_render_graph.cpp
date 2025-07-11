@@ -187,7 +187,7 @@ void DrawRenderGraph::compile()
                     switch (output_node->m_ref_resource.resource_type)
                     {
                     case RenderGraphResourceType::e_image:
-                        src_state = output_node->m_ref_resource.image.texture->descriptor()->state;
+                        src_state = output_node->m_ref_resource.image.texture->description()->state;
                         break;
                     default:
                         break;

@@ -30,7 +30,7 @@ void DrawRenderGraphicsView::set_uniform(RenderEntity const& entity, uint32_t of
         {
         case RenderGraphResourceType::e_buffer:
         {
-            RENDERING_ASSERT(resource.buffer.buffer->descriptor()->type == GPUResourceType::e_uniform_buffer, "unmatched buffer type!");
+            RENDERING_ASSERT(resource.buffer.buffer->description()->type == GPUResourceType::e_uniform_buffer, "unmatched buffer type!");
             resource.buffer.buffer->map(offset, size, data);
         }
             break;
