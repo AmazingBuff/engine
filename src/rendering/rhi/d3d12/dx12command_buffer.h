@@ -26,8 +26,8 @@ public:
     GPUComputePassEncoder* begin_compute_pass(GPUComputePassCreateInfo const& info) override;
     void end_compute_pass(GPUComputePassEncoder* encoder) override;
 
-    void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info) override;
-    void resource_barrier(GPUResourceBarrierInfo const& info) override;
+    void transfer_resource(GPUResourceTransferInfo const& info) override;
+    void resource_barrier(GPUResourceBarrierInfo const& info) const override;
     void generate_mipmap(GPUTexture const* texture, const GPUResourceState& src_state, const GPUResourceState& dst_state) override;
 private:
     void reset_root_signature(GPUPipelineType type, ID3D12RootSignature* root_signature);

@@ -83,6 +83,8 @@ VKTextureView::VKTextureView(GPUTextureViewCreateInfo const& info) : m_rtv_dsv_v
     }
 
     m_ref_texture = texture;
+    m_usage = info.usage;
+    m_format = info.format;
 }
 
 VKTextureView::~VKTextureView()

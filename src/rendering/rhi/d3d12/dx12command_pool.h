@@ -16,7 +16,7 @@ public:
     DX12CommandPool(GPUQueue const* queue, GPUCommandPoolCreateInfo const& info);
     ~DX12CommandPool() override;
 
-    void reset() override;
+    void reset() const override;
 private:
     ID3D12CommandAllocator* m_command_allocator;
 

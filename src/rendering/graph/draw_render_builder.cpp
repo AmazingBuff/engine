@@ -4,20 +4,32 @@
 
 #include "draw_render_builder.h"
 #include "rendering/draw/draw_render_system.h"
+#include "rendering/acceleration/render_geometry.h"
 #include "rendering/graph/resource/render_graph_pass_node.h"
 #include "rendering/graph/resource/render_graph_resource_node.h"
 #include "rendering/graph/resource/render_graph_resource_edge.h"
-#include "rendering/rhi/common/buffer.h"
 #include "rendering/rhi/common/root_signature.h"
+#include "rendering/rhi/common/texture.h"
 
 AMAZING_NAMESPACE_BEGIN
-
-DrawRenderBuilder::DrawRenderBuilder(DrawRenderGraph* graph, RenderGraphPassNode* pass_node)
+    DrawRenderBuilder::DrawRenderBuilder(DrawRenderGraph* graph, RenderGraphPassNode* pass_node)
     : m_ref_render_graph(graph), m_ref_graph_pass_node(pass_node) {}
 
 DrawRenderBuilder::~DrawRenderBuilder()
 {
 
+}
+
+void DrawRenderBuilder::bind_scene_geometry(RenderEntity const& entity)
+{
+    DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(m_ref_render_graph->m_ref_render_system);
+
+    if (auto it = render_system->m_render_geometries.find(entity); it != render_system->m_render_geometries.end())
+        m_ref_graph_pass_node->m_ref_render_geometry = &it->second;
+    else
+        RENDERING_LOG_ERROR("can't find geometry entity! the entity is {}", entity.id());
+
+    m_ref_graph_pass_node->m_geometry_entity = entity;
 }
 
 void DrawRenderBuilder::bind_pipeline(RenderEntity const& entity)
@@ -93,6 +105,7 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
         edge->link(node, m_ref_graph_pass_node);
         m_ref_render_graph->m_edges.emplace(edge);
         m_ref_graph_pass_node->add_input_edge(edge);
+        node->add_output_edge(edge);
     }
     else
     {
@@ -107,6 +120,7 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
             edge->link(it->second, m_ref_graph_pass_node);
             m_ref_render_graph->m_edges.emplace(edge);
             m_ref_graph_pass_node->add_input_edge(edge);
+            it->second->add_output_edge(edge);
         }
     }
 }
@@ -114,20 +128,6 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
 void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
 {
     RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
-
-    for (auto& [resources, set_index] : m_ref_graph_pass_node->m_ref_pipeline->root_signature->set_tables())
-    {
-        if (!any_of(resources, [&](GPUShaderResource const& resource)
-        {
-            if (resource.name == name)
-            {
-                m_ref_graph_pass_node->m_descriptors[set_index].push_back(resource.name);
-                return true;
-            }
-            return false;
-        }))
-            RENDERING_LOG_WARNING("no supported resource! the resource name is {}", name);
-    }
 
     GPUResourceState state = GPUResourceState::e_undefined;
     switch (m_ref_graph_pass_node->m_ref_pipeline->pipeline_type)
@@ -168,6 +168,7 @@ void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
         edge->link(m_ref_graph_pass_node, node);
         m_ref_render_graph->m_edges.emplace(edge);
         m_ref_graph_pass_node->add_output_edge(edge);
+        node->add_input_edge(edge);
     }
     else
         RENDERING_LOG_ERROR("unsupported behavior! an entity can't be wrote twice! the entity is {}", entity.id());
@@ -225,6 +226,7 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
         to_edge->link(m_ref_graph_pass_node, node);
         m_ref_render_graph->m_edges.emplace(to_edge);
         m_ref_graph_pass_node->add_output_edge(to_edge);
+        node->add_input_edge(to_edge);
     }
     else
     {
@@ -239,6 +241,7 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
             edge->link(it->second, m_ref_graph_pass_node);
             m_ref_render_graph->m_edges.emplace(edge);
             m_ref_graph_pass_node->add_input_edge(edge);
+            it->second->add_output_edge(edge);
         }
 
         if (all_of(m_ref_render_graph->m_edges, [&](DependencyEdge const* edge)
@@ -252,6 +255,7 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
             edge->link(m_ref_graph_pass_node, it->second);
             m_ref_render_graph->m_edges.emplace(edge);
             m_ref_graph_pass_node->add_output_edge(edge);
+            it->second->add_input_edge(edge);
         }
     }
 }

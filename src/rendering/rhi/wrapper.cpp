@@ -19,6 +19,7 @@
 #include "d3d12/dx12root_signature.h"
 #include "d3d12/dx12query_pool.h"
 #include "d3d12/resources/dx12buffer.h"
+#include "d3d12/resources/dx12buffer_view.h"
 #include "d3d12/resources/dx12memory_pool.h"
 #include "d3d12/resources/dx12sampler.h"
 #include "d3d12/resources/dx12shader_library.h"
@@ -41,6 +42,7 @@
 #include "vulkan/vkroot_signature.h"
 #include "vulkan/vkquery_pool.h"
 #include "vulkan/resources/vkbuffer.h"
+#include "vulkan/resources/vkbuffer_view.h"
 #include "vulkan/resources/vkmemory_pool.h"
 #include "vulkan/resources/vksampler.h"
 #include "vulkan/resources/vkshader_library.h"
@@ -165,6 +167,10 @@ GPUBuffer* GPU_create_buffer(GPUDevice const* device, GPUBufferCreateInfo const&
 {
     GPU_CREATE(GPUBuffer, DX12Buffer, VKBuffer, device, info);
 }
+GPUBufferView* GPU_create_buffer_view(GPUBufferViewCreateInfo const& info)
+{
+    GPU_CREATE(GPUBufferView, DX12BufferView, VKBufferView, info);
+}
 GPUMemoryPool* GPU_create_memory_pool(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info)
 {
     GPU_CREATE(GPUMemoryPool, DX12MemoryPool, VKMemoryPool, device, info);
@@ -219,6 +225,7 @@ GPU_DESTROY(GPUMemoryPool, memory_pool)
 GPU_DESTROY(GPUSampler, sampler)
 GPU_DESTROY(GPUShaderLibrary, shader_library)
 GPU_DESTROY(GPUBuffer, buffer)
+GPU_DESTROY(GPUBufferView, buffer_view)
 GPU_DESTROY(GPURootSignaturePool, root_signature_pool)
 #undef GPU_DESTROY
 

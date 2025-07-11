@@ -23,6 +23,7 @@ public:
 
     NODISCARD bool operator==(RenderEntity const& other) const { return m_id == other.m_id; }
     NODISCARD bool operator!=(RenderEntity const& other) const { return m_id != other.m_id; }
+    NODISCARD explicit operator bool() const { return *m_id != 0; }
 private:
     SharedPtr<uint32_t> m_id;
 };

@@ -18,6 +18,7 @@ struct RenderVertex
     Vec3f bitangent;
 };
 static constexpr uint32_t RENDER_Vertex_Stride = sizeof(RenderVertex);
+static constexpr uint32_t RENDER_Index_Stride = sizeof(uint32_t);
 
 struct RenderMesh
 {

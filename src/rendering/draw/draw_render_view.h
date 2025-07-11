@@ -11,20 +11,20 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+class DrawRenderScene;
+
 class DrawRenderGraphicsView final : public RenderView
 {
 public:
-    explicit DrawRenderGraphicsView(RenderGraphicsCommand& command);
+    DrawRenderGraphicsView(DrawRenderScene const* scene, RenderGraphicsCommand& command);
     ~DrawRenderGraphicsView() override = default;
 
-    void set_uniform(RenderEntity const& entity) override;
+    void set_uniform(RenderEntity const& entity, uint32_t offset, uint32_t size, void const* data) override;
     void set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
     void set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
     void set_push_constant(String const& name, void const* data) override;
-    void bind_scene_geometry(RenderEntity const& entity) override;
 private:
     RenderGraphicsCommand& m_graphics_command;
-    RenderEntity m_geometry_entity;
 
     friend class DrawRenderScene;
 };
@@ -32,13 +32,13 @@ private:
 class DrawRenderComputeView final : public RenderView
 {
 public:
-    explicit DrawRenderComputeView(RenderComputeCommand& command);
+    DrawRenderComputeView(DrawRenderScene const* scene, RenderComputeCommand& command);
     ~DrawRenderComputeView() override = default;
 
+    void set_uniform(RenderEntity const& entity, uint32_t offset, uint32_t size, void const* data) override;
     void set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
     void set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
     void set_push_constant(String const& name, void const* data) override;
-    void bind_scene_geometry(RenderEntity const& entity) override;
 private:
     RenderComputeCommand& m_compute_command;
 };

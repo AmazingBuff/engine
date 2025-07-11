@@ -18,6 +18,7 @@ public:
     DrawRenderBuilder(DrawRenderGraph* graph, RenderGraphPassNode* pass_node);
     ~DrawRenderBuilder() override;
 
+    void bind_scene_geometry(RenderEntity const& entity) override;
     void bind_pipeline(RenderEntity const& entity) override;
     void read(const char* name, RenderEntity const& entity) override;
     void write(const char* name, RenderEntity const& entity) override;

@@ -25,6 +25,7 @@ public:
 
     RenderEntity create_pipeline(RenderGraphPipelineCreateInfo const& info) override;
     RenderEntity create_image(RenderGraphImageCreateInfo const& info) override;
+    RenderEntity create_buffer(RenderGraphBufferCreateInfo const& info) override;
 private:
     RenderDriver m_render_driver;
     RenderGraphicsCommand m_graphics_command;
@@ -36,6 +37,7 @@ private:
 
     friend class DrawRenderScene;
     friend class DrawRenderBuilder;
+    friend class DrawRenderGraphicsView;
 };
 
 AMAZING_NAMESPACE_END

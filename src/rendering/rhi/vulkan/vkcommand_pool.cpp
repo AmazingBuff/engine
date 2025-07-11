@@ -38,7 +38,7 @@ VKCommandPool::~VKCommandPool()
     vk_device->m_device_table.vkDestroyCommandPool(vk_device->m_device, m_pool, VK_Allocation_Callbacks_Ptr);
 }
 
-void VKCommandPool::reset()
+void VKCommandPool::reset() const
 {
     VKQueue const* vk_queue = static_cast<VKQueue const*>(m_ref_queue);
     VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);

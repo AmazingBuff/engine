@@ -8,7 +8,7 @@
 #include "dx12.h"
 #include "resources/dx12sampler.h"
 #include "resources/dx12texture_view.h"
-#include "resources/dx12buffer.h"
+#include "resources/dx12buffer_view.h"
 #include "internal/dx12descriptor_heap.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -204,8 +204,8 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[j]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_buffer->m_handle, m_cbv_srv_uav_handle, j + heap_offset);
+                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffers[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_buffer_view->m_handle, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
         break;
@@ -214,8 +214,8 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[j]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_srv_offset }, m_cbv_srv_uav_handle, j + heap_offset);
+                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffers[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer_view->m_handle.ptr + dx12_buffer_view->m_srv_offset }, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
         break;
@@ -224,8 +224,8 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12Buffer const* dx12_buffer = static_cast<DX12Buffer const*>(data.buffers[j]);
-                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer->m_handle.ptr + dx12_buffer->m_uav_offset }, m_cbv_srv_uav_handle, j + heap_offset);
+                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffers[j]);
+                DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer_view->m_handle.ptr + dx12_buffer_view->m_uav_offset }, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
         break;

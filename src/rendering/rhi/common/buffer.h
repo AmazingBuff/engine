@@ -11,12 +11,6 @@ AMAZING_NAMESPACE_BEGIN
 
 class GPUBuffer
 {
-public:
-    GPUBuffer() : m_ref_device(nullptr), m_info(nullptr) {}
-    virtual ~GPUBuffer() = default;
-
-    virtual void map(size_t offset, size_t size, const void* data = nullptr) = 0;
-    virtual void unmap() = 0;
 protected:
     struct GPUBufferInfo
     {
@@ -25,8 +19,17 @@ protected:
         GPUResourceType type;
         GPUMemoryUsage memory_usage;
         GPUBufferFlag flags;
+        GPUResourceState state;
     };
+public:
+    GPUBuffer() : m_ref_device(nullptr), m_info(nullptr) {}
+    virtual ~GPUBuffer() = default;
 
+    virtual void map(size_t offset, size_t size, const void* data = nullptr) const = 0;
+    virtual void unmap() const = 0;
+
+    GPUBufferInfo const* descriptor() const { return m_info; }
+protected:
     GPUDevice const* m_ref_device;
     GPUBufferInfo* m_info;
 };

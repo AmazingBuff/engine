@@ -39,6 +39,7 @@ class GPUComputePassEncoder;
 
 class GPUMemoryPool;
 class GPUBuffer;
+class GPUBufferView;
 class GPUTexture;
 class GPUTextureView;
 class GPUSampler;
@@ -151,7 +152,7 @@ struct GPUDescriptorData
     {
         GPUSampler const* const* samplers;
         GPUTextureView const* const* textures;
-        GPUBuffer const* const* buffers;
+        GPUBufferView const* const* buffers;
     };
 
     uint32_t array_count;
@@ -162,7 +163,7 @@ struct GPUVertexAttribute
     uint32_t array_size;
     GPUFormat format;
     uint32_t slot;          // for d3d12 is slot, while vulkan is binding
-    String semantic_name;   // d3d12 use semantic while vulkan use location
+    const char* semantic_name;   // d3d12 use semantic while vulkan use location
     uint32_t location;
     uint32_t offset;
     uint32_t size;          // every attribute size

@@ -9,6 +9,8 @@
 
 AMAZING_NAMESPACE_BEGIN
 
+class Mesh;
+
 class Triangle3D final : public Primitive
 {
 public:
@@ -21,6 +23,8 @@ public:
     NODISCARD Float area() const;
     NODISCARD AABB aabb() const override;
     NODISCARD DirectionDetection detect_point_direction(const Point3D& p) const override;
+
+    NODISCARD Mesh as_mesh() const;
 private:
     Point3D m_vertices[3];
 };

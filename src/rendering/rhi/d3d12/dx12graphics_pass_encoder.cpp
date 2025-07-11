@@ -21,7 +21,7 @@ void DX12GraphicsPassEncoder::bind_vertex_buffers(GPUBufferBinding const* bindin
         GPUBufferBinding const& binding = bindings[i];
         DX12Buffer const* buffer = static_cast<DX12Buffer const*>(binding.buffer);
 
-        vertex_buffer_views[i].BufferLocation = buffer->m_gpu_address + binding.offset;
+        vertex_buffer_views[i].BufferLocation = buffer->m_resource->GetGPUVirtualAddress() + binding.offset;
         vertex_buffer_views[i].StrideInBytes = binding.stride;
         vertex_buffer_views[i].SizeInBytes = buffer->m_info->size - binding.offset;
     }
@@ -33,7 +33,7 @@ void DX12GraphicsPassEncoder::bind_index_buffer(GPUBufferBinding const& binding)
 {
     DX12Buffer const* buffer = static_cast<DX12Buffer const*>(binding.buffer);
     D3D12_INDEX_BUFFER_VIEW index_buffer_view{
-        .BufferLocation = buffer->m_gpu_address + binding.offset,
+        .BufferLocation = buffer->m_resource->GetGPUVirtualAddress() + binding.offset,
         .SizeInBytes = static_cast<uint32_t>(buffer->m_info->size - binding.offset),
         .Format = DXGI_FORMAT_R32_UINT,
     };

@@ -4,6 +4,7 @@ struct VertexAttribute
     float2 texcoord : TEXCOORD0;
     float3 normal : NORMAL;
     float3 tangent : TANGENT;
+    float3 bitangent : BITANGENT;
 };
 
 // view space, because light position is defined in world space,
@@ -19,6 +20,7 @@ struct ObjectInfo
 {
     float4x4 model;
     float4x4 model_inv;
+    // material
 };
 
 struct PassInfo

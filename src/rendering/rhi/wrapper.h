@@ -23,6 +23,7 @@
 #include "common/root_signature_pool.h"
 #include "common/descriptor_set.h"
 #include "common/buffer.h"
+#include "common/buffer_view.h"
 #include "common/memory_pool.h"
 #include "common/shader_library.h"
 #include "common/sampler.h"
@@ -52,6 +53,7 @@ GPUQueryPool* GPU_create_query_pool(GPUDevice const* device, GPUQueryPoolCreateI
 GPUTextureView* GPU_create_texture_view(GPUTextureViewCreateInfo const& info);
 GPUTexture* GPU_create_texture(GPUDevice const* device, GPUTextureCreateInfo const& info);
 GPUBuffer* GPU_create_buffer(GPUDevice const* device, GPUBufferCreateInfo const& info);
+GPUBufferView* GPU_create_buffer_view(GPUBufferViewCreateInfo const& info);
 GPUMemoryPool* GPU_create_memory_pool(GPUDevice const* device, GPUMemoryPoolCreateInfo const& info);
 GPUSampler* GPU_create_sampler(GPUDevice const* device, GPUSamplerCreateInfo const& info);
 GPUShaderLibrary* GPU_create_shader_library(GPUDevice const* device, GPUShaderLibraryCreateInfo const& info);
@@ -72,6 +74,7 @@ void GPU_destroy_descriptor_set(GPUDescriptorSet* descriptor_set);
 void GPU_destroy_root_signature(GPURootSignature* root_signature);
 void GPU_destroy_query_pool(GPUQueryPool* query_pool);
 void GPU_destroy_buffer(GPUBuffer* buffer);
+void GPU_destroy_buffer_view(GPUBufferView* buffer_view);
 void GPU_destroy_shader_library(GPUShaderLibrary* shader_library);
 void GPU_destroy_memory_pool(GPUMemoryPool* memory_pool);
 void GPU_destroy_sampler(GPUSampler* sampler);

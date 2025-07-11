@@ -16,14 +16,13 @@ public:
     VKBuffer(GPUDevice const* device, GPUBufferCreateInfo const& info);
     ~VKBuffer() override;
 
-    void map(size_t offset, size_t size, const void* data) override;
-    void unmap() override;
+    void map(size_t offset, size_t size, const void* data) const override;
+    void unmap() const override;
 private:
     VkBuffer m_buffer;
-    VkBufferView m_storage_texel_view;
-    VkBufferView m_uniform_texel_view;
     VmaAllocation m_allocation;
 
+    friend class VKBufferView;
     friend class VKDescriptorSet;
     friend class VKCommandBuffer;
     friend class VKGraphicsPassEncoder;

@@ -330,6 +330,13 @@ enum class GPUStoreAction : uint8_t
     e_discard
 };
 
+enum class GPUResourceTransferType : uint8_t
+{
+    e_buffer_to_buffer,
+    e_buffer_to_texture,
+    e_texture_to_texture
+};
+
 
 // flags
 enum class GPUShaderStage : uint8_t
@@ -430,6 +437,14 @@ enum class GPUTextureFlag : uint32_t
     e_tiled_resource = 1 << 11,
 };
 FLAG_ENUM(GPUTextureFlag)
+
+enum class GPUBufferViewUsage : uint8_t
+{
+    e_cbv = 1,
+    e_srv = 2,
+    e_uav = 4,
+};
+FLAG_ENUM(GPUBufferViewUsage)
 
 enum class GPUTextureViewUsage : uint8_t
 {

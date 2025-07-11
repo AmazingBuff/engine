@@ -7,6 +7,7 @@
 #include "vkroot_signature.h"
 #include "internal/vkdescriptor_pool.h"
 #include "resources/vktexture_view.h"
+#include "resources/vkbuffer_view.h"
 #include "resources/vkbuffer.h"
 #include "resources/vksampler.h"
 
@@ -137,7 +138,8 @@ void VKDescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_t 
             {
                 for (uint32_t j = 0; j < data.array_count; ++j)
                 {
-                    VKBuffer const* buffer = static_cast<VKBuffer const*>(data.buffers[j]);
+                    VKBufferView const* buffer_view = static_cast<VKBufferView const*>(data.buffers[j]);
+                    VKBuffer const* buffer = static_cast<VKBuffer const*>(buffer_view->m_ref_buffer);
                     VulkanDescriptorUpdateData& update_data = m_update_data[resource->binding + j];
                     update_data.buffer_info.buffer = buffer->m_buffer;
                     update_data.buffer_info.offset = 0;

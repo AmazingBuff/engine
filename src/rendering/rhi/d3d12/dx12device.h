@@ -42,6 +42,7 @@ private:
 
     friend class DX12MemoryPool;
     friend class DX12Buffer;
+    friend class DX12BufferView;
     friend class DX12Texture;
     friend class DX12TextureView;
     friend class DX12Sampler;

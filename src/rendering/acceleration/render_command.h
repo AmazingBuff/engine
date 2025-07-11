@@ -29,9 +29,9 @@ public:
 
     void begin_frame();
     void end_frame();
-    void resource_barrier(RenderGraphResource const* resources, RenderGraphResourceBarrier const* info, uint32_t count);
-
-    void bind_pipeline(RenderGraphPipeline const* pipeline);
+    void resource_barrier(RenderGraphResource const* resources, RenderGraphResourceBarrier const* info, uint32_t count) const;
+    // copy the data of src_resource to dst_resource
+    void copy_resource(RenderGraphResource const& src_resource, RenderGraphResource const& dst_resource) const;
 
     virtual void submit(RenderCommandSubmitInfo const& info) = 0;
 protected:
@@ -58,9 +58,10 @@ public:
     void begin_pass(GPUGraphicsPassCreateInfo const& info);
     void end_pass();
 
-    void bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t count);
-    void bind_index_buffer(GPUBufferBinding const& binding);
-    void draw();
+    void bind_pipeline(RenderGraphPipeline const* pipeline);
+    void bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t count) const;
+    void bind_index_buffer(GPUBufferBinding const& binding) const;
+    void draw(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) const;
 private:
     GPUGraphicsPassEncoder* m_graphics_encoder;
 
@@ -73,6 +74,7 @@ public:
     explicit RenderComputeCommand(RenderDriver const& driver);
     ~RenderComputeCommand() override;
 
+    void bind_pipeline(RenderGraphPipeline const* pipeline);
     void begin_pass(GPUComputePassCreateInfo const& info);
     void end_pass();
     void submit(RenderCommandSubmitInfo const& info) override;

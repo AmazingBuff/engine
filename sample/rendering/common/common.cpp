@@ -270,14 +270,14 @@ Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUS
     return res;
 }
 
-void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
+void transfer_resource(GPUResourceTransferInfo const& info)
 {
     if (Renderdoc_Api)
         Renderdoc_Api->StartFrameCapture(nullptr, nullptr);
 
     t_command_pool[0]->reset();
     t_command_buffer[0]->begin_command();
-    t_command_buffer[0]->transfer_buffer_to_texture(info);
+    t_command_buffer[0]->transfer_resource(info);
 
     // GPUTextureBarrier barrier{
     //     .texture = info.dst_texture,
@@ -291,7 +291,8 @@ void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
     //
     // t_command_buffer[0]->resource_barrier(barrier_info);
 
-    t_command_buffer[0]->generate_mipmap(info.dst_texture, GPUResourceState::e_copy_destination, GPUResourceState::e_shader_resource);
+    if (info.type == GPUResourceTransferType::e_buffer_to_texture || info.type == GPUResourceTransferType::e_texture_to_texture)
+        t_command_buffer[0]->generate_mipmap(info.dst_texture.texture, GPUResourceState::e_copy_destination, GPUResourceState::e_shader_resource);
 
     t_command_buffer[0]->end_command();
 

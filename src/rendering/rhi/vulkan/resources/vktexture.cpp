@@ -3,7 +3,6 @@
 //
 
 #include "vktexture.h"
-
 #include "rendering/rhi/common/queue.h"
 #include "rendering/rhi/vulkan/vkdevice.h"
 #include "rendering/rhi/vulkan/vkadapter.h"

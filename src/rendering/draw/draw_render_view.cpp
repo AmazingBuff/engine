@@ -3,16 +3,44 @@
 //
 
 #include "draw_render_view.h"
+#include "draw_render_scene.h"
+#include "draw_render_system.h"
+#include "rendering/render_util.h"
 #include "rendering/rhi/wrapper.h"
 #include "rendering/graph/resource/render_graph_resources.h"
 
 AMAZING_NAMESPACE_BEGIN
 
-DrawRenderGraphicsView::DrawRenderGraphicsView(RenderGraphicsCommand& command) : m_graphics_command(command) {}
-
-void DrawRenderGraphicsView::set_uniform(RenderEntity const& entity)
+DrawRenderGraphicsView::DrawRenderGraphicsView(DrawRenderScene const* scene, RenderGraphicsCommand& command) : m_graphics_command(command)
 {
-    //m_graphics_command.m_graphics_encoder->set_uniform(entity);
+    m_ref_render_scene = scene;
+}
+
+void DrawRenderGraphicsView::set_uniform(RenderEntity const& entity, uint32_t offset, uint32_t size, void const* data)
+{
+    DrawRenderScene const* render_scene = static_cast<DrawRenderScene const*>(m_ref_render_scene);
+
+    auto it = render_scene->m_render_entities.find(entity);
+    if (it != render_scene->m_render_entities.end())
+    {
+        DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(render_scene->m_ref_render_system);
+        RenderGraphResource const& resource = render_system->m_render_graph_resources[entity];
+
+        switch (resource.resource_type)
+        {
+        case RenderGraphResourceType::e_buffer:
+        {
+            RENDERING_ASSERT(resource.buffer.buffer->descriptor()->type == GPUResourceType::e_uniform_buffer, "unmatched buffer type!");
+            resource.buffer.buffer->map(offset, size, data);
+        }
+            break;
+        case RenderGraphResourceType::e_image:
+            RENDERING_LOG_ERROR("unsupported resource type!");
+            break;
+        }
+    }
+    else
+        RENDERING_LOG_ERROR("the entity {} isn't imported to this scene!", entity.id());
 }
 
 void DrawRenderGraphicsView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
@@ -30,13 +58,16 @@ void DrawRenderGraphicsView::set_push_constant(String const& name, void const* d
     m_graphics_command.m_graphics_encoder->set_push_constant(m_graphics_command.m_ref_pipeline->root_signature, name, data);
 }
 
-void DrawRenderGraphicsView::bind_scene_geometry(RenderEntity const& entity)
+
+DrawRenderComputeView::DrawRenderComputeView(DrawRenderScene const* scene, RenderComputeCommand& command) : m_compute_command(command)
 {
-    m_geometry_entity = entity;
+    m_ref_render_scene = scene;
 }
 
+void DrawRenderComputeView::set_uniform(RenderEntity const& entity, uint32_t offset, uint32_t size, void const* data)
+{
 
-DrawRenderComputeView::DrawRenderComputeView(RenderComputeCommand& command) : m_compute_command(command) {}
+}
 
 void DrawRenderComputeView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
 {
@@ -51,11 +82,6 @@ void DrawRenderComputeView::set_scissor(uint32_t x, uint32_t y, uint32_t width, 
 void DrawRenderComputeView::set_push_constant(String const& name, void const* data)
 {
     m_compute_command.m_compute_encoder->set_push_constant(m_compute_command.m_ref_pipeline->root_signature, name, data);
-}
-
-void DrawRenderComputeView::bind_scene_geometry(RenderEntity const& entity)
-{
-    RENDERING_LOG_ERROR("can't invoke graphics pipeline function in compute pipeline!");
 }
 
 AMAZING_NAMESPACE_END

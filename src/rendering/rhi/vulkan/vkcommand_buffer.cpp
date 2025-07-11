@@ -272,7 +272,7 @@ void VKCommandBuffer::end_query(GPUQueryPool const* pool, GPUQueryInfo const& in
     begin_query(pool, info);
 }
 
-void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
+void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info) const
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
     VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
@@ -383,40 +383,103 @@ void VKCommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
     }
 }
 
-void VKCommandBuffer::transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
+void VKCommandBuffer::transfer_resource(GPUResourceTransferInfo const& info)
 {
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
     VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
     VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
-    VKBuffer const* buffer = static_cast<VKBuffer const*>(info.src_buffer);
-    VKTexture const* texture = static_cast<VKTexture const*>(info.dst_texture);
 
-    uint32_t width = std::max(1u, texture->m_info->width >> info.dst_texture_subresource.mip_level);
-    uint32_t height = std::max(1u, texture->m_info->height >> info.dst_texture_subresource.mip_level);
-    uint32_t depth = std::max(1u, texture->m_info->depth >> info.dst_texture_subresource.mip_level);
+    switch (info.type)
+    {
+    case GPUResourceTransferType::e_buffer_to_buffer:
+    {
+        VKBuffer const* src_buffer = static_cast<VKBuffer const*>(info.src_buffer.buffer);
+        VKBuffer const* dst_buffer = static_cast<VKBuffer const*>(info.dst_buffer.buffer);
 
-    VkBufferImageCopy region{
-        .bufferOffset = info.src_buffer_offset,
-        .bufferRowLength = width,
-        .bufferImageHeight = height,
-        .imageSubresource{
-            .aspectMask = texture->m_info->aspect_mask,
-            .mipLevel = info.dst_texture_subresource.mip_level,
-            .baseArrayLayer = info.dst_texture_subresource.base_array_layer,
-            .layerCount = info.dst_texture_subresource.array_layers
-        },
-        .imageOffset{
-            .x = 0,
-            .y = 0,
-            .z = 0,
-        },
-        .imageExtent{
-            .width = width,
-            .height = height,
-            .depth = depth,
-        },
-    };
-    vk_device->m_device_table.vkCmdCopyBufferToImage(m_command_buffer, buffer->m_buffer, texture->m_image, transfer_image_layout(texture->m_info->state), 1, &region);
+        VkBufferCopy copy_region{
+            .srcOffset = info.src_buffer.offset,
+            .dstOffset = info.dst_buffer.offset,
+            .size = info.dst_buffer.size,
+        };
+        vk_device->m_device_table.vkCmdCopyBuffer(m_command_buffer, src_buffer->m_buffer, dst_buffer->m_buffer, 1, &copy_region);
+        break;
+    }
+    case GPUResourceTransferType::e_buffer_to_texture:
+    {
+        VKBuffer const* buffer = static_cast<VKBuffer const*>(info.src_buffer.buffer);
+        VKTexture const* texture = static_cast<VKTexture const*>(info.dst_texture.texture);
+
+        uint32_t width = std::max(1u, texture->m_info->width >> info.dst_texture.subresource.mip_level);
+        uint32_t height = std::max(1u, texture->m_info->height >> info.dst_texture.subresource.mip_level);
+        uint32_t depth = std::max(1u, texture->m_info->depth >> info.dst_texture.subresource.mip_level);
+
+        VkBufferImageCopy region{
+            .bufferOffset = info.src_buffer.offset,
+            .bufferRowLength = width,
+            .bufferImageHeight = height,
+            .imageSubresource{
+                .aspectMask = texture->m_info->aspect_mask,
+                .mipLevel = info.dst_texture.subresource.mip_level,
+                .baseArrayLayer = info.dst_texture.subresource.base_array_layer,
+                .layerCount = info.dst_texture.subresource.array_layers
+            },
+            .imageOffset{
+                .x = 0,
+                .y = 0,
+                .z = 0,
+            },
+            .imageExtent{
+                .width = width,
+                .height = height,
+                .depth = depth,
+            },
+        };
+        vk_device->m_device_table.vkCmdCopyBufferToImage(m_command_buffer, buffer->m_buffer, texture->m_image, transfer_image_layout(texture->m_info->state), 1, &region);
+        break;
+    }
+    case GPUResourceTransferType::e_texture_to_texture:
+    {
+        VKTexture const* src_texture = static_cast<VKTexture const*>(info.src_texture.texture);
+        VKTexture const* dst_texture = static_cast<VKTexture const*>(info.dst_texture.texture);
+
+        uint32_t width = std::max(1u, dst_texture->m_info->width >> info.dst_texture.subresource.mip_level);
+        uint32_t height = std::max(1u, dst_texture->m_info->height >> info.dst_texture.subresource.mip_level);
+        uint32_t depth = std::max(1u, dst_texture->m_info->depth >> info.dst_texture.subresource.mip_level);
+
+        VkImageCopy copy_region{
+            .srcSubresource{
+                .aspectMask = src_texture->m_info->aspect_mask,
+                .mipLevel = info.dst_texture.subresource.mip_level,
+                .baseArrayLayer = info.dst_texture.subresource.base_array_layer,
+                .layerCount = info.dst_texture.subresource.array_layers
+            },
+            .srcOffset{
+                .x = 0,
+                .y = 0,
+                .z = 0
+            },
+            .dstSubresource{
+                .aspectMask = dst_texture->m_info->aspect_mask,
+                .mipLevel = info.dst_texture.subresource.mip_level,
+                .baseArrayLayer = info.dst_texture.subresource.base_array_layer,
+                .layerCount = info.dst_texture.subresource.array_layers
+            },
+            .dstOffset{
+                .x = 0,
+                .y = 0,
+                .z = 0
+            },
+            .extent{
+                .width = width,
+                .height = height,
+                .depth = depth,
+            },
+        };
+
+        vk_device->m_device_table.vkCmdCopyImage(m_command_buffer, src_texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+        break;
+    }
+    }
 }
 
 void VKCommandBuffer::generate_mipmap(GPUTexture const* texture, const GPUResourceState& src_state, const GPUResourceState& dst_state)

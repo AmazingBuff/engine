@@ -24,4 +24,19 @@ DirectionDetection Mesh::detect_point_direction(const Point3D& p) const
     return DirectionDetection{};
 }
 
+NODISCARD Mesh Mesh::subdivide(uint32_t degree) const
+{
+    for (auto& triangle : triangles)
+    {
+        Vec3f v1 = vertices[triangle.x()];
+        Vec3f v2 = vertices[triangle.y()];
+        Vec3f v3 = vertices[triangle.z()];
+
+
+
+    }
+
+    return Mesh(aabb());
+}
+
 AMAZING_NAMESPACE_END

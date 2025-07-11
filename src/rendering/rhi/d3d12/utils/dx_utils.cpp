@@ -510,6 +510,8 @@ uint32_t format_bit_size(GPUFormat format)
         return 128;
     case GPUFormat::e_d32_sfloat_s8_uint:
         return 40;
+    default:
+        return 32;
     }
 
     return 32;

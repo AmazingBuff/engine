@@ -12,10 +12,6 @@ AMAZING_NAMESPACE_BEGIN
 class GPUTexture
 {
 public:
-    GPUTexture() : m_ref_device(nullptr), m_info(nullptr) {}
-    virtual ~GPUTexture() = default;
-
-protected:
     struct GPUTextureInfo
     {
         uint32_t width;
@@ -40,7 +36,7 @@ protected:
         uint8_t can_alias;
         uint8_t can_export;
     };
-
+protected:
     struct GPUTiledTextureInfo
     {
         uint64_t tile_size;
@@ -62,7 +58,12 @@ protected:
         uint32_t height_in_tiles;
         uint32_t depth_in_tiles;
     };
+public:
+    GPUTexture() : m_ref_device(nullptr), m_info(nullptr) {}
+    virtual ~GPUTexture() = default;
 
+    GPUTextureInfo const* descriptor() const { return m_info; }
+protected:
     GPUDevice const* m_ref_device;
     GPUTextureInfo* m_info;
 };

@@ -304,7 +304,7 @@ void draw(SDL_Window* window)
     HWND hwnd = static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
     HINSTANCE hinstance = static_cast<HINSTANCE>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_INSTANCE_POINTER, nullptr));
 
-    create_api_object(hwnd, hinstance, GPUBackend::e_vulkan);
+    create_api_object(hwnd, hinstance, GPUBackend::e_d3d12);
     create_pipeline();
 
     GPUSemaphore* graphic_semaphore = GPU_create_semaphore(t_device);

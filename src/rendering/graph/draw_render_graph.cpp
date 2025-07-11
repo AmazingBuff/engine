@@ -50,6 +50,12 @@ void DrawRenderGraph::add_pass(const char* pass_name, RenderGraphPassSetup&& set
     }
 }
 
+void DrawRenderGraph::add_present_pass(const char* pass_name, RenderEntity const& present_entity)
+{
+    m_present_pass.name = pass_name;
+    m_present_pass.present_entity = present_entity;
+}
+
 void DrawRenderGraph::compile()
 {
     struct PassNodeEdge
@@ -89,6 +95,8 @@ void DrawRenderGraph::compile()
                 }
             }
 
+            PassNodeEdge edge;
+            pass_graph.emplace(input_node, edge);
             for (RenderGraphPassNode* out_node : output_nodes)
             {
                 pass_graph[input_node].output_nodes.insert(out_node);
@@ -137,6 +145,8 @@ void DrawRenderGraph::compile()
     for (auto& [node, priority] : priority)
         m_parallel_groups[priority].push_back(node);
 
+    RENDERING_ASSERT(m_parallel_groups[max_priority].size() == 1, "last pass of rendering must only has one output!");
+
     // todo: cull pass
 
     for (Vector<RenderGraphPassNode*> const& group : m_parallel_groups)
@@ -172,7 +182,17 @@ void DrawRenderGraph::compile()
                 if (dst_state != GPUResourceState::e_unordered_access)
                 {
                     RenderGraphResourceNode* output_node = static_cast<RenderGraphResourceNode*>(out->to());
-                    node->m_output_barriers[output_node] = {GPUResourceState::e_undefined, dst_state};
+
+                    GPUResourceState src_state = GPUResourceState::e_undefined;
+                    switch (output_node->m_ref_resource.resource_type)
+                    {
+                    case RenderGraphResourceType::e_image:
+                        src_state = output_node->m_ref_resource.image.texture->descriptor()->state;
+                        break;
+                    default:
+                        break;
+                    }
+                    node->m_output_barriers[output_node] = {src_state, dst_state};
                 }
             }
 
@@ -204,7 +224,7 @@ void DrawRenderGraph::compile()
                             descriptor_data.textures = &resource.image.texture_view;
                             break;
                         case RenderGraphResourceType::e_buffer:
-                            descriptor_data.buffers = &resource.buffer.buffer;
+                            descriptor_data.buffers = &resource.buffer.buffer_view;
                             break;
                         }
 

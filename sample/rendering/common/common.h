@@ -13,6 +13,56 @@
 
 using namespace Amazing;
 
+static constexpr GPUVertexAttribute Vertex_Attributes[] =
+{
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32b32_sfloat,
+        .slot = 0,
+        .semantic_name = "POSITION",
+        .location = 0,
+        .offset = 0,
+        .size = 12,
+    },
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32_sfloat,
+        .slot = 0,
+        .semantic_name = "TEXCOORD",
+        .location = 1,
+        .offset = 12,
+        .size = 8,
+    },
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32b32_sfloat,
+        .slot = 0,
+        .semantic_name = "NORMAL",
+        .location = 2,
+        .offset = 20,
+        .size = 12,
+        .rate = GPUVertexInputRate::e_vertex
+    },
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32b32_sfloat,
+        .slot = 0,
+        .semantic_name = "TANGENT",
+        .location = 3,
+        .offset = 32,
+        .size = 12,
+    },
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32b32_sfloat,
+        .slot = 0,
+        .semantic_name = "BITANGENT",
+        .location = 4,
+        .offset = 44,
+        .size = 12,
+    }
+};
+
 static constexpr uint32_t Width = 960;
 static constexpr uint32_t Height = 540;
 static constexpr uint32_t Frame_In_Flight = 3;
@@ -54,4 +104,4 @@ void destroy_api_object();
 
 ImageInfo load_image(const String& file_path);
 Vector<char> compile_shader(const Vector<char>& code, const wchar_t* entry, GPUShaderStage stage);
-void transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info);
+void transfer_resource(GPUResourceTransferInfo const& info);

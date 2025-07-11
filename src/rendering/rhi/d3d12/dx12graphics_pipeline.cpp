@@ -21,21 +21,22 @@ DX12GraphicsPipeline::DX12GraphicsPipeline(GPUGraphicsPipelineCreateInfo const& 
 
     uint32_t input_element_count = 0;
     Vector<D3D12_INPUT_ELEMENT_DESC> input_element_desc;
-    if (!info.vertex_inputs.empty())
+    if (info.vertex_attribute_count > 0)
     {
-        for (GPUVertexAttribute const& vertex_attribute : info.vertex_inputs)
-            input_element_count += vertex_attribute.array_size;
+        for (uint32_t i = 0; i < info.vertex_attribute_count; i++)
+            input_element_count += info.vertex_inputs[i].array_size;
 
         input_element_desc.resize(input_element_count);
 
         Map<String, uint32_t> semantic_name_to_index;
         uint32_t fill_index = 0;
-        for (GPUVertexAttribute const& vertex_attribute : info.vertex_inputs)
+        for (uint32_t index = 0; index < info.vertex_attribute_count; index++)
         {
+            GPUVertexAttribute const& vertex_attribute = info.vertex_inputs[index];
             for (uint32_t i = 0; i < vertex_attribute.array_size; ++i)
             {
                 D3D12_INPUT_ELEMENT_DESC& input_desc = input_element_desc[fill_index];
-                input_desc.SemanticName = vertex_attribute.semantic_name.c_str();
+                input_desc.SemanticName = vertex_attribute.semantic_name;
                 auto iter = semantic_name_to_index.find(vertex_attribute.semantic_name);
                 if (iter != semantic_name_to_index.end())
                     iter->second++;

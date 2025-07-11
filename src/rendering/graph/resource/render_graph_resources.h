@@ -35,13 +35,13 @@ struct RenderGraphResource
     {
         struct
         {
-            GPUTexture* texture;
-            GPUTextureView* texture_view;
+            GPUTexture const* texture;
+            GPUTextureView const* texture_view;
         } image;
         struct
         {
-            GPUBuffer* buffer;
-            GPUResourceType resource_type;
+            GPUBuffer const* buffer;
+            GPUBufferView const* buffer_view;
         } buffer;
     };
 };

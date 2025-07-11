@@ -22,6 +22,7 @@ struct Edge
     Index2i tri;        // triangle index form the field triangles of Mesh
 };
 
+// only for manifold topology
 class Mesh final : public Primitive
 {
 public:
@@ -41,6 +42,16 @@ public:
     NODISCARD PrimitiveType type() const override;
     NODISCARD AABB aabb() const override;
     NODISCARD DirectionDetection detect_point_direction(const Point3D& p) const override;
+
+    /*
+     *          /\                 /\                 /\
+     *        /   \              /   \              /___\
+     *      /      \           /______\           /__\/__\
+     *    /         \        /  \   /  \        /__\/_\/__\
+     *  /____________\     /_____\/_____\     /__\/_\/__\/_\
+     *        0                   1                 2
+    */
+    NODISCARD Mesh subdivide(uint32_t degree) const;
 private:
     AABB m_aabb;
 };

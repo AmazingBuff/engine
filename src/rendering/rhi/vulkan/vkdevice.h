@@ -56,6 +56,7 @@ private:
     friend class VKQueryPool;
 
     friend class VKBuffer;
+    friend class VKBufferView;
     friend class VKTexture;
     friend class VKTextureView;
     friend class VKSampler;

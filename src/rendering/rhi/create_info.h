@@ -81,7 +81,8 @@ struct GPUGraphicsPipelineCreateInfo
     GPUShaderEntry const* tessellation_evaluation_shader;
     GPUShaderEntry const* geometry_shader;
     GPUShaderEntry const* fragment_shader;
-    Vector<GPUVertexAttribute> const vertex_inputs;
+    GPUVertexAttribute const* vertex_inputs;
+    uint32_t vertex_attribute_count;
 
     GPUBlendState const* blend_state;
     GPUDepthStencilState const* depth_stencil_state;
@@ -133,18 +134,28 @@ struct GPUBufferCreateInfo
 {
     String name;
     uint64_t size;
+    GPUMemoryUsage usage;
+    GPUFormat format;
+    GPUResourceState state;
+    GPUResourceType type;
+    GPUBufferFlag flags;
+};
+
+struct GPUBufferViewCreateInfo
+{
+    String name;
+    GPUBuffer const* buffer;
+    GPUBuffer const* counter_buffer;
     struct
     {
         uint64_t first_element;
         uint32_t element_count;
         uint32_t element_stride;
     } data_array;
-    GPUBuffer const* counter_buffer;
-    GPUMemoryUsage usage;
     GPUFormat format;
-    GPUResourceState state;
-    GPUResourceType type;
-    GPUBufferFlag flags;
+    GPUBufferViewUsage usage;
+    uint32_t offset;
+    uint32_t stride;
 };
 
 struct GPUTextureCreateInfo
@@ -222,12 +233,37 @@ struct GPUQueuePresentInfo
     uint8_t index;
 };
 
-struct GPUBufferToTextureTransferInfo
+struct GPUResourceTransferInfo
 {
-    GPUBuffer const* src_buffer;
-    uint64_t src_buffer_offset;
-    GPUTexture const* dst_texture;
-    GPUTextureSubresource dst_texture_subresource;
+    struct GPUSrcBufferTransferInfo
+    {
+        GPUBuffer const* buffer;
+        uint64_t offset;
+    };
+
+    struct GPUDstBufferTransferInfo : GPUSrcBufferTransferInfo
+    {
+        uint64_t size;
+    };
+
+    struct GPUTextureTransferInfo
+    {
+        GPUTexture const* texture;
+        GPUTextureSubresource subresource;
+    };
+
+    GPUResourceTransferType type;
+    union
+    {
+        GPUSrcBufferTransferInfo src_buffer;
+        GPUTextureTransferInfo src_texture;
+    };
+
+    union
+    {
+        GPUDstBufferTransferInfo dst_buffer;
+        GPUTextureTransferInfo dst_texture;
+    };
 };
 
 AMAZING_NAMESPACE_END

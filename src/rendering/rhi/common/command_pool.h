@@ -15,7 +15,7 @@ public:
     GPUCommandPool() : m_ref_queue(nullptr) {}
     virtual ~GPUCommandPool() = default;
 
-    virtual void reset() = 0;
+    virtual void reset() const = 0;
 protected:
     GPUQueue const* m_ref_queue;
 };

@@ -15,7 +15,7 @@ public:
     VKCommandPool(GPUQueue const* queue, GPUCommandPoolCreateInfo const& info);
     ~VKCommandPool() override;
 
-    void reset() override;
+    void reset() const override;
 private:
     VkCommandPool m_pool;
 

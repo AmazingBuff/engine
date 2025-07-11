@@ -13,6 +13,7 @@ thread_local GPUTexture* texture = nullptr;
 thread_local GPUTextureView* texture_view = nullptr;
 thread_local GPUSampler* sampler = nullptr;
 thread_local GPUBuffer* buffer = nullptr;
+thread_local GPUBufferView* buffer_view = nullptr;
 thread_local GPUBuffer* vertex_buffer = nullptr;
 thread_local GPUBuffer* index_buffer = nullptr;
 
@@ -153,17 +154,22 @@ void create_pipeline()
     GPUBuffer* transfer_buffer = GPU_create_buffer(t_device, buffer_create_info);
     transfer_buffer->map(0, image.data.size(), image.data.data());
 
-    GPUBufferToTextureTransferInfo transfer_info{
-        .src_buffer = transfer_buffer,
-        .src_buffer_offset = 0,
-        .dst_texture = texture,
-        .dst_texture_subresource{
-            .mip_level = 0,
-            .base_array_layer = 0,
-            .array_layers = 1
+    GPUResourceTransferInfo transfer_info{
+        .type = GPUResourceTransferType::e_buffer_to_texture,
+        .src_buffer{
+            .buffer = transfer_buffer,
+            .offset = 0
         },
+        .dst_texture {
+            .texture = texture,
+            .subresource{
+                .mip_level = 0,
+                .base_array_layer = 0,
+                .array_layers = 1
+            }
+        }
     };
-    transfer_buffer_to_texture(transfer_info);
+    transfer_resource(transfer_info);
 
     GPUTextureViewCreateInfo texture_view_create_info{
         .texture = texture,
@@ -197,6 +203,12 @@ void create_pipeline()
     };
     buffer = GPU_create_buffer(t_device, buffer_ci);
     buffer->map(0, sizeof(ObjectInfo), world);
+
+    GPUBufferViewCreateInfo buffer_view_create_info{
+        .buffer = buffer,
+        .usage = GPUBufferViewUsage::e_cbv,
+    };
+    buffer_view = GPU_create_buffer_view(buffer_view_create_info);
 
     // graphics pipeline
     Vector<char> shader = read_file(RES_DIR"shader/box/box.hlsl");
@@ -305,7 +317,8 @@ void create_pipeline()
         .root_signature = root_signature,
         .vertex_shader = &vertex_shader_entry,
         .fragment_shader = &fragment_shader_entry,
-        .vertex_inputs = { pos, tex, normal, tangent },
+        .vertex_inputs = Vertex_Attributes,
+        .vertex_attribute_count = array_size(Vertex_Attributes),
         .depth_stencil_state = &depth_stencil_state,
         .rasterizer_state = &rasterizer_state,
         .color_format = &Backend_Format,
@@ -336,7 +349,7 @@ void create_pipeline()
 
     GPUDescriptorData buffer_set_data;
     buffer_set_data.array_count = 1;
-    buffer_set_data.buffers = &buffer;
+    buffer_set_data.buffers = &buffer_view;
     buffer_set_data.resource_type = GPUResourceType::e_uniform_buffer;
     buffer_set_data.binding = 0;
     buffer_set->update(&buffer_set_data, 1);
@@ -364,6 +377,7 @@ void destroy_pipeline()
 {
     GPU_destroy_graphics_pipeline(pipeline);
 
+    GPU_destroy_buffer_view(buffer_view);
     GPU_destroy_buffer(buffer);
     GPU_destroy_buffer(vertex_buffer);
     GPU_destroy_buffer(index_buffer);

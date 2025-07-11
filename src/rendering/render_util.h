@@ -16,6 +16,12 @@ GPUCullMode transfer_cull_mode(RenderCullMode cull_mode);
 GPUFillMode transfer_fill_mode(RenderFillMode fill_mode);
 GPUFrontFace transfer_front_face(RenderFrontFace front_face);
 GPUPrimitiveTopology transfer_primitive_topology(RenderPrimitiveTopology topology);
+GPUResourceState transfer_resource_state(RenderGraphImageLayout layout);
+GPUResourceType transfer_resource_type(RenderGraphImageUsage usage);
+GPUTextureType transfer_texture_type(RenderGraphImageType type);
+GPUTextureViewUsage transfer_texture_view_usage(RenderGraphImageUsage usage);
+
+RenderEntity generate_render_entity();
 
 AMAZING_NAMESPACE_END
 #endif //RENDER_UTIL_H

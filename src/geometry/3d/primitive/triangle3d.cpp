@@ -3,6 +3,7 @@
 //
 
 #include "geometry/3d/primitive/triangle3d.h"
+#include "geometry/3d/primitive/mesh.h"
 #include "geometry/3d/face3d.h"
 
 AMAZING_NAMESPACE_BEGIN
@@ -80,6 +81,37 @@ DirectionDetection Triangle3D::detect_point_direction(const Point3D& p) const
     }
 
     return DirectionDetection::e_outer;
+}
+
+Mesh Triangle3D::as_mesh() const
+{
+    Mesh ret(aabb());
+
+    ret.vertices.resize(3);
+    ret.vertices[0] = m_vertices[0];
+    ret.vertices[1] = m_vertices[1];
+    ret.vertices[2] = m_vertices[2];
+
+    Vec3f n = normal();
+    ret.normals.resize(3);
+    ret.normals[0] = n;
+    ret.normals[1] = n;
+    ret.normals[2] = n;
+
+    ret.triangles.resize(1);
+    ret.triangles[0] = {0, 1, 2};
+
+    ret.edges.resize(3);
+    ret.edges[0].tri.x() = 0;
+    ret.edges[0].tri.y() = Mesh_Valid_Index;
+
+    ret.edges[1].tri.x() = 0;
+    ret.edges[1].tri.y() = Mesh_Valid_Index;
+
+    ret.edges[2].tri.x() = 0;
+    ret.edges[2].tri.y() = Mesh_Valid_Index;
+
+    return ret;
 }
 
 AMAZING_NAMESPACE_END

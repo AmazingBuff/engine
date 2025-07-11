@@ -29,15 +29,35 @@ enum class RenderGraphImageUsage : uint8_t
 {
     e_srv = 1,
     e_uav = 2,
-    e_rtv = 4,
+    e_rtv_dsv = 4,
+    e_copy = 8,
 };
 FLAG_ENUM(RenderGraphImageUsage)
+
+enum class RenderGraphImageLayout : uint8_t
+{
+    e_srv = 1,
+    e_uav = 2,
+    e_rtv = 4,
+    e_dsv = 8,
+    e_copy_src = 16,
+    e_copy_dst = 32,
+};
+FLAG_ENUM(RenderGraphImageLayout)
+
+enum class RenderGraphImageType : uint8_t
+{
+    e_2d,
+    e_3d,
+    e_cube
+};
 
 enum class RenderGraphBufferUsage : uint8_t
 {
     e_srv = 1,
     e_uav = 2,
     e_cbv = 4,
+    e_copy = 8,
 };
 FLAG_ENUM(RenderGraphBufferUsage)
 

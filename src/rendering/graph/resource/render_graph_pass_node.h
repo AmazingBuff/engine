@@ -13,7 +13,7 @@ AMAZING_NAMESPACE_BEGIN
 class RenderGraphPassNode final : public RenderGraphNode
 {
 public:
-    RenderGraphPassNode() : m_ref_pipeline(nullptr) {}
+    RenderGraphPassNode() : m_ref_pipeline(nullptr), m_ref_render_geometry(nullptr) {}
     ~RenderGraphPassNode() override = default;
 private:
     RenderGraphPipeline const* m_ref_pipeline;
@@ -22,6 +22,9 @@ private:
     HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_output_barriers;
     HashMap<uint32_t, Vector<String>> m_descriptors;
     HashMap<uint32_t, GPUDescriptorSet*> m_descriptor_sets;
+
+    RenderEntity m_geometry_entity;
+    RenderGeometry const* m_ref_render_geometry;
 
     friend class DrawRenderBuilder;
     friend class DrawRenderGraph;

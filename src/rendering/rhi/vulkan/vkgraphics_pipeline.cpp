@@ -23,20 +23,22 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
     uint32_t input_attribute_count = 0;
     VkVertexInputBindingDescription* input_binding_descriptions = nullptr;
     VkVertexInputAttributeDescription* input_attribute_descriptions = nullptr;
-    if (!info.vertex_inputs.empty())
+    if (info.vertex_attribute_count > 0)
     {
         Map<uint32_t, VkVertexInputBindingDescription> input_bindings;
-        for (GPUVertexAttribute const& vertex_input : info.vertex_inputs)
+        for (uint32_t i = 0; i < info.vertex_attribute_count; i++)
         {
-            input_bindings.emplace(vertex_input.slot, VkVertexInputBindingDescription{});
-            input_attribute_count += vertex_input.array_size;
+
+            input_bindings.emplace(info.vertex_inputs[i].slot, VkVertexInputBindingDescription{});
+            input_attribute_count += info.vertex_inputs[i].array_size;
         }
         input_binding_descriptions = STACK_NEW(VkVertexInputBindingDescription, input_bindings.size());
         input_attribute_descriptions = STACK_NEW(VkVertexInputAttributeDescription, input_attribute_count);
 
         uint32_t attribute_index = 0;
-        for (GPUVertexAttribute const& vertex_input : info.vertex_inputs)
+        for (uint32_t index = 0; index < info.vertex_attribute_count; index++)
         {
+            GPUVertexAttribute const& vertex_input = info.vertex_inputs[index];
             VkVertexInputBindingDescription& input_binding_description = input_bindings[vertex_input.slot];
             input_binding_description.binding = vertex_input.slot;
             input_binding_description.stride += vertex_input.size;
@@ -249,10 +251,13 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
     VulkanRenderPassCreateInfo render_pass_info{
         .color_attachment_count = info.render_target_count,
         .sample_count = info.sample_count > GPUSampleCount::e_1 ? info.sample_count : GPUSampleCount::e_1,
-        .depth_stencil_attachment{
-            .depth_stencil_format = info.depth_stencil_format,
-        },
     };
+    if (info.depth_stencil_state)
+    {
+        render_pass_info.depth_stencil_attachment = {
+            .depth_stencil_format = info.depth_stencil_format,
+        };
+    }
     for (uint32_t i = 0; i < info.render_target_count; i++)
     {
         render_pass_info.color_attachment[i].format = info.color_format[i];

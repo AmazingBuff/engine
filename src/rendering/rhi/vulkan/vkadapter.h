@@ -42,6 +42,7 @@ private:
 
 
     friend class VKBuffer;
+    friend class VKBufferView;
     friend class VKTexture;
 };
 

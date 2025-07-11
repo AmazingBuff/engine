@@ -26,10 +26,12 @@ public:
     void attach_graph(RenderGraph const* graph) override;
     void render() override;
 private:
-    void render_graphics(RenderGraphPassNode* node) const;
-    void render_compute(RenderGraphPassNode* node);
+    void render_graphics(RenderGraphPassNode* node, RenderCommandSubmitInfo const& submit) const;
+    void render_compute(RenderGraphPassNode* node, RenderCommandSubmitInfo const& submit);
 private:
     HashSet<RenderEntity> m_render_entities;
+
+    friend class DrawRenderGraphicsView;
 };
 
 

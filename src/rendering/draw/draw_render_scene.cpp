@@ -5,6 +5,7 @@
 #include "draw_render_scene.h"
 #include "draw_render_system.h"
 #include "draw_render_view.h"
+#include "assimp/Vertex.h"
 #include "core/dependency/dependency_edge.h"
 #include "rendering/acceleration/render_driver.h"
 #include "rendering/acceleration/render_geometry.h"
@@ -12,6 +13,8 @@
 #include "rendering/graph/resource/render_graph_pass_node.h"
 #include "rendering/graph/resource/render_graph_resource_node.h"
 #include "rendering/graph/resource/render_graph_resource_edge.h"
+#include "rendering/rhi/common/buffer.h"
+#include "rendering/rhi/common/fence.h"
 
 AMAZING_NAMESPACE_BEGIN
     DrawRenderScene::DrawRenderScene(RenderSceneCreateInfo const& info)
@@ -37,16 +40,25 @@ void DrawRenderScene::attach_graph(RenderGraph const* graph)
     for_each(render_graph->m_pass_nodes, [this](const Pair<String, RenderGraphPassNode*>& node)
     {
         RenderEntity const& entity = node.second->entity();
+        RenderEntity const& geometry_entity = node.second->m_geometry_entity;
         if (m_render_entities.find(entity) == m_render_entities.end())
             RENDERING_LOG_ERROR("can't find pipeline entity in this scene! entity is {}", entity.id());
+        if (geometry_entity && m_render_entities.find(geometry_entity) == m_render_entities.end())
+            RENDERING_LOG_ERROR("can't find geometry entity in this scene! entity is {}", entity.id());
     });
 
     for_each(render_graph->m_resource_nodes, [this](const Pair<String, RenderGraphResourceNode*>& node)
     {
         RenderEntity const& entity = node.second->entity();
         if (m_render_entities.find(entity) == m_render_entities.end())
-            RENDERING_LOG_ERROR("can't find pipeline entity in this scene! entity is {}", entity.id());
+            RENDERING_LOG_ERROR("can't find resource entity in this scene! entity is {}", entity.id());
     });
+
+    if (render_graph->m_present_pass.present_entity)
+    {
+        if (m_render_entities.find(render_graph->m_present_pass.present_entity) == m_render_entities.end())
+            RENDERING_LOG_ERROR("can't find present entity in this scene! entity is {}", render_graph->m_present_pass.present_entity.id());
+    }
 
     m_ref_render_graph = graph;
 }
@@ -57,28 +69,60 @@ void DrawRenderScene::render()
     DrawRenderGraph const* render_graph = static_cast<DrawRenderGraph const*>(m_ref_render_graph);
     RenderDriver const& render_driver = render_system->m_render_driver;
 
-    uint32_t frame_index = 0;
-    for (auto& group : render_graph->m_parallel_groups)
+    RenderCommandSubmitInfo submit_info{};
+
+    uint32_t group_count = render_graph->m_parallel_groups.size();
+    for (uint32_t i = 0; i < group_count; i++)
     {
+        // last pass
+        if (!render_graph->m_present_pass.present_entity && i == group_count - 1)
+            submit_info.signal_fence = render_driver.m_fences[0];
+
+        Vector<RenderGraphPassNode*> const& group = render_graph->m_parallel_groups[i];
         for (auto& pass_node : group)
         {
             RenderGraphPipeline const* pipeline = pass_node->m_ref_pipeline;
             switch (pipeline->pipeline_type)
             {
             case GPUPipelineType::e_graphics:
-                render_graphics(pass_node);
+                render_graphics(pass_node, submit_info);
                 break;
             case GPUPipelineType::e_compute:
-                render_compute(pass_node);
+                render_compute(pass_node, submit_info);
                 break;
             default:
                 break;
             }
         }
     }
+
+    if (render_graph->m_present_pass.present_entity)
+    {
+        // present pass
+        RenderGraphResource const& resource = render_system->m_render_graph_resources[render_graph->m_present_pass.present_entity];
+        //RENDERING_ASSERT(resource.resource_type == RenderGraphResourceType::e_image, "unsupported resource type!");
+
+        submit_info.signal_fence = render_driver.m_fences[0];
+        submit_info.wait_semaphores.push_back(render_driver.m_present_context->image_semaphore);
+        submit_info.signal_semaphores.push_back(render_driver.m_present_context->present_semaphore);
+
+        RenderGraphicsCommand& command = const_cast<RenderGraphicsCommand&>(render_system->m_graphics_command);
+
+        command.begin_frame();
+
+        // todo: use copy queue
+        render_driver.copy_to_swap_chain(resource, command);
+
+        command.end_frame();
+        command.submit(submit_info);
+
+        render_driver.present();
+    }
+
+    render_driver.m_fences[0]->wait();
 }
 
-void DrawRenderScene::render_graphics(RenderGraphPassNode* node) const
+void DrawRenderScene::render_graphics(RenderGraphPassNode* node, RenderCommandSubmitInfo const& submit) const
 {
     DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(m_ref_render_system);
     RenderGraphicsCommand& command = const_cast<RenderGraphicsCommand&>(render_system->m_graphics_command);
@@ -92,9 +136,12 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node) const
     uint32_t node_index = 0;
     for (auto& [resource_node, barrier] : node->m_input_barriers)
     {
-        resources[node_index] = resource_node->m_ref_resource;
-        barriers[node_index] = barrier;
-        node_index++;
+        if (barrier.src_state != barrier.dst_state)
+        {
+            resources[node_index] = resource_node->m_ref_resource;
+            barriers[node_index] = barrier;
+            node_index++;
+        }
     }
 
     uint32_t render_target_count = node->m_output_barriers.size();
@@ -105,12 +152,15 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node) const
         render_targets[render_target_index] = resource_node->m_ref_resource;
         render_target_index++;
 
-        resources[node_index] = resource_node->m_ref_resource;
-        barriers[node_index] = barrier;
-        node_index++;
+        if (barrier.src_state != barrier.dst_state)
+        {
+            resources[node_index] = resource_node->m_ref_resource;
+            barriers[node_index] = barrier;
+            node_index++;
+        }
     }
 
-    command.resource_barrier(resources, barriers, node_count);
+    command.resource_barrier(resources, barriers, node_index);
 
     // todo: add depth attachment
     GPUGraphicsPassCreateInfo graphics_pass_create_info{
@@ -132,24 +182,46 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node) const
         graphics_pass_create_info.color_attachments[i] = color_attachment;
     }
 
+    command.begin_pass(graphics_pass_create_info);
     command.bind_pipeline(node->m_ref_pipeline);
 
-    DrawRenderGraphicsView view(command);
+    DrawRenderGraphicsView view(this, command);
 
     node->m_execute(&view);
 
-    auto geometry_it = render_system->m_render_geometries.find(view.m_geometry_entity);
-    if (geometry_it != render_system->m_render_geometries.end())
     {
         // draw
-        RenderGeometry const& geometry = geometry_it->second;
+        RenderGeometry const& geometry = *node->m_ref_render_geometry;
 
+        // one mesh
+
+        GPUBufferBinding v_binding{
+            .buffer = geometry.vertex_buffer,
+            .stride = RENDER_Vertex_Stride,
+            .offset = geometry.meshes[0].vertex_offset * RENDER_Vertex_Stride,
+        };
+
+        command.bind_vertex_buffers(&v_binding, 1);
+
+        GPUBufferBinding i_binding{
+            .buffer = geometry.index_buffer,
+            .stride = RENDER_Index_Stride,
+            .offset = geometry.meshes[0].index_offset * RENDER_Index_Stride,
+        };
+        command.bind_index_buffer(i_binding);
+
+        command.draw(geometry.meshes[0].index_count, geometry.meshes[0].index_offset, geometry.meshes[0].vertex_offset);
     }
-    else
-        RENDERING_LOG_ERROR("can't find geometry entity in this scene! entity is {}", view.m_geometry_entity.id());
 
+    command.end_pass();
     command.end_frame();
+
+    command.submit(submit);
 }
 
+void DrawRenderScene::render_compute(RenderGraphPassNode* node, RenderCommandSubmitInfo const& submit)
+{
+
+}
 
 AMAZING_NAMESPACE_END

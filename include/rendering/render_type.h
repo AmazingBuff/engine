@@ -21,6 +21,11 @@ class RenderBuilder;
 struct RenderSystemCreateInfo
 {
     RenderBackend backend;
+
+    void* window_handle;
+    uint32_t window_width;
+    uint32_t window_height;
+    RenderFormat format;
 };
 
 struct RenderSceneCreateInfo
@@ -66,6 +71,8 @@ struct RenderGraphImageCreateInfo
     uint32_t mip_levels;
     RenderFormat format;
     RenderGraphImageUsage usage;
+    RenderGraphImageType type;
+    RenderGraphImageLayout layout;
 };
 
 struct RenderGraphBufferCreateInfo
@@ -89,6 +96,26 @@ struct RenderGraphPipelineCreateInfo
 
     // rasterizer info
     RenderRasterizerStateDescriptor const* rasterizer_descriptor;
+};
+
+
+// builtin parameter, all there parameters will be located in set/space 0
+struct RenderObjectShaderDescriptor
+{
+    Affine3f model;
+    Affine3f model_inv;
+};
+
+struct RenderPassShaderDescriptor
+{
+    Affine3f view;
+    Affine3f projection;
+};
+
+struct RenderLightShaderDescriptor
+{
+    Vec3f position;
+    Vec3f color;
 };
 
 

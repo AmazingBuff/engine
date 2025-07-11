@@ -547,35 +547,85 @@ void DX12CommandBuffer::end_compute_pass(GPUComputePassEncoder* encoder)
     PLACEMENT_DELETE(DX12ComputePassEncoder, static_cast<DX12ComputePassEncoder*>(encoder));
 }
 
-void DX12CommandBuffer::transfer_buffer_to_texture(GPUBufferToTextureTransferInfo const& info)
+void DX12CommandBuffer::transfer_resource(GPUResourceTransferInfo const& info)
 {
     DX12CommandPool const* command_pool = static_cast<DX12CommandPool const*>(m_ref_pool);
     DX12Queue const* queue = static_cast<DX12Queue const*>(command_pool->m_ref_queue);
     DX12Device const* device = static_cast<DX12Device const*>(queue->m_ref_device);
-    DX12Buffer const* buffer = static_cast<DX12Buffer const*>(info.src_buffer);
-    DX12Texture const* texture = static_cast<DX12Texture const*>(info.dst_texture);
 
-    GPUTextureSubresource const& subresource = info.dst_texture_subresource;
-    uint32_t subresource_index = transfer_subresource_index(subresource.mip_level, subresource.base_array_layer,
-        0, 1, subresource.array_layers);
+    switch (info.type)
+    {
+    case GPUResourceTransferType::e_buffer_to_buffer:
+    {
+        DX12Buffer const* src_buffer = static_cast<DX12Buffer const*>(info.src_buffer.buffer);
+        DX12Buffer const* dst_buffer = static_cast<DX12Buffer const*>(info.dst_buffer.buffer);
 
-    D3D12_RESOURCE_DESC texture_desc = texture->m_resource->GetDesc();
-    D3D12_TEXTURE_COPY_LOCATION src_copy{
-        .pResource = buffer->m_resource,
-        .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
-    };
-    device->m_device->GetCopyableFootprints(&texture_desc, subresource_index, 1, info.src_buffer_offset, &src_copy.PlacedFootprint, nullptr, nullptr, nullptr);
+        m_command_list->CopyBufferRegion(dst_buffer->m_resource, info.dst_buffer.offset, src_buffer->m_resource, info.src_buffer.offset, info.dst_buffer.size);
+        break;
+    }
+    case GPUResourceTransferType::e_buffer_to_texture:
+    {
+        DX12Buffer const* buffer = static_cast<DX12Buffer const*>(info.src_buffer.buffer);
+        DX12Texture const* texture = static_cast<DX12Texture const*>(info.dst_texture.texture);
 
-    src_copy.PlacedFootprint.Offset = info.src_buffer_offset;
-    D3D12_TEXTURE_COPY_LOCATION dst_copy{
-        .pResource = texture->m_resource,
-        .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-        .SubresourceIndex = subresource_index
-    };
-    m_command_list->CopyTextureRegion(&dst_copy, 0, 0, 0, &src_copy, nullptr);
+        GPUTextureSubresource const& subresource = info.dst_texture.subresource;
+        uint32_t subresource_index = transfer_subresource_index(subresource.mip_level, subresource.base_array_layer,
+            0, 1, subresource.array_layers);
+
+        D3D12_RESOURCE_DESC texture_desc = texture->m_resource->GetDesc();
+        D3D12_TEXTURE_COPY_LOCATION src_copy{
+            .pResource = buffer->m_resource,
+            .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+        };
+        device->m_device->GetCopyableFootprints(&texture_desc, subresource_index, 1, info.src_buffer.offset, &src_copy.PlacedFootprint, nullptr, nullptr, nullptr);
+
+        src_copy.PlacedFootprint.Offset = info.src_buffer.offset;
+        D3D12_TEXTURE_COPY_LOCATION dst_copy{
+            .pResource = texture->m_resource,
+            .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+            .SubresourceIndex = subresource_index
+        };
+        m_command_list->CopyTextureRegion(&dst_copy, 0, 0, 0, &src_copy, nullptr);
+
+        break;
+    }
+    case GPUResourceTransferType::e_texture_to_texture:
+    {
+        DX12Texture const* src_texture = static_cast<DX12Texture const*>(info.src_texture.texture);
+        DX12Texture const* dst_texture = static_cast<DX12Texture const*>(info.dst_texture.texture);
+
+        GPUTextureSubresource const& src_subresource = info.src_texture.subresource;
+        uint32_t src_subresource_index = transfer_subresource_index(src_subresource.mip_level, src_subresource.base_array_layer,
+            0, 1, src_subresource.array_layers);
+
+        GPUTextureSubresource const& dst_subresource = info.dst_texture.subresource;
+        uint32_t dst_subresource_index = transfer_subresource_index(dst_subresource.mip_level, dst_subresource.base_array_layer,
+            0, 1, dst_subresource.array_layers);
+
+        D3D12_RESOURCE_DESC src_texture_desc = src_texture->m_resource->GetDesc();
+        D3D12_TEXTURE_COPY_LOCATION src_copy{
+            .pResource = src_texture->m_resource,
+            .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+            .SubresourceIndex = src_subresource_index
+        };
+        device->m_device->GetCopyableFootprints(&src_texture_desc, src_subresource_index, 1, 0, &src_copy.PlacedFootprint, nullptr, nullptr, nullptr);
+
+        D3D12_RESOURCE_DESC dst_texture_desc = dst_texture->m_resource->GetDesc();
+        D3D12_TEXTURE_COPY_LOCATION dst_copy{
+            .pResource = dst_texture->m_resource,
+            .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+            .SubresourceIndex = dst_subresource_index
+        };
+        device->m_device->GetCopyableFootprints(&dst_texture_desc, dst_subresource_index, 1, 0, &dst_copy.PlacedFootprint, nullptr, nullptr, nullptr);
+
+        m_command_list->CopyTextureRegion(&dst_copy, 0, 0, 0, &src_copy, nullptr);
+
+        break;
+    }
+    }
 }
 
-void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info)
+void DX12CommandBuffer::resource_barrier(GPUResourceBarrierInfo const& info) const
 {
     D3D12_RESOURCE_BARRIER* resource_barriers = static_cast<D3D12_RESOURCE_BARRIER*>(alloca(
         (info.buffer_barriers.size() + info.texture_barriers.size()) * sizeof(D3D12_RESOURCE_BARRIER)));

@@ -6,13 +6,65 @@
 #include "render_geometry.h"
 #include "rendering/rhi/wrapper.h"
 #include "rendering/graph/resource/render_graph_resources.h"
-#include "rendering/graph/resource/render_util.h"
+#include "rendering/render_util.h"
 #include "geometry/geometry.h"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
+#include "render_command.h"
+
 AMAZING_NAMESPACE_BEGIN
+    static constexpr GPUVertexAttribute Vertex_Attributes[] =
+{
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32b32_sfloat,
+        .slot = 0,
+        .semantic_name = "POSITION",
+        .location = 0,
+        .offset = 0,
+        .size = 12,
+    },
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32_sfloat,
+        .slot = 0,
+        .semantic_name = "TEXCOORD",
+        .location = 1,
+        .offset = 12,
+        .size = 8,
+    },
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32b32_sfloat,
+        .slot = 0,
+        .semantic_name = "NORMAL",
+        .location = 2,
+        .offset = 20,
+        .size = 12,
+        .rate = GPUVertexInputRate::e_vertex
+    },
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32b32_sfloat,
+        .slot = 0,
+        .semantic_name = "TANGENT",
+        .location = 3,
+        .offset = 32,
+        .size = 12,
+    },
+    {
+        .array_size = 1,
+        .format = GPUFormat::e_r32g32b32_sfloat,
+        .slot = 0,
+        .semantic_name = "BITANGENT",
+        .location = 4,
+        .offset = 44,
+        .size = 12,
+    }
+};
+
 
 static RenderMesh import_mesh(const aiMesh* mesh, Vector<RenderVertex>& vertices, Vector<Index3i>& triangles, uint32_t& vertex_offset, uint32_t& triangle_offset)
 {
@@ -169,7 +221,35 @@ RenderDriver::RenderDriver(RenderDriverCreateInfo const& info) : m_driver_info{}
     m_graphics_queue = const_cast<GPUQueue*>(m_device->fetch_queue(GPUQueueType::e_graphics, 0));
     m_compute_queue = const_cast<GPUQueue*>(m_device->fetch_queue(GPUQueueType::e_compute, 0));
 
+    m_fences.resize(info.frame_count);
+    for (uint32_t i = 0; i < info.frame_count; i++)
+        m_fences[i] = GPU_create_fence(m_device);
 
+    // present
+    if (info.window_handle)
+    {
+        m_present_context = PLACEMENT_NEW(RenderPresentContext, sizeof(RenderPresentContext));
+
+        m_present_context->surface = GPU_create_surface(m_instance, info.window_handle, nullptr);
+
+        GPUSwapChainCreateInfo swap_chain_create_info{
+            .width = info.frame_width,
+            .height = info.frame_height,
+            .frame_count = info.frame_count,
+            .format = transfer_format(info.frame_format),
+            .enable_vsync = true,
+            .surface = m_present_context->surface,
+            .present_queues = { m_graphics_queue }
+        };
+
+        m_present_context->swap_chain = GPU_create_swap_chain(m_device, swap_chain_create_info);
+        m_present_context->image_semaphore = GPU_create_semaphore(m_device);
+        m_present_context->present_semaphore = GPU_create_semaphore(m_device);
+    }
+    else
+        m_present_context = nullptr;
+
+    // internal resources
     constexpr uint32_t filter_count = Reflect::MetaInfo<GPUFilterType>::enum_count();
     constexpr uint32_t address_mode_count = Reflect::MetaInfo<GPUAddressMode>::enum_count();
     for (uint32_t i = 0; i < filter_count; i++)
@@ -195,11 +275,24 @@ RenderDriver::RenderDriver(RenderDriverCreateInfo const& info) : m_driver_info{}
 
 RenderDriver::~RenderDriver()
 {
-    for (GPUSampler const* sampler : m_static_samplers)
-        GPU_destroy_sampler(const_cast<GPUSampler*>(sampler));
+    for (GPUSampler* sampler : m_static_samplers)
+        GPU_destroy_sampler(sampler);
 
-    GPU_destroy_device(const_cast<GPUDevice*>(m_device));
-    GPU_destroy_instance(const_cast<GPUInstance*>(m_instance));
+    if (m_present_context)
+    {
+        GPU_destroy_semaphore(m_present_context->present_semaphore);
+        GPU_destroy_semaphore(m_present_context->image_semaphore);
+        GPU_destroy_swap_chain(m_present_context->swap_chain);
+        GPU_destroy_surface(m_present_context->surface);
+
+        PLACEMENT_DELETE(RenderPresentContext, m_present_context);
+    }
+
+    for (GPUFence* fence : m_fences)
+        GPU_destroy_fence(fence);
+
+    GPU_destroy_device(m_device);
+    GPU_destroy_instance(m_instance);
 }
 
 RenderGeometry RenderDriver::import_render_geometry(Scene const& scene) const
@@ -262,18 +355,18 @@ RenderGeometry RenderDriver::import_render_geometry(Scene const& scene) const
     }
 
     GPUBufferCreateInfo info{
-        .size = sizeof(vertices),
+        .size = static_cast<uint32_t>(vertices.size()) * RENDER_Vertex_Stride,
         .usage = GPUMemoryUsage::e_cpu_to_gpu,
         .type = GPUResourceType::e_vertex_buffer,
-        .flags = GPUBufferFlag::e_dedicated,
+        .flags = GPUBufferFlag::e_persistent_map,
     };
     GPUBuffer* vertex_buffer = GPU_create_buffer(m_device, info);
-    vertex_buffer->map(0, sizeof(vertices), vertices.data());
+    vertex_buffer->map(0, info.size, vertices.data());
 
-    info.size = sizeof(triangles);
+    info.size = static_cast<uint32_t>(triangles.size()) * sizeof(Index3i);
     info.type = GPUResourceType::e_index_buffer;
     GPUBuffer* index_buffer = GPU_create_buffer(m_device, info);
-    index_buffer->map(0, sizeof(triangles), triangles.data());
+    index_buffer->map(0, info.size, triangles.data());
 
 
     geometry.vertex_buffer = vertex_buffer;
@@ -291,30 +384,30 @@ RenderGeometry RenderDriver::import_render_geometry(const char* file_name) const
         uint32_t mesh_count;
         uint32_t transform_count;
     };
-    // static auto count_geometry_attribute = [](this auto self, const aiNode* node, const aiScene* scene) -> GeometryCounter
-    // {
-    //     uint32_t vertex_count = 0;
-    //     uint32_t triangle_count = 0;
-    //     uint32_t mesh_count = 0;
-    //     uint32_t transform_count = 1;
-    //     for (uint32_t i = 0; i < node->mNumMeshes; i++)
-    //     {
-    //         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-    //         vertex_count += mesh->mNumVertices;
-    //         triangle_count += mesh->mNumFaces;
-    //         mesh_count++;
-    //     }
-    //
-    //     for (uint32_t i = 0; i < node->mNumChildren; i++)
-    //     {
-    //         GeometryCounter count = self(node->mChildren[i], scene);
-    //         vertex_count += count.vertex_count;
-    //         triangle_count += count.triangle_count;
-    //         mesh_count += count.mesh_count;
-    //         transform_count += count.transform_count;
-    //     }
-    //     return {vertex_count, triangle_count, mesh_count, transform_count};
-    // };
+    static auto count_geometry_attribute = [](this auto self, const aiNode* node, const aiScene* scene) -> GeometryCounter
+    {
+        uint32_t vertex_count = 0;
+        uint32_t triangle_count = 0;
+        uint32_t mesh_count = 0;
+        uint32_t transform_count = 1;
+        for (uint32_t i = 0; i < node->mNumMeshes; i++)
+        {
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            vertex_count += mesh->mNumVertices;
+            triangle_count += mesh->mNumFaces;
+            mesh_count++;
+        }
+
+        for (uint32_t i = 0; i < node->mNumChildren; i++)
+        {
+            GeometryCounter count = self(node->mChildren[i], scene);
+            vertex_count += count.vertex_count;
+            triangle_count += count.triangle_count;
+            mesh_count += count.mesh_count;
+            transform_count += count.transform_count;
+        }
+        return {vertex_count, triangle_count, mesh_count, transform_count};
+    };
 
     uint32_t flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_MakeLeftHanded | aiProcess_GenBoundingBoxes;
     Assimp::Importer importer;
@@ -323,7 +416,7 @@ RenderGeometry RenderDriver::import_render_geometry(const char* file_name) const
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         LOG_ERROR("Model Loader", "unable to load this model, which is from {}!", file_name);
 
-    GeometryCounter count = {};//count_geometry_attribute(scene->mRootNode, scene);
+    GeometryCounter count = count_geometry_attribute(scene->mRootNode, scene);
     Vector<RenderVertex> vertices(count.vertex_count);
     Vector<Index3i> triangles(count.triangle_count);
     Vector<Affine3f> transforms(count.transform_count);
@@ -386,12 +479,13 @@ RenderGraphPipeline RenderDriver::create_pipeline(RenderGraphPipelineCreateInfo 
         };
         libraries[i] = GPU_create_shader_library(m_device, library_info);
         root_signature_info.shaders.emplace_back(libraries[i], info.shaders[i].entry, stage);
-#define SHADER_EXTRACT(shader)                                                                                        \
-        case GPUShaderStage::e_##shader:                                                                             \
+#define SHADER_EXTRACT(shader)                                                                                          \
+        case GPUShaderStage::e_##shader:                                                                                \
             if (!shader)                                                                                                \
                 shader = &root_signature_info.shaders[i];                                                               \
             else                                                                                                        \
-                RENDERING_LOG_ERROR("can't use same shader stage twice! shader stage is {}", to_underlying(stage));
+                RENDERING_LOG_ERROR("can't use same shader stage twice! shader stage is {}", to_underlying(stage));     \
+            break;
 
         switch (stage)
         {
@@ -423,47 +517,6 @@ RenderGraphPipeline RenderDriver::create_pipeline(RenderGraphPipelineCreateInfo 
     if (info.rasterizer_descriptor)
     {
         // todo: make vertex attribute configurable
-        GPUVertexAttribute pos{
-            .array_size = 1,
-            .format = GPUFormat::e_r32g32b32_sfloat,
-            .slot = 0,
-            .semantic_name = "POSITION",
-            .location = 0,
-            .offset = 0,
-            .size = 12,
-        };
-
-        GPUVertexAttribute tex{
-            .array_size = 1,
-            .format = GPUFormat::e_r32g32_sfloat,
-            .slot = 0,
-            .semantic_name = "TEXCOORD",
-            .location = 1,
-            .offset = 12,
-            .size = 8,
-        };
-
-        GPUVertexAttribute normal{
-            .array_size = 1,
-            .format = GPUFormat::e_r32g32b32_sfloat,
-            .slot = 0,
-            .semantic_name = "NORMAL",
-            .location = 2,
-            .offset = 20,
-            .size = 12,
-            .rate = GPUVertexInputRate::e_vertex
-        };
-
-        GPUVertexAttribute tangent{
-            .array_size = 1,
-            .format = GPUFormat::e_r32g32b32_sfloat,
-            .slot = 0,
-            .semantic_name = "TANGENT",
-            .location = 3,
-            .offset = 32,
-            .size = 12,
-        };
-
         GPURasterizerState rasterizer_state{
             .cull_mode = transfer_cull_mode(info.rasterizer_descriptor->rasterizer_state.cull_mode),
             .fill_mode = transfer_fill_mode(info.rasterizer_descriptor->rasterizer_state.fill_mode),
@@ -482,7 +535,8 @@ RenderGraphPipeline RenderDriver::create_pipeline(RenderGraphPipelineCreateInfo 
             .tessellation_evaluation_shader = tessellation_evaluation,
             .geometry_shader = geometry,
             .fragment_shader = fragment,
-            .vertex_inputs = { pos, tex, normal, tangent },
+            .vertex_inputs = Vertex_Attributes,
+            .vertex_attribute_count = array_size(Vertex_Attributes),
             .blend_state = nullptr,
             .depth_stencil_state = nullptr,
             .rasterizer_state = &rasterizer_state,
@@ -531,6 +585,140 @@ void RenderDriver::destroy_pipeline(RenderGraphPipeline const& pipeline) const
     GPU_destroy_root_signature(pipeline.root_signature);
 }
 
+RenderGraphResource RenderDriver::create_image(RenderGraphImageCreateInfo const& info) const
+{
+    GPUTextureCreateInfo texture_info{
+        .width = info.width,
+        .height = info.height,
+        .depth = info.depth,
+        .array_layers = info.array_layers,
+        .mip_levels = info.mip_levels,
+        .sample_quality = 0,
+        .sample_count = GPUSampleCount::e_1,
+        .format = transfer_format(info.format),
+        .state = transfer_resource_state(info.layout),
+        .type = transfer_resource_type(info.usage),
+        .flags = GPUTextureFlag::e_dedicated,
+        .clear_color{
+            .color{
+                .r = 0,
+                .g = 0,
+                .b = 0,
+                .a = 0
+            }
+        }
+    };
 
+    GPUTexture* texture = GPU_create_texture(m_device, texture_info);
+
+    GPUTexture::GPUTextureInfo const* descriptor = texture->descriptor();
+
+    GPUTextureViewCreateInfo view_info{
+        .texture = texture,
+        .format = transfer_format(info.format),
+        .usage = transfer_texture_view_usage(info.usage),
+        .aspect = static_cast<GPUTextureViewAspect>(descriptor->aspect_mask),
+        .type = transfer_texture_type(info.type),
+        .base_array_layer = 0,
+        .array_layers = info.array_layers,
+        .base_mip_level = 0,
+        .mip_levels = info.mip_levels,
+    };
+
+    GPUTextureView* texture_view = GPU_create_texture_view(view_info);
+
+    RenderGraphResource resource{
+        .resource_type = RenderGraphResourceType::e_image,
+        .image{
+            .texture = texture,
+            .texture_view = texture_view,
+        }
+    };
+
+    return resource;
+}
+
+void RenderDriver::destroy_resource(RenderGraphResource const& resource) const
+{
+    switch (resource.resource_type)
+    {
+    case RenderGraphResourceType::e_image:
+        GPU_destroy_texture_view(const_cast<GPUTextureView*>(resource.image.texture_view));
+        GPU_destroy_texture(const_cast<GPUTexture*>(resource.image.texture));
+        break;
+    case RenderGraphResourceType::e_buffer:
+        GPU_destroy_buffer_view(const_cast<GPUBufferView*>(resource.buffer.buffer_view));
+        GPU_destroy_buffer(const_cast<GPUBuffer*>(resource.buffer.buffer));
+        break;
+    }
+}
+
+void RenderDriver::copy_to_swap_chain(RenderGraphResource const& resource, RenderGraphicsCommand& command) const
+{
+    RENDERING_ASSERT(m_present_context != nullptr, "must create present context!");
+
+    GPUSwapChain* swap_chain = m_present_context->swap_chain;
+    uint32_t index = swap_chain->acquire_next_frame(m_present_context->image_semaphore, nullptr);
+    GPUTexture const* back_texture = swap_chain->fetch_back_texture(index);
+    GPUTextureView const* back_texture_view = swap_chain->fetch_back_texture_view(index);
+
+    RenderGraphResource back_resource{
+        .resource_type = RenderGraphResourceType::e_image,
+        .image{
+            .texture = back_texture,
+            .texture_view = back_texture_view,
+        }
+    };
+
+    RenderGraphResourceBarrier back_barrier{
+        .src_state = GPUResourceState::e_undefined,
+        .dst_state = GPUResourceState::e_copy_destination,
+    };
+    RenderGraphResourceBarrier resource_barrier{
+        .dst_state = GPUResourceState::e_copy_source,
+    };
+
+    switch (resource.resource_type)
+    {
+    case RenderGraphResourceType::e_image:
+        resource_barrier.src_state = resource.image.texture->descriptor()->state;
+        break;
+    case RenderGraphResourceType::e_buffer:
+        resource_barrier.src_state = resource.buffer.buffer->descriptor()->state;
+        break;
+    }
+
+    RenderGraphResourceBarrier barriers[] = {back_barrier, resource_barrier};
+    RenderGraphResource resources[] = { back_resource, resource};
+    command.resource_barrier(resources, barriers, 2);
+
+    command.copy_resource(resource, back_resource);
+
+    RenderGraphResourceBarrier present_barrier{
+        .src_state = back_barrier.dst_state,
+        .dst_state = GPUResourceState::e_present,
+    };
+
+    RenderGraphResourceBarrier revert_barrier{
+        .src_state = resource_barrier.dst_state,
+        .dst_state = resource_barrier.src_state,
+    };
+
+    RenderGraphResourceBarrier present_barriers[] = { present_barrier, revert_barrier};
+    command.resource_barrier(resources, present_barriers, 2);
+
+    m_present_context->swap_chain_image_index = index;
+}
+
+void RenderDriver::present() const
+{
+    GPUQueuePresentInfo queue_present_info{
+        .swap_chain = m_present_context->swap_chain,
+        .wait_semaphores = {m_present_context->present_semaphore},
+        .index = static_cast<uint8_t>(m_present_context->swap_chain_image_index),
+    };
+
+    m_graphics_queue->present(queue_present_info);
+}
 
 AMAZING_NAMESPACE_END

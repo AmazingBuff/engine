@@ -26,7 +26,7 @@ DX12CommandPool::~DX12CommandPool()
     DX_FREE(m_command_allocator);
 }
 
-void DX12CommandPool::reset()
+void DX12CommandPool::reset() const
 {
     DX_CHECK_RESULT(m_command_allocator->Reset());
 }

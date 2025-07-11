@@ -16,6 +16,7 @@ public:
     virtual ~RenderGraph() = default;
 
     virtual void add_pass(const char* pass_name, RenderGraphPassSetup&& setup, RenderGraphPassExecute&& execute) = 0;
+    virtual void add_present_pass(const char* pass_name, RenderEntity const& present_entity) = 0;
     virtual void compile() = 0;
 protected:
     RenderSystem const* m_ref_render_system;

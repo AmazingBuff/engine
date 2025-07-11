@@ -67,7 +67,7 @@ private:
 
 
     friend class DX12CommandBuffer;
-    friend class DX12Buffer;
+    friend class DX12BufferView;
     friend class DX12TextureView;
     friend class DX12Sampler;
     friend class DX12DescriptorSet;

@@ -16,20 +16,13 @@ public:
     DX12Buffer(GPUDevice const* device, GPUBufferCreateInfo const& info);
     ~DX12Buffer() override;
 
-    void map(size_t offset, size_t size, const void* data) override;
-    void unmap() override;
+    void map(size_t offset, size_t size, const void* data) const override;
+    void unmap() const override;
 private:
     ID3D12Resource*  m_resource;
     D3D12MA::Allocation* m_allocation;
-    // gpu address
-    D3D12_GPU_VIRTUAL_ADDRESS m_gpu_address;
-    // buffer address in cpu, max num for three buffers of different type
-    D3D12_CPU_DESCRIPTOR_HANDLE m_handle;
-    // order: cbv -- srv -- uav
-    uint32_t m_srv_offset;
-    uint32_t m_uav_offset;
 
-    friend class DX12DescriptorSet;
+    friend class DX12BufferView;
     friend class DX12CommandBuffer;
     friend class DX12GraphicsPassEncoder;
 };

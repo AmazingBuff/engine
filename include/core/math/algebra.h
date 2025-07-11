@@ -19,7 +19,7 @@ using Vec2u = Eigen::Vector2<uint32_t>;
 using Mat3f = Eigen::Matrix<Float, 3, 3>;
 using Mat4f = Eigen::Matrix<Float, 4, 4>;
 
-using Affine3f = Eigen::Affine3f;
+using Affine3f = Eigen::Transform<float, 3, Eigen::Affine, Eigen::DontAlign>;
 
 static constexpr Float Pi = EIGEN_PI;
 static constexpr Float PiOver2 = EIGEN_PI / 2;

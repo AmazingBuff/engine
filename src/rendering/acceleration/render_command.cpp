@@ -40,12 +40,7 @@ void RenderCommand::refresh_frame()
     m_frame_index = (m_frame_index + 1) % m_frame_count;
 }
 
-void RenderCommand::bind_pipeline(RenderGraphPipeline const* pipeline)
-{
-    m_ref_pipeline = pipeline;
-}
-
-void RenderCommand::resource_barrier(RenderGraphResource const* resources, RenderGraphResourceBarrier const* info, uint32_t count)
+void RenderCommand::resource_barrier(RenderGraphResource const* resources, RenderGraphResourceBarrier const* info, uint32_t count) const
 {
     uint32_t texture_barrier_count = 0;
     uint32_t buffer_barrier_count = 0;
@@ -101,6 +96,51 @@ void RenderCommand::resource_barrier(RenderGraphResource const* resources, Rende
     m_command_buffers[m_frame_index]->resource_barrier(barrier);
 }
 
+void RenderCommand::copy_resource(RenderGraphResource const& src_resource, RenderGraphResource const& dst_resource) const
+{
+    GPUResourceTransferInfo transfer_info{};
+
+    bool src_is_buffer = true;
+    switch (src_resource.resource_type)
+    {
+    case RenderGraphResourceType::e_buffer:
+        transfer_info.src_buffer.buffer = src_resource.buffer.buffer;
+        transfer_info.src_buffer.offset = 0;
+        break;
+    case RenderGraphResourceType::e_image:
+        transfer_info.src_texture.texture = src_resource.image.texture;
+        transfer_info.src_texture.subresource = {
+            .mip_level = 0,
+            .base_array_layer = 0,
+            .array_layers = 1
+        };
+        src_is_buffer = false;
+        break;
+    }
+
+    switch (dst_resource.resource_type)
+    {
+    case RenderGraphResourceType::e_buffer:
+        RENDERING_ASSERT(src_is_buffer == true, "can't copy data to a buffer from a image!");
+        transfer_info.dst_buffer.buffer = dst_resource.buffer.buffer;
+        transfer_info.dst_buffer.offset = 0;
+        transfer_info.dst_buffer.size = dst_resource.buffer.buffer->descriptor()->size;
+        transfer_info.type = GPUResourceTransferType::e_buffer_to_buffer;
+        break;
+    case RenderGraphResourceType::e_image:
+        transfer_info.dst_texture.texture = dst_resource.image.texture;
+        transfer_info.dst_texture.subresource =  {
+            .mip_level = 0,
+            .base_array_layer = 0,
+            .array_layers = 1
+        };
+        transfer_info.type = src_is_buffer ? GPUResourceTransferType::e_buffer_to_texture : GPUResourceTransferType::e_texture_to_texture;
+        break;
+    }
+
+    m_command_buffers[m_frame_index]->transfer_resource(transfer_info);
+}
+
 
 RenderGraphicsCommand::RenderGraphicsCommand(RenderDriver const& driver) : RenderCommand(driver), m_graphics_encoder(nullptr)
 {
@@ -141,6 +181,26 @@ void RenderGraphicsCommand::end_pass()
     m_command_buffers[m_frame_index]->end_graphics_pass(m_graphics_encoder);
 }
 
+void RenderGraphicsCommand::bind_pipeline(RenderGraphPipeline const* pipeline)
+{
+    m_graphics_encoder->bind_pipeline(pipeline->graphics_pipeline);
+    m_ref_pipeline = pipeline;
+}
+
+void RenderGraphicsCommand::bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t count) const
+{
+    m_graphics_encoder->bind_vertex_buffers(bindings, count);
+}
+
+void RenderGraphicsCommand::bind_index_buffer(GPUBufferBinding const& binding) const
+{
+    m_graphics_encoder->bind_index_buffer(binding);
+}
+
+void RenderGraphicsCommand::draw(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) const
+{
+    m_graphics_encoder->draw_indexed(index_count, first_index, first_vertex);
+}
 
 
 RenderComputeCommand::RenderComputeCommand(RenderDriver const& driver) : RenderCommand(driver), m_compute_encoder(nullptr)
@@ -170,6 +230,12 @@ void RenderComputeCommand::submit(RenderCommandSubmitInfo const& info)
     m_ref_driver.m_compute_queue->submit(submit_info);
 
     refresh_frame();
+}
+
+void RenderComputeCommand::bind_pipeline(RenderGraphPipeline const* pipeline)
+{
+    m_compute_encoder->bind_pipeline(pipeline->compute_pipeline);
+    m_ref_pipeline = pipeline;
 }
 
 void RenderComputeCommand::begin_pass(GPUComputePassCreateInfo const& info)
