@@ -17,7 +17,36 @@
 #include "rendering/rhi/common/fence.h"
 
 AMAZING_NAMESPACE_BEGIN
-    DrawRenderScene::DrawRenderScene(RenderSceneCreateInfo const& info)
+
+static void draw_node(RenderNode const* node, RenderGeometry const* geometry, RenderGraphicsCommand const& command)
+{
+    for (uint32_t const& mesh_index : node->mesh_indices)
+    {
+        RenderMesh const& mesh = geometry->meshes[mesh_index];
+        GPUBufferBinding v_binding{
+            .buffer = geometry->vertex_buffer,
+            .stride = RENDER_Vertex_Stride,
+            .offset = mesh.vertex_offset * RENDER_Vertex_Stride,
+        };
+        command.bind_vertex_buffers(&v_binding, 1);
+
+        GPUBufferBinding i_binding{
+            .buffer = geometry->index_buffer,
+            .stride = RENDER_Index_Stride,
+            .offset = mesh.index_offset * RENDER_Index_Stride,
+        };
+        command.bind_index_buffer(i_binding);
+
+        command.draw(mesh.index_count, mesh.index_offset, mesh.vertex_offset);
+    }
+
+
+    for (RenderNode const* child : node->children)
+        draw_node(child, geometry, command);
+}
+
+
+DrawRenderScene::DrawRenderScene(RenderSceneCreateInfo const& info)
 {
     m_ref_render_system = info.render_system;
 }
@@ -38,21 +67,21 @@ void DrawRenderScene::attach_graph(RenderGraph const* graph)
 
     // validate entity
     for_each(render_graph->m_pass_nodes, [this](const Pair<String, RenderGraphPassNode*>& node)
-    {
-        RenderEntity const& entity = node.second->entity();
-        RenderEntity const& geometry_entity = node.second->m_geometry_entity;
-        if (m_render_entities.find(entity) == m_render_entities.end())
-            RENDERING_LOG_ERROR("can't find pipeline entity in this scene! entity is {}", entity.id());
-        if (geometry_entity && m_render_entities.find(geometry_entity) == m_render_entities.end())
-            RENDERING_LOG_ERROR("can't find geometry entity in this scene! entity is {}", entity.id());
-    });
+        {
+            RenderEntity const& entity = node.second->entity();
+            RenderEntity const& geometry_entity = node.second->m_geometry_entity;
+            if (m_render_entities.find(entity) == m_render_entities.end())
+                RENDERING_LOG_ERROR("can't find pipeline entity in this scene! entity is {}", entity.id());
+            if (geometry_entity && m_render_entities.find(geometry_entity) == m_render_entities.end())
+                RENDERING_LOG_ERROR("can't find geometry entity in this scene! entity is {}", entity.id());
+        });
 
     for_each(render_graph->m_resource_nodes, [this](const Pair<String, RenderGraphResourceNode*>& node)
-    {
-        RenderEntity const& entity = node.second->entity();
-        if (m_render_entities.find(entity) == m_render_entities.end())
-            RENDERING_LOG_ERROR("can't find resource entity in this scene! entity is {}", entity.id());
-    });
+        {
+            RenderEntity const& entity = node.second->entity();
+            if (m_render_entities.find(entity) == m_render_entities.end())
+                RENDERING_LOG_ERROR("can't find resource entity in this scene! entity is {}", entity.id());
+        });
 
     if (render_graph->m_present_pass.present_entity)
     {
@@ -76,7 +105,7 @@ void DrawRenderScene::render()
     {
         // last pass
         if (!render_graph->m_present_pass.present_entity && i == group_count - 1)
-            submit_info.signal_fence = render_driver.m_fences[0];
+            submit_info.signal_fence = render_driver.m_fence;
 
         Vector<RenderGraphPassNode*> const& group = render_graph->m_parallel_groups[i];
         for (auto& pass_node : group)
@@ -102,7 +131,7 @@ void DrawRenderScene::render()
         RenderGraphResource const& resource = render_system->m_render_graph_resources[render_graph->m_present_pass.present_entity];
         //RENDERING_ASSERT(resource.resource_type == RenderGraphResourceType::e_image, "unsupported resource type!");
 
-        submit_info.signal_fence = render_driver.m_fences[0];
+        submit_info.signal_fence = render_driver.m_fence;
         submit_info.wait_semaphores.push_back(render_driver.m_present_context->image_semaphore);
         submit_info.signal_semaphores.push_back(render_driver.m_present_context->present_semaphore);
 
@@ -119,7 +148,7 @@ void DrawRenderScene::render()
         render_driver.present();
     }
 
-    render_driver.m_fences[0]->wait();
+    render_driver.m_fence->wait();
 }
 
 void DrawRenderScene::render_graphics(RenderGraphPassNode* node, RenderCommandSubmitInfo const& submit) const
@@ -185,32 +214,17 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node, RenderCommandSu
     command.begin_pass(graphics_pass_create_info);
     command.bind_pipeline(node->m_ref_pipeline);
 
-    DrawRenderGraphicsView view(this, command);
+    DrawRenderGraphicsView view(node, command);
 
     node->m_execute(&view);
 
+    for (auto& [set_index, descriptor_resource] : node->m_descriptor_resources)
+        command.bind_descriptor_set(descriptor_resource.descriptor_set);
+
     {
-        // draw
-        RenderGeometry const& geometry = *node->m_ref_render_geometry;
-
-        // one mesh
-
-        GPUBufferBinding v_binding{
-            .buffer = geometry.vertex_buffer,
-            .stride = RENDER_Vertex_Stride,
-            .offset = geometry.meshes[0].vertex_offset * RENDER_Vertex_Stride,
-        };
-
-        command.bind_vertex_buffers(&v_binding, 1);
-
-        GPUBufferBinding i_binding{
-            .buffer = geometry.index_buffer,
-            .stride = RENDER_Index_Stride,
-            .offset = geometry.meshes[0].index_offset * RENDER_Index_Stride,
-        };
-        command.bind_index_buffer(i_binding);
-
-        command.draw(geometry.meshes[0].index_count, geometry.meshes[0].index_offset, geometry.meshes[0].vertex_offset);
+        // draw mesh recursively
+        RenderGeometry const* geometry = node->m_ref_render_geometry;
+        draw_node(geometry->root, geometry, command);
     }
 
     command.end_pass();
@@ -221,7 +235,56 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node, RenderCommandSu
 
 void DrawRenderScene::render_compute(RenderGraphPassNode* node, RenderCommandSubmitInfo const& submit)
 {
+    DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(m_ref_render_system);
+    RenderComputeCommand& command = const_cast<RenderComputeCommand&>(render_system->m_compute_command);
 
+    command.begin_frame();
+
+    uint32_t node_count = node->m_input_barriers.size() + node->m_output_barriers.size();
+    RenderGraphResource* resources = STACK_NEW(RenderGraphResource, node_count);
+    RenderGraphResourceBarrier* barriers = STACK_NEW(RenderGraphResourceBarrier, node_count);
+
+    uint32_t node_index = 0;
+    for (auto& [resource_node, barrier] : node->m_input_barriers)
+    {
+        if (barrier.src_state != barrier.dst_state)
+        {
+            resources[node_index] = resource_node->m_ref_resource;
+            barriers[node_index] = barrier;
+            node_index++;
+        }
+    }
+
+    uint32_t render_target_count = node->m_output_barriers.size();
+    RenderGraphResource* render_targets = STACK_NEW(RenderGraphResource, render_target_count);
+    uint32_t render_target_index = 0;
+    for (auto& [resource_node, barrier] : node->m_output_barriers)
+    {
+        render_targets[render_target_index] = resource_node->m_ref_resource;
+        render_target_index++;
+
+        if (barrier.src_state != barrier.dst_state)
+        {
+            resources[node_index] = resource_node->m_ref_resource;
+            barriers[node_index] = barrier;
+            node_index++;
+        }
+    }
+
+
+    GPUComputePassCreateInfo compute_pass_create_info{};
+
+    command.begin_pass(compute_pass_create_info);
+    command.bind_pipeline(node->m_ref_pipeline);
+
+    DrawRenderComputeView view(node, command);
+
+    node->m_execute(&view);
+
+    command.end_pass();
+    command.end_frame();
+
+    command.submit(submit);
 }
 
 AMAZING_NAMESPACE_END

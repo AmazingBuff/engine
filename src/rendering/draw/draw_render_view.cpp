@@ -8,39 +8,32 @@
 #include "rendering/render_util.h"
 #include "rendering/rhi/wrapper.h"
 #include "rendering/graph/resource/render_graph_resources.h"
+#include "rendering/graph/resource/render_graph_pass_node.h"
 
 AMAZING_NAMESPACE_BEGIN
 
-DrawRenderGraphicsView::DrawRenderGraphicsView(DrawRenderScene const* scene, RenderGraphicsCommand& command) : m_graphics_command(command)
-{
-    m_ref_render_scene = scene;
-}
+DrawRenderGraphicsView::DrawRenderGraphicsView(RenderGraphPassNode const* node, RenderGraphicsCommand& command)
+    : m_ref_pass_node(node), m_graphics_command(command) {}
 
-void DrawRenderGraphicsView::set_uniform(RenderEntity const& entity, uint32_t offset, uint32_t size, void const* data)
+void DrawRenderGraphicsView::set_uniform(String const& name, void const* data)
 {
-    DrawRenderScene const* render_scene = static_cast<DrawRenderScene const*>(m_ref_render_scene);
-
-    auto it = render_scene->m_render_entities.find(entity);
-    if (it != render_scene->m_render_entities.end())
+    for (auto& [set_index, descriptor_resource] : m_ref_pass_node->m_descriptor_resources)
     {
-        DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(render_scene->m_ref_render_system);
-        RenderGraphResource const& resource = render_system->m_render_graph_resources[entity];
+        if (any_of(descriptor_resource.descriptor_data, [&](RenderGraphPassNode::RenderDescriptorResource::RenderDescriptorData const& descriptor)
+        {
+            if (descriptor.name == name)
+            {
+                RENDERING_ASSERT(descriptor.resource_type == GPUResourceType::e_uniform_buffer, "can only set uniform buffer object!");
 
-        switch (resource.resource_type)
-        {
-        case RenderGraphResourceType::e_buffer:
-        {
-            RENDERING_ASSERT(resource.buffer.buffer->description()->type == GPUResourceType::e_uniform_buffer, "unmatched buffer type!");
-            resource.buffer.buffer->map(offset, size, data);
-        }
+                descriptor.buffers[0]->map(0, descriptor.buffers[0]->description()->size, data);
+                descriptor_resource.descriptor_set->update(&descriptor, 1);
+
+                return true;
+            }
+            return false;
+        }))
             break;
-        case RenderGraphResourceType::e_image:
-            RENDERING_LOG_ERROR("unsupported resource type!");
-            break;
-        }
     }
-    else
-        RENDERING_LOG_ERROR("the entity {} isn't imported to this scene!", entity.id());
 }
 
 void DrawRenderGraphicsView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
@@ -58,15 +51,35 @@ void DrawRenderGraphicsView::set_push_constant(String const& name, void const* d
     m_graphics_command.m_graphics_encoder->set_push_constant(m_graphics_command.m_ref_pipeline->root_signature, name, data);
 }
 
-
-DrawRenderComputeView::DrawRenderComputeView(DrawRenderScene const* scene, RenderComputeCommand& command) : m_compute_command(command)
+void DrawRenderGraphicsView::dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
-    m_ref_render_scene = scene;
+    RENDERING_LOG_ERROR("can't invoke compute pipeline function in graphics pipeline!");
 }
 
-void DrawRenderComputeView::set_uniform(RenderEntity const& entity, uint32_t offset, uint32_t size, void const* data)
-{
 
+
+DrawRenderComputeView::DrawRenderComputeView(RenderGraphPassNode const* node, RenderComputeCommand& command)
+    : m_ref_pass_node(node), m_compute_command(command) {}
+
+void DrawRenderComputeView::set_uniform(String const& name, void const* data)
+{
+    for (auto& [set_index, descriptor_resource] : m_ref_pass_node->m_descriptor_resources)
+    {
+        if (any_of(descriptor_resource.descriptor_data, [&](RenderGraphPassNode::RenderDescriptorResource::RenderDescriptorData const& descriptor)
+        {
+            if (descriptor.name == name)
+            {
+                RENDERING_ASSERT(descriptor.resource_type == GPUResourceType::e_uniform_buffer, "can only set uniform buffer object!");
+
+                descriptor.buffers[0]->map(0, descriptor.buffers[0]->description()->size, data);
+                descriptor_resource.descriptor_set->update(&descriptor, 1);
+
+                return true;
+            }
+            return false;
+        }))
+            break;
+    }
 }
 
 void DrawRenderComputeView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
@@ -82,6 +95,11 @@ void DrawRenderComputeView::set_scissor(uint32_t x, uint32_t y, uint32_t width, 
 void DrawRenderComputeView::set_push_constant(String const& name, void const* data)
 {
     m_compute_command.m_compute_encoder->set_push_constant(m_compute_command.m_ref_pipeline->root_signature, name, data);
+}
+
+void DrawRenderComputeView::dispatch(uint32_t x, uint32_t y, uint32_t z)
+{
+    m_compute_command.m_compute_encoder->dispatch(x, y, z);
 }
 
 AMAZING_NAMESPACE_END

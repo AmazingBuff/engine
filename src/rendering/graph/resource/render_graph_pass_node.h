@@ -17,18 +17,36 @@ public:
     ~RenderGraphPassNode() override = default;
 private:
     RenderGraphPipeline const* m_ref_pipeline;
+    RenderGeometry const* m_ref_render_geometry;
+    RenderEntity m_geometry_entity;
+
     RenderGraphPassExecute m_execute;
     HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_input_barriers;
     HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_output_barriers;
-    HashMap<uint32_t, Vector<String>> m_descriptors;
-    HashMap<uint32_t, GPUDescriptorSet*> m_descriptor_sets;
 
-    RenderEntity m_geometry_entity;
-    RenderGeometry const* m_ref_render_geometry;
+    struct RenderDescriptorResource
+    {
+        struct RenderDescriptorData : GPUDescriptorData
+        {
+            union
+            {
+                GPUTexture const* const* textures;
+                GPUBuffer const* const* buffers;
+            };
+        };
+
+        Vector<RenderDescriptorData> descriptor_data;
+        GPUDescriptorSet* descriptor_set;
+    };
+
+    HashMap<uint32_t, RenderDescriptorResource> m_descriptor_resources;
+
 
     friend class DrawRenderBuilder;
     friend class DrawRenderGraph;
     friend class DrawRenderScene;
+    friend class DrawRenderGraphicsView;
+    friend class DrawRenderComputeView;
 };
 
 AMAZING_NAMESPACE_END

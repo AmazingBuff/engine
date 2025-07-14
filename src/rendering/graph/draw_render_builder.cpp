@@ -67,7 +67,13 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
         {
             if (resource.name == name)
             {
-                m_ref_graph_pass_node->m_descriptors[set_index].push_back(resource.name);
+                RenderGraphPassNode::RenderDescriptorResource::RenderDescriptorData descriptor{};
+                descriptor.name = resource.name;
+                descriptor.resource_type = resource.resource_type;
+                descriptor.binding = resource.binding;
+                descriptor.array_count = resource.array_count;
+
+                m_ref_graph_pass_node->m_descriptor_resources[set_index].descriptor_data.emplace_back(descriptor);
                 return true;
             }
             return false;
@@ -184,7 +190,13 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
         {
             if (resource.name == name)
             {
-                m_ref_graph_pass_node->m_descriptors[set_index].push_back(resource.name);
+                RenderGraphPassNode::RenderDescriptorResource::RenderDescriptorData descriptor{};
+                descriptor.name = resource.name;
+                descriptor.resource_type = resource.resource_type;
+                descriptor.binding = resource.binding;
+                descriptor.array_count = resource.array_count;
+
+                m_ref_graph_pass_node->m_descriptor_resources[set_index].descriptor_data.emplace_back(descriptor);
                 return true;
             }
             return false;

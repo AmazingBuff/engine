@@ -78,9 +78,10 @@ struct RenderGraphImageCreateInfo
 struct RenderGraphBufferCreateInfo
 {
     uint32_t size;
-    RenderGraphBufferUsage usage;
     RenderFormat format;
+    RenderGraphBufferUsage usage;
     RenderGraphBufferType type;
+    RenderGraphBufferLayout layout;
 };
 
 struct RenderGraphPipelineCreateInfo

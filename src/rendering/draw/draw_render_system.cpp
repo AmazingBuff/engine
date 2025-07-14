@@ -57,7 +57,9 @@ RenderEntity DrawRenderSystem::create_image(RenderGraphImageCreateInfo const& in
 
 RenderEntity DrawRenderSystem::create_buffer(RenderGraphBufferCreateInfo const& info)
 {
+    RenderGraphResource buffer = m_render_driver.create_buffer(info);
     RenderEntity entity = generate_render_entity();
+    m_render_graph_resources[entity] = buffer;
     return entity;
 }
 

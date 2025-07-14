@@ -186,7 +186,7 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[j]);
+                DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.texture_views[j]);
                 DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_texture_view->m_srv_uva_handle, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
@@ -195,7 +195,7 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.textures[j]);
+                DX12TextureView const* dx12_texture_view = static_cast<DX12TextureView const*>(data.texture_views[j]);
                 DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_texture_view->m_srv_uva_handle.ptr + dx12_texture_view->m_uav_offset }, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
@@ -204,7 +204,7 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffers[j]);
+                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffer_views[j]);
                 DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, dx12_buffer_view->m_handle, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
@@ -214,7 +214,7 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffers[j]);
+                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffer_views[j]);
                 DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer_view->m_handle.ptr + dx12_buffer_view->m_srv_offset }, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }
@@ -224,7 +224,7 @@ void DX12DescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_
         {
             for (uint32_t j = 0; j < data.array_count; j++)
             {
-                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffers[j]);
+                DX12BufferView const* dx12_buffer_view = static_cast<DX12BufferView const*>(data.buffer_views[j]);
                 DX12DescriptorHeap::copy_descriptor_handle(dx12_device->m_device, cbv_srv_uav_heap, { dx12_buffer_view->m_handle.ptr + dx12_buffer_view->m_uav_offset }, m_cbv_srv_uav_handle, j + heap_offset);
             }
         }

@@ -221,9 +221,7 @@ RenderDriver::RenderDriver(RenderDriverCreateInfo const& info) : m_driver_info{}
     m_graphics_queue = const_cast<GPUQueue*>(m_device->fetch_queue(GPUQueueType::e_graphics, 0));
     m_compute_queue = const_cast<GPUQueue*>(m_device->fetch_queue(GPUQueueType::e_compute, 0));
 
-    m_fences.resize(info.frame_count);
-    for (uint32_t i = 0; i < info.frame_count; i++)
-        m_fences[i] = GPU_create_fence(m_device);
+    m_fence = GPU_create_fence(m_device);
 
     // present
     if (info.window_handle)
@@ -288,9 +286,7 @@ RenderDriver::~RenderDriver()
         PLACEMENT_DELETE(RenderPresentContext, m_present_context);
     }
 
-    for (GPUFence* fence : m_fences)
-        GPU_destroy_fence(fence);
-
+    GPU_destroy_fence(m_fence);
     GPU_destroy_device(m_device);
     GPU_destroy_instance(m_instance);
 }
@@ -632,6 +628,45 @@ RenderGraphResource RenderDriver::create_image(RenderGraphImageCreateInfo const&
         .image{
             .texture = texture,
             .texture_view = texture_view,
+        }
+    };
+
+    return resource;
+}
+
+RenderGraphResource RenderDriver::create_buffer(RenderGraphBufferCreateInfo const& info) const
+{
+    GPUBufferCreateInfo buffer_info{
+        .size = info.size,
+        .format = transfer_format(info.format),
+        .state = transfer_resource_state(info.layout),
+        .type = transfer_resource_type(info.usage),
+        .flags = static_cast<GPUBufferFlag>(info.type)
+    };
+
+    if (FLAG_IDENTITY(info.usage, RenderGraphBufferUsage::e_uav) || FLAG_IDENTITY(info.usage, RenderGraphBufferUsage::e_srv))
+        buffer_info.usage = GPUMemoryUsage::e_gpu_only;
+    else if (FLAG_IDENTITY(info.usage, RenderGraphBufferUsage::e_cbv))
+    {
+        buffer_info.usage = GPUMemoryUsage::e_cpu_only;
+        buffer_info.flags |= GPUBufferFlag::e_persistent_map;
+    }
+
+    GPUBuffer* buffer = GPU_create_buffer(m_device, buffer_info);
+
+    GPUBufferViewCreateInfo view_info{
+        .buffer = buffer,
+        .counter_buffer = nullptr,
+        .format = transfer_format(info.format),
+        .usage = transfer_texture_view_usage(info.usage),
+    };
+    GPUBufferView* view = GPU_create_buffer_view(view_info);
+
+    RenderGraphResource resource{
+        .resource_type = RenderGraphResourceType::e_buffer,
+        .buffer{
+            .buffer = buffer,
+            .buffer_view = view,
         }
     };
 

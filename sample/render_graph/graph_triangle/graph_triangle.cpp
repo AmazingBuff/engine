@@ -26,7 +26,7 @@ int main()
     };
     RenderSystem* system = RENDER_create_render_system(system_create_info);
 
-    Triangle3D triangle({-0.5, -0.5, 0}, {0.5, -0.5, 0}, {0, 1, 0});
+    Triangle3D triangle({ -0.5, -0.5, 0 }, { 0.5, -0.5, 0 }, { 0, 1, 0 });
     Mesh mesh = triangle.as_mesh();
 
     Node node{
@@ -57,7 +57,7 @@ int main()
         .stage = RenderShaderStage::e_fragment,
     };
 
-    RenderShaderDescriptor shaders[] = {vs, ps};
+    RenderShaderDescriptor shaders[] = { vs, ps };
 
 
     RenderRasterizerStateDescriptor rasterizer_descriptor{
@@ -91,22 +91,33 @@ int main()
     };
     RenderEntity output_texture = system->create_image(image_create_info);
 
+    RenderGraphBufferCreateInfo buffer_create_info{
+        .size = 24,
+        .format = RenderFormat::e_undefined,
+        .usage = RenderGraphBufferUsage::e_cbv,
+        .type = RenderGraphBufferType::e_persistent_map
+    };
+    RenderEntity buffer = system->create_buffer(buffer_create_info);
+    float light[] = { 0, 1, 1, 0.5, 0.4, 0.5 };
+
     RenderGraphCreateInfo graph_create_info{
         .render_system = system,
     };
     RenderGraph* graph = RENDER_create_render_graph(graph_create_info);
 
     graph->add_pass("triangle", [&](RenderBuilder* builder)
-    {
-        builder->bind_pipeline(pipeline_entity);
-        builder->bind_scene_geometry(scene_entity);
-        builder->write("output", output_texture);
-    },
-    [&](RenderView* view)
-    {
-        view->set_viewport(0, 0, Width, Height, 0, 1);
-        view->set_scissor(0, 0, Width, Height);
-    });
+        {
+            builder->bind_pipeline(pipeline_entity);
+            builder->bind_scene_geometry(scene_entity);
+            builder->read("b_light", buffer);
+            builder->write("output", output_texture);
+        },
+        [&](RenderView* view)
+        {
+            view->set_viewport(0, 0, Width, Height, 0, 1);
+            view->set_scissor(0, 0, Width, Height);
+            view->set_uniform("b_light", light);
+        });
 
     graph->add_present_pass("ps", output_texture);
 
@@ -119,6 +130,7 @@ int main()
     scene->add_entity(pipeline_entity);
     scene->add_entity(output_texture);
     scene->add_entity(scene_entity);
+    scene->add_entity(buffer);
 
     scene->attach_graph(graph);
 

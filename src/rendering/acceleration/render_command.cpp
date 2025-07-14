@@ -129,7 +129,7 @@ void RenderCommand::copy_resource(RenderGraphResource const& src_resource, Rende
         break;
     case RenderGraphResourceType::e_image:
         transfer_info.dst_texture.texture = dst_resource.image.texture;
-        transfer_info.dst_texture.subresource =  {
+        transfer_info.dst_texture.subresource = {
             .mip_level = 0,
             .base_array_layer = 0,
             .array_layers = 1
@@ -181,6 +181,11 @@ void RenderGraphicsCommand::end_pass()
     m_command_buffers[m_frame_index]->end_graphics_pass(m_graphics_encoder);
 }
 
+void RenderGraphicsCommand::bind_descriptor_set(GPUDescriptorSet const* set)
+{
+    m_graphics_encoder->bind_descriptor_set(set);
+}
+
 void RenderGraphicsCommand::bind_pipeline(RenderGraphPipeline const* pipeline)
 {
     m_graphics_encoder->bind_pipeline(pipeline->graphics_pipeline);
@@ -230,6 +235,11 @@ void RenderComputeCommand::submit(RenderCommandSubmitInfo const& info)
     m_ref_driver.m_compute_queue->submit(submit_info);
 
     refresh_frame();
+}
+
+void RenderComputeCommand::bind_descriptor_set(GPUDescriptorSet const* set)
+{
+    m_compute_encoder->bind_descriptor_set(set);
 }
 
 void RenderComputeCommand::bind_pipeline(RenderGraphPipeline const* pipeline)

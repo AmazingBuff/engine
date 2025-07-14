@@ -51,8 +51,6 @@ target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC
     ${THIRD_PARTY_LIBS}
-    d3d12
-    dxgi
     amazing_std
     reflect
     SDL3::SDL3
@@ -83,6 +81,13 @@ add_custom_command(
 )
 
 if (WIN32)
+    target_link_libraries(
+        ${PROJECT_NAME}
+        PUBLIC
+        d3d12
+        dxgi
+    )
+
     target_compile_definitions(
         ${PROJECT_NAME}
         PUBLIC

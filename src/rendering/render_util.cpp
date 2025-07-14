@@ -96,15 +96,43 @@ GPUResourceState transfer_resource_state(RenderGraphImageLayout layout)
     return state;
 }
 
+GPUResourceState transfer_resource_state(RenderGraphBufferLayout layout)
+{
+    GPUResourceState state = GPUResourceState::e_undefined;
+    if (FLAG_IDENTITY(layout, RenderGraphBufferLayout::e_srv))
+        state |= GPUResourceState::e_shader_resource;
+    if (FLAG_IDENTITY(layout, RenderGraphBufferLayout::e_uav))
+        state |= GPUResourceState::e_unordered_access;
+    if (FLAG_IDENTITY(layout, RenderGraphBufferLayout::e_copy_src))
+        state |= GPUResourceState::e_copy_source;
+    if (FLAG_IDENTITY(layout, RenderGraphBufferLayout::e_copy_dst))
+        state |= GPUResourceState::e_copy_destination;
+
+    return state;
+}
+
 GPUResourceType transfer_resource_type(RenderGraphImageUsage usage)
 {
-    GPUResourceType type = GPUResourceType::e_texture;
+    GPUResourceType type = GPUResourceType::e_undefined;
     if (FLAG_IDENTITY(usage, RenderGraphImageUsage::e_rtv_dsv))
         type |= GPUResourceType::e_render_target | GPUResourceType::e_depth_stencil;
     if (FLAG_IDENTITY(usage, RenderGraphImageUsage::e_srv))
         type |= GPUResourceType::e_texture;
     if (FLAG_IDENTITY(usage, RenderGraphImageUsage::e_uav))
         type |= GPUResourceType::e_rw_texture;
+
+    return type;
+}
+
+GPUResourceType transfer_resource_type(RenderGraphBufferUsage usage)
+{
+    GPUResourceType type = GPUResourceType::e_undefined;
+    if (FLAG_IDENTITY(usage, RenderGraphBufferUsage::e_cbv))
+        type |= GPUResourceType::e_uniform_buffer;
+    if (FLAG_IDENTITY(usage, RenderGraphBufferUsage::e_srv))
+        type |= GPUResourceType::e_buffer;
+    if (FLAG_IDENTITY(usage, RenderGraphBufferUsage::e_uav))
+        type |= GPUResourceType::e_rw_buffer;
 
     return type;
 }
@@ -125,13 +153,26 @@ GPUTextureType transfer_texture_type(RenderGraphImageType type)
 
 GPUTextureViewUsage transfer_texture_view_usage(RenderGraphImageUsage usage)
 {
-    GPUTextureViewUsage view = GPUTextureViewUsage::e_srv;
+    GPUTextureViewUsage view = static_cast<GPUTextureViewUsage>(0);
     if (FLAG_IDENTITY(usage, RenderGraphImageUsage::e_rtv_dsv))
         view |= GPUTextureViewUsage::e_rtv_dsv;
     if (FLAG_IDENTITY(usage, RenderGraphImageUsage::e_srv))
         view |= GPUTextureViewUsage::e_srv;
     if (FLAG_IDENTITY(usage, RenderGraphImageUsage::e_uav))
         view |= GPUTextureViewUsage::e_uav;
+
+    return view;
+}
+
+GPUBufferViewUsage transfer_texture_view_usage(RenderGraphBufferUsage usage)
+{
+    GPUBufferViewUsage view = static_cast<GPUBufferViewUsage>(0);
+    if (FLAG_IDENTITY(usage, RenderGraphBufferUsage::e_cbv))
+        view |= GPUBufferViewUsage::e_cbv;
+    if (FLAG_IDENTITY(usage, RenderGraphBufferUsage::e_srv))
+        view |= GPUBufferViewUsage::e_srv;
+    if (FLAG_IDENTITY(usage, RenderGraphBufferUsage::e_uav))
+        view |= GPUBufferViewUsage::e_uav;
 
     return view;
 }

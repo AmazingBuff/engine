@@ -21,8 +21,8 @@ DrawRenderGraph::~DrawRenderGraph()
 {
     for (auto& [name, node] : m_pass_nodes)
     {
-        for (auto& [set_index, set] : node->m_descriptor_sets)
-            GPU_destroy_descriptor_set(set);
+        for (auto& [set_index, descriptor_resource] : node->m_descriptor_resources)
+            GPU_destroy_descriptor_set(descriptor_resource.descriptor_set);
         PLACEMENT_DELETE(RenderGraphPassNode, node);
     }
 
@@ -197,7 +197,7 @@ void DrawRenderGraph::compile()
             }
 
             // update resource
-            for_each(node->m_descriptors, [&](Pair<uint32_t, Vector<String>> const& descriptor)
+            for_each(node->m_descriptor_resources, [&](Pair<uint32_t, RenderGraphPassNode::RenderDescriptorResource>& descriptor)
             {
                 GPUDescriptorSetCreateInfo desc{
                     .root_signature = node->m_ref_pipeline->root_signature,
@@ -205,34 +205,28 @@ void DrawRenderGraph::compile()
                 };
                 GPUDescriptorSet* descriptor_set = GPU_create_descriptor_set(desc);
 
-                Vector<GPUDescriptorData> resource_data;
-                resource_data.reserve(descriptor.second.size());
-                for_each(descriptor.second, [&](String const& name)
+                for_each(descriptor.second.descriptor_data, [&](RenderGraphPassNode::RenderDescriptorResource::RenderDescriptorData& descriptor_data)
                 {
-                    auto resource_it = m_resource_nodes.find(name);
+                    auto resource_it = m_resource_nodes.find(descriptor_data.name);
                     if (resource_it != m_resource_nodes.end())
                     {
-                        RenderGraphResource const& resource = resource_it->second->m_ref_resource;
+                        RenderGraphResource const& graph_resource = resource_it->second->m_ref_resource;
 
-                        GPUDescriptorData descriptor_data{
-                            .name = name,
-                            .array_count = 1
-                        };
                         switch (resource_it->second->type())
                         {
                         case RenderGraphResourceType::e_image:
-                            descriptor_data.textures = &resource.image.texture_view;
+                            descriptor_data.texture_views = &graph_resource.image.texture_view;
+                            descriptor_data.textures = &graph_resource.image.texture;
                             break;
                         case RenderGraphResourceType::e_buffer:
-                            descriptor_data.buffers = &resource.buffer.buffer_view;
+                            descriptor_data.buffer_views = &graph_resource.buffer.buffer_view;
+                            descriptor_data.buffers = &graph_resource.buffer.buffer;
                             break;
                         }
-
-                        resource_data.emplace_back(descriptor_data);
                     }
-                    descriptor_set->update(resource_data.data(), resource_data.size());
-                    node->m_descriptor_sets[descriptor.first] = descriptor_set;
                 });
+                descriptor_set->update(descriptor.second.descriptor_data.data(), descriptor.second.descriptor_data.size());
+                descriptor.second.descriptor_set = descriptor_set;
             });
         }
     }

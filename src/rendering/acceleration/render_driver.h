@@ -42,6 +42,7 @@ public:
     void destroy_pipeline(RenderGraphPipeline const& pipeline) const;
 
     NODISCARD RenderGraphResource create_image(RenderGraphImageCreateInfo const& info) const;
+    NODISCARD RenderGraphResource create_buffer(RenderGraphBufferCreateInfo const& info) const;
     void destroy_resource(RenderGraphResource const& resource) const;
 
     void copy_to_swap_chain(RenderGraphResource const& resource, RenderGraphicsCommand& command) const;
@@ -57,7 +58,7 @@ private:
     GPUDevice* m_device;
     GPUQueue* m_graphics_queue;
     GPUQueue* m_compute_queue;
-    Vector<GPUFence*> m_fences;
+    GPUFence* m_fence;
 
     // present
     struct RenderPresentContext
