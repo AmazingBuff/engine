@@ -455,16 +455,6 @@ VkSampleCountFlagBits transfer_sample_count(GPUSampleCount sample_count)
 	}
 }
 
-VkImageUsageFlags transfer_image_usage(const GPUResourceType& type)
-{
-	VkImageUsageFlags usage = 0;
-	if (FLAG_IDENTITY(type, GPUResourceType::e_texture))
-		usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-	if (FLAG_IDENTITY(type, GPUResourceType::e_rw_buffer) || FLAG_IDENTITY(type, GPUResourceType::e_rw_texture))
-		usage |= VK_IMAGE_USAGE_STORAGE_BIT;
-	return usage;
-}
-
 VkImageAspectFlags transfer_image_aspect(VkFormat format, bool stencil)
 {
 	VkImageAspectFlags result = VK_IMAGE_ASPECT_NONE;

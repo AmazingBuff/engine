@@ -104,7 +104,7 @@ void VKDescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_t 
             {
                 for (uint32_t j = 0; j < data.array_count; ++j)
                 {
-                    VKTextureView const* texture_view = static_cast<VKTextureView const*>(data.textures[j]);
+                    VKTextureView const* texture_view = static_cast<VKTextureView const*>(data.texture_views[j]);
                     VulkanDescriptorUpdateData& update_data = m_update_data[resource->binding + j];
                     if (resource->resource_type == GPUResourceType::e_rw_texture)
                     {
@@ -138,7 +138,7 @@ void VKDescriptorSet::update(GPUDescriptorData const* descriptor_data, uint32_t 
             {
                 for (uint32_t j = 0; j < data.array_count; ++j)
                 {
-                    VKBufferView const* buffer_view = static_cast<VKBufferView const*>(data.buffers[j]);
+                    VKBufferView const* buffer_view = static_cast<VKBufferView const*>(data.buffer_views[j]);
                     VKBuffer const* buffer = static_cast<VKBuffer const*>(buffer_view->m_ref_buffer);
                     VulkanDescriptorUpdateData& update_data = m_update_data[resource->binding + j];
                     update_data.buffer_info.buffer = buffer->m_buffer;

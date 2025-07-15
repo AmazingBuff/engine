@@ -18,6 +18,7 @@ public:
 private:
     VKTexture();
     static VkImageType transfer_image_type(GPUTextureCreateInfo const& info);
+    static VkImageUsageFlags transfer_image_usage(GPUTextureCreateInfo const& info);
     static VkFormatFeatureFlags transfer_image_format_features(VkImageUsageFlags usage);
 private:
     VkImage m_image;

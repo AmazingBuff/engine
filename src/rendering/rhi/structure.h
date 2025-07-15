@@ -151,8 +151,8 @@ struct GPUDescriptorData
     union
     {
         GPUSampler const* const* samplers;
-        GPUTextureView const* const* textures;
-        GPUBufferView const* const* buffers;
+        GPUTextureView const* const* texture_views;
+        GPUBufferView const* const* buffer_views;
     };
 
     uint32_t array_count;

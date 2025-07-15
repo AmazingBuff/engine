@@ -69,142 +69,242 @@ GPUGraphicsPassEncoder* VKCommandBuffer::begin_graphics_pass(GPUGraphicsPassCrea
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
     VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
     VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
+    VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
+
     uint32_t width = 0, height = 0;
-    VkRenderPass render_pass = nullptr;
+
+    if (vk_adapter->m_vulkan_detail.device_ext_detail.dynamic_rendering)
     {
-        VulkanRenderPassCreateInfo render_pass_info{
-            .color_attachment_count = info.color_attachment_count,
-            .sample_count = info.sample_count,
+        // dynamic rendering
+        VkRenderingAttachmentInfoKHR color_attachment_infos[GPU_Max_Render_Target]{};
+        VkRenderingAttachmentInfoKHR depth_attachment_info{
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+        };
+        VkRenderingAttachmentInfoKHR stencil_attachment_info{
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR
+        };
+        VkRenderingInfoKHR rendering_info {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR,
+            .layerCount = 1,
+            .colorAttachmentCount = info.color_attachment_count,
+            .pColorAttachments = color_attachment_infos,
         };
 
-        for (uint32_t i = 0; i < info.color_attachment_count; i++)
         {
-            VulkanRenderPassCreateInfo::VulkanColorAttachment& color_attachment = render_pass_info.color_attachment[i];
-            VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.color_attachments[i].texture_view);
-            VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
+            for (uint32_t i = 0; i < info.color_attachment_count; i++)
+            {
+                VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.color_attachments[i].texture_view);
+                VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
 
-            color_attachment.resolve_enable = info.sample_count > GPUSampleCount::e_1 && info.color_attachments[i].resolve_view != nullptr;
-            color_attachment.format = texture->m_info->format;
-            color_attachment.load_action = info.color_attachments[i].load;
-            color_attachment.store_action = info.color_attachments[i].store;
-            width = std::max(width, texture->m_info->width);
-            height = std::max(height, texture->m_info->height);
+                GPUClearColor const& clear_color = info.color_attachments[i].clear_color;
+                VkRenderingAttachmentInfoKHR color_attachment_info {
+                    .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+                    .imageView = texture_view->m_rtv_dsv_view,
+                    .imageLayout = transfer_image_layout(texture->m_info->state),
+                    .loadOp = Attachment_Load_Op_Map[to_underlying(info.color_attachments[i].load)],
+                    .storeOp = Attachment_Store_Op_Map[to_underlying(info.color_attachments[i].store)],
+                    .clearValue{
+                        .color{
+                            clear_color.color.r,
+                            clear_color.color.g,
+                            clear_color.color.b,
+                            clear_color.color.a
+                        }
+                    }
+                };
+
+                if (info.color_attachments[i].resolve_view && info.sample_count > GPUSampleCount::e_1)
+                {
+                    VKTextureView const* resolve_texture_view = static_cast<VKTextureView const*>(info.color_attachments[i].resolve_view);
+                    VKTexture const* resolve_texture = static_cast<VKTexture const*>(resolve_texture_view->m_ref_texture);
+
+                    color_attachment_info.resolveImageView = resolve_texture_view->m_rtv_dsv_view;
+                    color_attachment_info.resolveImageLayout = transfer_image_layout(resolve_texture->m_info->state);
+                    color_attachment_info.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT_KHR; // todo: support other resolve modes
+                }
+
+                color_attachment_infos[i] = color_attachment_info;
+
+                rendering_info.layerCount = std::max(texture->m_info->array_layers, rendering_info.layerCount);
+                width = std::max(width, texture->m_info->width);
+                height = std::max(height, texture->m_info->height);
+            }
+
+            if (info.depth_stencil_attachment)
+            {
+                VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.depth_stencil_attachment->texture_view);
+                VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
+
+                depth_attachment_info.imageView = texture_view->m_rtv_dsv_view;
+                depth_attachment_info.imageLayout = transfer_image_layout(texture->m_info->state);
+                depth_attachment_info.loadOp = Attachment_Load_Op_Map[to_underlying(info.depth_stencil_attachment->depth_load)];
+                depth_attachment_info.storeOp = Attachment_Store_Op_Map[to_underlying(info.depth_stencil_attachment->depth_store)];
+                depth_attachment_info.clearValue = {
+                    .depthStencil{
+                        .depth = info.depth_stencil_attachment->clear_color.depth_stencil.depth,
+                        .stencil = info.depth_stencil_attachment->clear_color.depth_stencil.stencil
+                    }
+                };
+
+                stencil_attachment_info.imageView = depth_attachment_info.imageView;
+                stencil_attachment_info.imageLayout = depth_attachment_info.imageLayout;
+                stencil_attachment_info.clearValue = depth_attachment_info.clearValue;
+                stencil_attachment_info.loadOp = Attachment_Load_Op_Map[to_underlying(info.depth_stencil_attachment->stencil_load)];
+                stencil_attachment_info.storeOp = Attachment_Store_Op_Map[to_underlying(info.depth_stencil_attachment->stencil_store)];
+            }
         }
 
-        VulkanRenderPassCreateInfo::VulkanDepthStencilAttachment& depth_stencil_attachment = render_pass_info.depth_stencil_attachment;
-        if (info.depth_stencil_attachment)
-        {
-            VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.depth_stencil_attachment->texture_view);
-            VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
+        rendering_info.renderArea = {
+            .offset{
+                .x = 0,
+                .y = 0,
+            },
+            .extent{
+                .width = width,
+                .height = height,
+            }
+        };
 
-            depth_stencil_attachment.depth_stencil_format = texture->m_info->format;
-            depth_stencil_attachment.depth_load_action = info.depth_stencil_attachment->depth_load;
-            depth_stencil_attachment.depth_store_action = info.depth_stencil_attachment->depth_store;
-            depth_stencil_attachment.stencil_load_action = info.depth_stencil_attachment->stencil_load;
-            depth_stencil_attachment.stencil_store_action = info.depth_stencil_attachment->stencil_store;
-        }
-        else
-        {
-            depth_stencil_attachment.depth_stencil_format = GPUFormat::e_undefined;
-            depth_stencil_attachment.depth_load_action = GPULoadAction::e_dont_care;
-            depth_stencil_attachment.depth_store_action = GPUStoreAction::e_dont_care;
-            depth_stencil_attachment.stencil_load_action = GPULoadAction::e_dont_care;
-            depth_stencil_attachment.stencil_store_action = GPUStoreAction::e_dont_care;
-        }
-        render_pass = vk_device->m_pass_table->find_render_pass(render_pass_info);
+        vk_device->m_device_table.vkCmdBeginRenderingKHR(m_command_buffer, &rendering_info);
     }
-
-    // framebuffer
-    VkFramebuffer framebuffer = nullptr;
+    else
     {
-        VulkanFramebufferCreateInfo framebuffer_info{
-            .render_pass = render_pass,
-            .width = width,
-            .height = height,
-            .layers = 1,
-        };
+        VkRenderPass render_pass = nullptr;
+        {
+            VulkanRenderPassCreateInfo render_pass_info{
+                .color_attachment_count = info.color_attachment_count,
+                .sample_count = info.sample_count,
+            };
 
-        uint32_t attachment_count = 0;
+            for (uint32_t i = 0; i < info.color_attachment_count; i++)
+            {
+                VulkanRenderPassCreateInfo::VulkanColorAttachment& color_attachment = render_pass_info.color_attachments[i];
+                VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.color_attachments[i].texture_view);
+                VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
+
+                color_attachment.resolve_enable = info.sample_count > GPUSampleCount::e_1 && info.color_attachments[i].resolve_view != nullptr;
+                color_attachment.format = texture->m_info->format;
+                color_attachment.load_action = info.color_attachments[i].load;
+                color_attachment.store_action = info.color_attachments[i].store;
+                width = std::max(width, texture->m_info->width);
+                height = std::max(height, texture->m_info->height);
+            }
+
+            VulkanRenderPassCreateInfo::VulkanDepthStencilAttachment& depth_stencil_attachment = render_pass_info.depth_stencil_attachment;
+            if (info.depth_stencil_attachment)
+            {
+                VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.depth_stencil_attachment->texture_view);
+                VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
+
+                depth_stencil_attachment.depth_stencil_format = texture->m_info->format;
+                depth_stencil_attachment.depth_load_action = info.depth_stencil_attachment->depth_load;
+                depth_stencil_attachment.depth_store_action = info.depth_stencil_attachment->depth_store;
+                depth_stencil_attachment.stencil_load_action = info.depth_stencil_attachment->stencil_load;
+                depth_stencil_attachment.stencil_store_action = info.depth_stencil_attachment->stencil_store;
+            }
+            else
+            {
+                depth_stencil_attachment.depth_stencil_format = GPUFormat::e_undefined;
+                depth_stencil_attachment.depth_load_action = GPULoadAction::e_dont_care;
+                depth_stencil_attachment.depth_store_action = GPUStoreAction::e_dont_care;
+                depth_stencil_attachment.stencil_load_action = GPULoadAction::e_dont_care;
+                depth_stencil_attachment.stencil_store_action = GPUStoreAction::e_dont_care;
+            }
+            render_pass = vk_device->m_pass_table->find_render_pass(render_pass_info);
+        }
+
+        // framebuffer
+        VkFramebuffer framebuffer = nullptr;
+        {
+            VulkanFramebufferCreateInfo framebuffer_info{
+                .render_pass = render_pass,
+                .width = width,
+                .height = height,
+                .layers = 1,
+            };
+
+            uint32_t attachment_count = 0;
+            for (uint32_t i = 0; i < info.color_attachment_count; i++)
+            {
+                VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.color_attachments[i].texture_view);
+                VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
+
+                framebuffer_info.attachments[attachment_count] = texture_view->m_rtv_dsv_view;
+                framebuffer_info.layers = std::max(framebuffer_info.layers, texture->m_info->array_layers);
+                attachment_count++;
+            }
+
+            for (uint32_t i = 0; i < info.color_attachment_count; i++)
+            {
+                if (info.color_attachments[i].resolve_view && info.sample_count > GPUSampleCount::e_1)
+                {
+                    VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.color_attachments[i].resolve_view);
+                    framebuffer_info.attachments[attachment_count] = texture_view->m_rtv_dsv_view;
+                    attachment_count++;
+                }
+            }
+
+            if (info.depth_stencil_attachment && info.depth_stencil_attachment->texture_view)
+            {
+                VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.depth_stencil_attachment->texture_view);
+                VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
+
+                framebuffer_info.attachments[attachment_count] = texture_view->m_rtv_dsv_view;
+                framebuffer_info.layers = std::max(framebuffer_info.layers, texture->m_info->array_layers);
+                attachment_count++;
+            }
+
+            framebuffer_info.attachment_count = attachment_count;
+            framebuffer = vk_device->m_pass_table->find_framebuffer(framebuffer_info);
+        }
+
+        // begin
+        VkClearValue clear_values[2 * GPU_Max_Render_Target + 1]{};
+        uint32_t clear_value_count = 0;
         for (uint32_t i = 0; i < info.color_attachment_count; i++)
         {
-            VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.color_attachments[i].texture_view);
-            VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
-
-            framebuffer_info.attachments[attachment_count] = texture_view->m_rtv_dsv_view;
-            framebuffer_info.layers = std::max(framebuffer_info.layers, texture->m_info->array_layers);
-            attachment_count++;
+            GPUClearColor const& clear_color = info.color_attachments[i].clear_color;
+            if (info.color_attachments[i].load == GPULoadAction::e_clear)
+                clear_values[clear_value_count].color = {clear_color.color.r, clear_color.color.g, clear_color.color.b, clear_color.color.a};
+            clear_value_count++;
         }
 
         for (uint32_t i = 0; i < info.color_attachment_count; i++)
         {
             if (info.color_attachments[i].resolve_view && info.sample_count > GPUSampleCount::e_1)
-            {
-                VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.color_attachments[i].resolve_view);
-                framebuffer_info.attachments[attachment_count] = texture_view->m_rtv_dsv_view;
-                attachment_count++;
-            }
+                clear_value_count++;
         }
 
         if (info.depth_stencil_attachment && info.depth_stencil_attachment->texture_view)
         {
-            VKTextureView const* texture_view = static_cast<VKTextureView const*>(info.depth_stencil_attachment->texture_view);
-            VKTexture const* texture = static_cast<VKTexture const*>(texture_view->m_ref_texture);
-
-            framebuffer_info.attachments[attachment_count] = texture_view->m_rtv_dsv_view;
-            framebuffer_info.layers = std::max(framebuffer_info.layers, texture->m_info->array_layers);
-            attachment_count++;
-        }
-
-        framebuffer_info.attachment_count = attachment_count;
-        framebuffer = vk_device->m_pass_table->find_framebuffer(framebuffer_info);
-    }
-
-    // begin
-    VkClearValue clear_values[2 * GPU_Max_Render_Target + 1]{};
-    uint32_t clear_value_count = 0;
-    for (uint32_t i = 0; i < info.color_attachment_count; i++)
-    {
-        GPUClearColor const& clear_color = info.color_attachments[i].clear_color;
-        if (info.color_attachments[i].load == GPULoadAction::e_clear)
-            clear_values[clear_value_count].color = {clear_color.color.r, clear_color.color.g, clear_color.color.b, clear_color.color.a};
-        clear_value_count++;
-    }
-
-    for (uint32_t i = 0; i < info.color_attachment_count; i++)
-    {
-        if (info.color_attachments[i].resolve_view && info.sample_count > GPUSampleCount::e_1)
+            if (info.depth_stencil_attachment->depth_load == GPULoadAction::e_clear)
+                clear_values[clear_value_count].depthStencil = {info.depth_stencil_attachment->clear_color.depth_stencil.depth, info.depth_stencil_attachment->clear_color.depth_stencil.stencil};
             clear_value_count++;
-    }
-
-    if (info.depth_stencil_attachment && info.depth_stencil_attachment->texture_view)
-    {
-        if (info.depth_stencil_attachment->depth_load == GPULoadAction::e_clear)
-            clear_values[clear_value_count].depthStencil = {info.depth_stencil_attachment->clear_color.depth_stencil.depth, info.depth_stencil_attachment->clear_color.depth_stencil.stencil};
-        clear_value_count++;
-    }
-
-    VkRect2D render_area = {
-        .offset{
-            .x = 0,
-            .y = 0,
-        },
-        .extent{
-            .width = width,
-            .height = height,
         }
-    };
 
-    VkRenderPassBeginInfo begin_info = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .pNext = nullptr,
-        .renderPass = render_pass,
-        .framebuffer = framebuffer,
-        .renderArea = render_area,
-        .clearValueCount = clear_value_count,
-        .pClearValues = clear_values,
-    };
+        VkRect2D render_area = {
+            .offset{
+                .x = 0,
+                .y = 0,
+            },
+            .extent{
+                .width = width,
+                .height = height,
+            }
+        };
 
-    vk_device->m_device_table.vkCmdBeginRenderPass(m_command_buffer, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+        VkRenderPassBeginInfo begin_info = {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = nullptr,
+            .renderPass = render_pass,
+            .framebuffer = framebuffer,
+            .renderArea = render_area,
+            .clearValueCount = clear_value_count,
+            .pClearValues = clear_values,
+        };
+
+        vk_device->m_device_table.vkCmdBeginRenderPass(m_command_buffer, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+    }
 
     VKGraphicsPassEncoder* graphics_pass_encoder = PLACEMENT_NEW(VKGraphicsPassEncoder, sizeof(VKGraphicsPassEncoder), this);
     return graphics_pass_encoder;
@@ -215,8 +315,12 @@ void VKCommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
     VKCommandPool const* vk_command_pool = static_cast<VKCommandPool const*>(m_ref_pool);
     VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
     VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
+    VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
     PLACEMENT_DELETE(VKGraphicsPassEncoder, static_cast<VKGraphicsPassEncoder*>(encoder));
-    vk_device->m_device_table.vkCmdEndRenderPass(m_command_buffer);
+    if (vk_adapter->m_vulkan_detail.device_ext_detail.dynamic_rendering)
+        vk_device->m_device_table.vkCmdEndRenderingKHR(m_command_buffer);
+    else
+        vk_device->m_device_table.vkCmdEndRenderPass(m_command_buffer);
 }
 
 GPUComputePassEncoder* VKCommandBuffer::begin_compute_pass(GPUComputePassCreateInfo const& info)

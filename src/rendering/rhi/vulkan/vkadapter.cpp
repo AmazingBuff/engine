@@ -202,6 +202,10 @@ void VKAdapter::record_adapter_detail()
     m_vulkan_detail.device_properties = properties;
     m_vulkan_detail.device_features = features;
 
+#if VK_KHR_dynamic_rendering
+    m_vulkan_detail.device_ext_detail.dynamic_rendering = dynamic_rendering_features.dynamicRendering;
+#endif
+
     m_adapter_detail.is_cpu = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU;
     m_adapter_detail.is_virtual = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
     m_adapter_detail.is_uma = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;

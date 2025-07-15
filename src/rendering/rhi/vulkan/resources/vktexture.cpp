@@ -42,6 +42,26 @@ VkImageType VKTexture::transfer_image_type(GPUTextureCreateInfo const& info)
     }
 }
 
+VkImageUsageFlags VKTexture::transfer_image_usage(GPUTextureCreateInfo const& info)
+{
+    VkImageUsageFlags usage = 0;
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_texture))
+        usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_rw_buffer) ||
+        FLAG_IDENTITY(info.type, GPUResourceType::e_rw_texture))
+        usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_render_target))
+        usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    else if (is_depth_stencil_format(info.format))
+        usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_copy_source))
+        usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    if (FLAG_IDENTITY(info.type, GPUResourceType::e_copy_target))
+        usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    return usage;
+}
+
 VkFormatFeatureFlags VKTexture::transfer_image_format_features(VkImageUsageFlags usage)
 {
     if ((usage & VK_IMAGE_USAGE_SAMPLED_BIT) == VK_IMAGE_USAGE_SAMPLED_BIT)
@@ -77,23 +97,15 @@ VKTexture::VKTexture(GPUDevice const* device, GPUTextureCreateInfo const& info) 
         .arrayLayers = info.array_layers,
         .samples = transfer_sample_count(info.sample_count),
         .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = transfer_image_usage(info.type),
+        .usage = transfer_image_usage(info),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
-
-    // usage
-    if (FLAG_IDENTITY(info.type, GPUResourceType::e_render_target))
-        image_create_info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    else if (is_depth_stencil_format(info.format))
-        image_create_info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
     if (FLAG_IDENTITY(info.type, GPUResourceType::e_texture_cube))
         image_create_info.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     if (image_create_info.imageType == VK_IMAGE_TYPE_3D)
         image_create_info.flags |= VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT_KHR;
 
-    if (image_create_info.usage & VK_IMAGE_USAGE_SAMPLED_BIT || image_create_info.usage & VK_IMAGE_USAGE_STORAGE_BIT)
-        image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     if (FLAG_IDENTITY(info.flags, GPUTextureFlag::e_tiled_resource))
     {
         image_create_info.flags |= VK_IMAGE_CREATE_SPARSE_BINDING_BIT;

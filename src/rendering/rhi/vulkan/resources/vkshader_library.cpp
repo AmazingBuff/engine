@@ -121,7 +121,7 @@ VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreate
         {
             GPUShaderResource& ref_resource = reflection.shader_resources[index++];
             ref_resource.name = compiler.get_name(uniform.id).c_str();
-            ref_resource.name_hash = hash_str(uniform.name.c_str(), uniform.name.size(), VK_Hash);
+            ref_resource.name_hash = hash_str(ref_resource.name.c_str(), ref_resource.name.size(), VK_Hash);
             ref_resource.set = compiler.get_decoration(uniform.id, spv::DecorationDescriptorSet);
             ref_resource.binding = compiler.get_decoration(uniform.id, spv::DecorationBinding);
             ref_resource.stage = transfer_execution_model(entry_point.execution_model);
@@ -142,7 +142,7 @@ VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreate
         {
             GPUShaderResource& ref_resource = reflection.shader_resources[index++];
             ref_resource.name = compiler.get_name(sampled.id).c_str();
-            ref_resource.name_hash = hash_str(sampled.name.c_str(), sampled.name.size(), VK_Hash);
+            ref_resource.name_hash = hash_str(ref_resource.name.c_str(), ref_resource.name.size(), VK_Hash);
             ref_resource.set = compiler.get_decoration(sampled.id, spv::DecorationDescriptorSet);
             ref_resource.binding = compiler.get_decoration(sampled.id, spv::DecorationBinding);
             ref_resource.stage = transfer_execution_model(entry_point.execution_model);
@@ -175,7 +175,7 @@ VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreate
         {
             GPUShaderResource& ref_resource = reflection.shader_resources[index++];
             ref_resource.name = compiler.get_name(push_constant.id).c_str();
-            ref_resource.name_hash = hash_str(push_constant.name.c_str(), push_constant.name.size(), VK_Hash);
+            ref_resource.name_hash = hash_str(ref_resource.name.c_str(), ref_resource.name.size(), VK_Hash);
             ref_resource.set = 0;
             ref_resource.binding = 0;
             ref_resource.stage = transfer_execution_model(entry_point.execution_model);
@@ -187,7 +187,7 @@ VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreate
         {
             GPUShaderResource& ref_resource = reflection.shader_resources[index++];
             ref_resource.name = compiler.get_name(image.id).c_str();
-            ref_resource.name_hash = hash_str(image.name.c_str(), image.name.size(), VK_Hash);
+            ref_resource.name_hash = hash_str(ref_resource.name.c_str(), ref_resource.name.size(), VK_Hash);
             ref_resource.set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
             ref_resource.binding = compiler.get_decoration(image.id, spv::DecorationBinding);
             ref_resource.stage = transfer_execution_model(entry_point.execution_model);
@@ -229,7 +229,7 @@ VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreate
         {
             GPUShaderResource& ref_resource = reflection.shader_resources[index++];
             ref_resource.name = compiler.get_name(sampler.id).c_str();
-            ref_resource.name_hash = hash_str(sampler.name.c_str(), sampler.name.size(), VK_Hash);
+            ref_resource.name_hash = hash_str(ref_resource.name.c_str(), ref_resource.name.size(), VK_Hash);
             ref_resource.set = compiler.get_decoration(sampler.id, spv::DecorationDescriptorSet);
             ref_resource.binding = compiler.get_decoration(sampler.id, spv::DecorationBinding);
             ref_resource.stage = transfer_execution_model(entry_point.execution_model);
@@ -249,7 +249,7 @@ VKShaderLibrary::VKShaderLibrary(GPUDevice const* device, GPUShaderLibraryCreate
         {
             GPUShaderResource& ref_resource = reflection.shader_resources[index++];
             ref_resource.name = compiler.get_name(image.id).c_str();
-            ref_resource.name_hash = hash_str(image.name.c_str(), image.name.size(), VK_Hash);
+            ref_resource.name_hash = hash_str(ref_resource.name.c_str(), ref_resource.name.size(), VK_Hash);
             ref_resource.set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
             ref_resource.binding = compiler.get_decoration(image.id, spv::DecorationBinding);
             ref_resource.stage = transfer_execution_model(entry_point.execution_model);

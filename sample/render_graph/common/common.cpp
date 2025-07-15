@@ -9,7 +9,7 @@
 
 AMAZING_NAMESPACE_BEGIN
 
-RenderBackend Backend = RenderBackend::e_d3d12;
+RenderBackend Backend = RenderBackend::e_vulkan;
 RENDERDOC_API_1_6_0* Renderdoc_Api = nullptr;
 
 void load_render_doc_api()

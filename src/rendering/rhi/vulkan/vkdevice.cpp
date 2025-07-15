@@ -57,6 +57,13 @@ VKDevice::VKDevice(GPUAdapter const* adapter, GPUDeviceCreateInfo const& info)
         .pEnabledFeatures = &vk_adapter->m_vulkan_detail.device_features,
     };
 
+    static constexpr VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_feature {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+        .dynamicRendering = VK_TRUE,
+    };
+    if (vk_adapter->m_vulkan_detail.device_ext_detail.dynamic_rendering)
+        device_create_info.pNext = &dynamic_rendering_feature;
+
     VK_CHECK_RESULT(vkCreateDevice(vk_adapter->m_physical_device, &device_create_info, VK_Allocation_Callbacks_Ptr, &m_device));
     m_ref_adapter = adapter;
 

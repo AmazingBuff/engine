@@ -318,7 +318,7 @@ struct VulkanRenderPassCreateInfo
         bool resolve_enable;
         GPULoadAction resolve_load_action;
         GPUStoreAction resolve_store_action;
-    } color_attachment[GPU_Max_Render_Target];
+    } color_attachments[GPU_Max_Render_Target];
 
     GPUSampleCount sample_count;
     struct VulkanDepthStencilAttachment

@@ -247,25 +247,6 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         .blendConstants = {0.0f, 0.0f, 0.0f, 0.0f}
     };
 
-    // render pass
-    VulkanRenderPassCreateInfo render_pass_info{
-        .color_attachment_count = info.render_target_count,
-        .sample_count = info.sample_count > GPUSampleCount::e_1 ? info.sample_count : GPUSampleCount::e_1,
-    };
-    if (info.depth_stencil_state)
-    {
-        render_pass_info.depth_stencil_attachment = {
-            .depth_stencil_format = info.depth_stencil_format,
-        };
-    }
-    for (uint32_t i = 0; i < info.render_target_count; i++)
-    {
-        render_pass_info.color_attachment[i].format = info.color_format[i];
-        if (info.sample_count > GPUSampleCount::e_1)
-            render_pass_info.color_attachment[i].resolve_enable = true;
-    }
-    VkRenderPass render_pass = vk_device->m_pass_table->find_render_pass(render_pass_info);
-
     VkGraphicsPipelineCreateInfo pipeline_info{
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = stage_count,
@@ -279,10 +260,43 @@ VKGraphicsPipeline::VKGraphicsPipeline(GPUGraphicsPipelineCreateInfo const& info
         .pColorBlendState = &blend_state_info,
         .pDynamicState = &dynamic_state_info,
         .layout = vk_root_signature->m_pipeline_layout,
-        .renderPass = render_pass,
         .subpass = 0,
         .basePipelineHandle = nullptr,
     };
+
+    // dynamic rendering
+    VkFormat color_formats[GPU_Max_Render_Target]{};
+    VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
+        .colorAttachmentCount = info.render_target_count,
+        .pColorAttachmentFormats = color_formats
+    };
+
+    // render pass
+    VulkanRenderPassCreateInfo render_pass_info{
+        .color_attachment_count = info.render_target_count,
+        .sample_count = info.sample_count > GPUSampleCount::e_1 ? info.sample_count : GPUSampleCount::e_1,
+    };
+    if (info.depth_stencil_state)
+    {
+        render_pass_info.depth_stencil_attachment = {
+            .depth_stencil_format = info.depth_stencil_format,
+        };
+        pipeline_rendering_create_info.depthAttachmentFormat = transfer_format(info.depth_stencil_format);
+        pipeline_rendering_create_info.stencilAttachmentFormat = transfer_format(info.depth_stencil_format);
+    }
+    for (uint32_t i = 0; i < info.render_target_count; i++)
+    {
+        render_pass_info.color_attachments[i].format = info.color_format[i];
+        color_formats[i] = transfer_format(info.color_format[i]);
+        if (info.sample_count > GPUSampleCount::e_1)
+            render_pass_info.color_attachments[i].resolve_enable = true;
+    }
+
+    if (vk_adapter->m_vulkan_detail.device_ext_detail.dynamic_rendering)
+        pipeline_info.pNext = &pipeline_rendering_create_info;
+    else
+        pipeline_info.renderPass = vk_device->m_pass_table->find_render_pass(render_pass_info);
 
     VK_CHECK_RESULT(vk_device->m_device_table.vkCreateGraphicsPipelines(vk_device->m_device, vk_device->m_pipeline_cache, 1, &pipeline_info, VK_Allocation_Callbacks_Ptr, &m_pipeline));
 

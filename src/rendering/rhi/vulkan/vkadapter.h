@@ -19,8 +19,14 @@ public:
 public:
     struct VulkanAdapterDetail
     {
+        struct VulkanExtDetail
+        {
+            uint32_t dynamic_rendering : 1;
+        };
+
         VkPhysicalDeviceProperties device_properties;
         VkPhysicalDeviceFeatures device_features;
+        VulkanExtDetail device_ext_detail;
     };
     VulkanAdapterDetail m_vulkan_detail;
 private:

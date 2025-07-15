@@ -358,6 +358,7 @@ FLAG_ENUM(GPUShaderStage)
 
 enum class GPUResourceType : uint32_t
 {
+    e_undefined = 0,
     e_sampler = 1 << 0,
     e_texture = 1 << 1,
     e_render_target = 1 << 2,
@@ -376,7 +377,9 @@ enum class GPUResourceType : uint32_t
     e_render_target_mip_slices = 1 << 15,
     e_render_target_array_slices = 1 << 16,
     e_render_target_depth_slices = 1 << 17,
-    e_ray_tracing = 1 << 18,
+    e_copy_source = 1 << 18,
+    e_copy_target = 1 << 19,
+    e_ray_tracing = 1 << 20,
 
     // only valid in vulkan
     e_input_attachment = 1 << 24,

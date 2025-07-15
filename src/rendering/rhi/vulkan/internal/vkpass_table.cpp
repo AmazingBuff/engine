@@ -33,10 +33,10 @@ VkRenderPass VKPassTable::find_render_pass(VulkanRenderPassCreateInfo const& inf
     for (uint32_t i = 0; i < info.color_attachment_count; i++)
     {
         // description
-        attachments[attachment_count].format = transfer_format(info.color_attachment[i].format);
+        attachments[attachment_count].format = transfer_format(info.color_attachments[i].format);
         attachments[attachment_count].samples = transfer_sample_count(info.sample_count);
-        attachments[attachment_count].loadOp = Attachment_Load_Op_Map[to_underlying(info.color_attachment[i].load_action)];
-        attachments[attachment_count].storeOp = Attachment_Store_Op_Map[to_underlying(info.color_attachment[i].store_action)];
+        attachments[attachment_count].loadOp = Attachment_Load_Op_Map[to_underlying(info.color_attachments[i].load_action)];
+        attachments[attachment_count].storeOp = Attachment_Store_Op_Map[to_underlying(info.color_attachments[i].store_action)];
         attachments[attachment_count].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         attachments[attachment_count].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         // reference
@@ -48,10 +48,10 @@ VkRenderPass VKPassTable::find_render_pass(VulkanRenderPassCreateInfo const& inf
     bool resolve_attachment = false;
     for (uint32_t i = 0; i < info.color_attachment_count; i++)
     {
-        if (info.color_attachment[i].resolve_enable)
+        if (info.color_attachments[i].resolve_enable)
         {
             // description
-            attachments[attachment_count].format = transfer_format(info.color_attachment[i].format);
+            attachments[attachment_count].format = transfer_format(info.color_attachments[i].format);
             attachments[attachment_count].samples = VK_SAMPLE_COUNT_1_BIT;
             attachments[attachment_count].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
             attachments[attachment_count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;

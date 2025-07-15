@@ -4,10 +4,10 @@
 
 #include "render_util.h"
 #include "rendering/render_entity.h"
+#include "rendering/graph/render_graph.h"
 
 AMAZING_NAMESPACE_BEGIN
-
-GPUFormat transfer_format(RenderFormat format)
+    GPUFormat transfer_format(RenderFormat format)
 {
     switch (format)
     {
@@ -120,6 +120,8 @@ GPUResourceType transfer_resource_type(RenderGraphImageUsage usage)
         type |= GPUResourceType::e_texture;
     if (FLAG_IDENTITY(usage, RenderGraphImageUsage::e_uav))
         type |= GPUResourceType::e_rw_texture;
+    if (FLAG_IDENTITY(usage, RenderGraphImageUsage::e_copy))
+        type |= GPUResourceType::e_copy_source | GPUResourceType::e_copy_target;
 
     return type;
 }
