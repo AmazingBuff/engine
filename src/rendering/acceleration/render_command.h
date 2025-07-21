@@ -58,7 +58,7 @@ public:
     void begin_pass(GPUGraphicsPassCreateInfo const& info);
     void end_pass();
 
-    void bind_descriptor_set(GPUDescriptorSet const* set);
+    void bind_descriptor_set(GPUDescriptorSet const* set) const;
     void bind_pipeline(RenderGraphPipeline const* pipeline);
     void bind_vertex_buffers(GPUBufferBinding const* bindings, uint32_t count) const;
     void bind_index_buffer(GPUBufferBinding const& binding) const;
@@ -75,7 +75,7 @@ public:
     explicit RenderComputeCommand(RenderDriver const& driver);
     ~RenderComputeCommand() override;
 
-    void bind_descriptor_set(GPUDescriptorSet const* set);
+    void bind_descriptor_set(GPUDescriptorSet const* set) const;
     void bind_pipeline(RenderGraphPipeline const* pipeline);
     void begin_pass(GPUComputePassCreateInfo const& info);
     void end_pass();

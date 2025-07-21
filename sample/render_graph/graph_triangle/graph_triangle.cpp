@@ -105,18 +105,18 @@ int main()
     };
     RenderGraph* graph = RENDER_create_render_graph(graph_create_info);
 
-    graph->add_pass("triangle", [&](RenderBuilder* builder)
+    graph->add_pass("triangle", [&](RenderBuilder& builder)
         {
-            builder->bind_pipeline(pipeline_entity);
-            builder->bind_scene_geometry(scene_entity);
-            builder->read("b_light", buffer);
-            builder->write("output", output_texture);
+            builder.bind_pipeline(pipeline_entity)
+                   .bind_scene_geometry(scene_entity)
+                   .read("b_light", buffer)
+                   .write("output", output_texture);
         },
-        [&](RenderView* view)
+        [&](RenderView& view)
         {
-            view->set_viewport(0, 0, Width, Height, 0, 1);
-            view->set_scissor(0, 0, Width, Height);
-            view->set_uniform("b_light", light);
+            view.set_viewport(0, 0, Width, Height, 0, 1)
+                .set_scissor(0, 0, Width, Height)
+                .set_uniform("b_light", light);
         });
 
     graph->add_present_pass("ps", output_texture);
@@ -152,6 +152,7 @@ int main()
         // if (Renderdoc_Api)
         //     Renderdoc_Api->StartFrameCapture(nullptr, nullptr);
 
+        light[4] = std::sin(SDL_GetTicks() / 1000.0f) * 0.5f + 0.5f;
         scene->render();
 
 

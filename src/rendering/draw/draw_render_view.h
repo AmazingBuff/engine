@@ -19,11 +19,11 @@ public:
     DrawRenderGraphicsView(RenderGraphPassNode const* node, RenderGraphicsCommand& command);
     ~DrawRenderGraphicsView() override = default;
 
-    void set_uniform(String const& name, void const* data) override;
-    void set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
-    void set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
-    void set_push_constant(String const& name, void const* data) override;
-    void dispatch(uint32_t x, uint32_t y, uint32_t z) override;
+    RenderView& set_uniform(String const& name, void const* data) override;
+    RenderView& set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
+    RenderView& set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
+    RenderView& set_push_constant(String const& name, void const* data) override;
+    RenderView& dispatch(uint32_t x, uint32_t y, uint32_t z) override;
 private:
     RenderGraphPassNode const* m_ref_pass_node;
     RenderGraphicsCommand& m_graphics_command;
@@ -37,11 +37,11 @@ public:
     DrawRenderComputeView(RenderGraphPassNode const* node, RenderComputeCommand& command);
     ~DrawRenderComputeView() override = default;
 
-    void set_uniform(String const& name, void const* data) override;
-    void set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
-    void set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
-    void set_push_constant(String const& name, void const* data) override;
-    void dispatch(uint32_t x, uint32_t y, uint32_t z) override;
+    RenderView& set_uniform(String const& name, void const* data) override;
+    RenderView& set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
+    RenderView& set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
+    RenderView& set_push_constant(String const& name, void const* data) override;
+    RenderView& dispatch(uint32_t x, uint32_t y, uint32_t z) override;
 private:
     RenderGraphPassNode const* m_ref_pass_node;
     RenderComputeCommand& m_compute_command;

@@ -199,8 +199,11 @@ void GPU_destroy_surface(GPUSurface* surface)
     switch (t_backend)
     {
     case GPUBackend::e_vulkan:
-        PLACEMENT_DELETE(VKSurface, reinterpret_cast<VKSurface*>(surface));
+    {
+        VKSurface* vk_surface = reinterpret_cast<VKSurface*>(surface);
+        PLACEMENT_DELETE(VKSurface, vk_surface);
         break;
+    }
     case GPUBackend::e_d3d12:
         break;
     }

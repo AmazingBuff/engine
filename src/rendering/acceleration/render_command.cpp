@@ -181,7 +181,7 @@ void RenderGraphicsCommand::end_pass()
     m_command_buffers[m_frame_index]->end_graphics_pass(m_graphics_encoder);
 }
 
-void RenderGraphicsCommand::bind_descriptor_set(GPUDescriptorSet const* set)
+void RenderGraphicsCommand::bind_descriptor_set(GPUDescriptorSet const* set) const
 {
     m_graphics_encoder->bind_descriptor_set(set);
 }
@@ -237,7 +237,7 @@ void RenderComputeCommand::submit(RenderCommandSubmitInfo const& info)
     refresh_frame();
 }
 
-void RenderComputeCommand::bind_descriptor_set(GPUDescriptorSet const* set)
+void RenderComputeCommand::bind_descriptor_set(GPUDescriptorSet const* set) const
 {
     m_compute_encoder->bind_descriptor_set(set);
 }

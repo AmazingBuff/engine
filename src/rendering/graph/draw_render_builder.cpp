@@ -12,7 +12,8 @@
 #include "rendering/rhi/common/texture.h"
 
 AMAZING_NAMESPACE_BEGIN
-    DrawRenderBuilder::DrawRenderBuilder(DrawRenderGraph* graph, RenderGraphPassNode* pass_node)
+
+DrawRenderBuilder::DrawRenderBuilder(DrawRenderGraph* graph, RenderGraphPassNode* pass_node)
     : m_ref_render_graph(graph), m_ref_graph_pass_node(pass_node) {}
 
 DrawRenderBuilder::~DrawRenderBuilder()
@@ -20,7 +21,7 @@ DrawRenderBuilder::~DrawRenderBuilder()
 
 }
 
-void DrawRenderBuilder::bind_scene_geometry(RenderEntity const& entity)
+RenderBuilder& DrawRenderBuilder::bind_scene_geometry(RenderEntity const& entity)
 {
     DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(m_ref_render_graph->m_ref_render_system);
 
@@ -30,9 +31,11 @@ void DrawRenderBuilder::bind_scene_geometry(RenderEntity const& entity)
         RENDERING_LOG_ERROR("can't find geometry entity! the entity is {}", entity.id());
 
     m_ref_graph_pass_node->m_geometry_entity = entity;
+
+    return *this;
 }
 
-void DrawRenderBuilder::bind_pipeline(RenderEntity const& entity)
+RenderBuilder& DrawRenderBuilder::bind_pipeline(RenderEntity const& entity)
 {
     DrawRenderSystem const* render_system = static_cast<DrawRenderSystem const*>(m_ref_render_graph->m_ref_render_system);
 
@@ -42,9 +45,11 @@ void DrawRenderBuilder::bind_pipeline(RenderEntity const& entity)
         RENDERING_LOG_ERROR("can't find pipeline entity! the entity is {}", entity.id());
 
     m_ref_graph_pass_node->attach_entity(entity);
+
+    return *this;
 }
 
-void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
+RenderBuilder& DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
 {
     RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
 
@@ -129,9 +134,10 @@ void DrawRenderBuilder::read(const char* name, RenderEntity const& entity)
             it->second->add_output_edge(edge);
         }
     }
+    return *this;
 }
 
-void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
+RenderBuilder& DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
 {
     RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
 
@@ -178,9 +184,11 @@ void DrawRenderBuilder::write(const char* name, RenderEntity const& entity)
     }
     else
         RENDERING_LOG_ERROR("unsupported behavior! an entity can't be wrote twice! the entity is {}", entity.id());
+
+    return *this;
 }
 
-void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
+RenderBuilder& DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
 {
     RENDERING_ASSERT(m_ref_graph_pass_node->m_ref_pipeline != nullptr, "need to bind pipeline first!");
 
@@ -270,6 +278,7 @@ void DrawRenderBuilder::read_write(const char* name, RenderEntity const& entity)
             it->second->add_input_edge(edge);
         }
     }
+    return *this;
 }
 
 AMAZING_NAMESPACE_END

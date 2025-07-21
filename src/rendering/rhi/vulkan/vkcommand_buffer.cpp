@@ -316,7 +316,9 @@ void VKCommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
     VKQueue const* vk_queue = static_cast<VKQueue const*>(vk_command_pool->m_ref_queue);
     VKDevice const* vk_device = static_cast<VKDevice const*>(vk_queue->m_ref_device);
     VKAdapter const* vk_adapter = static_cast<VKAdapter const*>(vk_device->m_ref_adapter);
-    PLACEMENT_DELETE(VKGraphicsPassEncoder, static_cast<VKGraphicsPassEncoder*>(encoder));
+
+    VKGraphicsPassEncoder* vk_encoder = static_cast<VKGraphicsPassEncoder*>(encoder);
+    PLACEMENT_DELETE(VKGraphicsPassEncoder, vk_encoder);
     if (vk_adapter->m_vulkan_detail.device_ext_detail.dynamic_rendering)
         vk_device->m_device_table.vkCmdEndRenderingKHR(m_command_buffer);
     else
@@ -331,7 +333,8 @@ GPUComputePassEncoder* VKCommandBuffer::begin_compute_pass(GPUComputePassCreateI
 
 void VKCommandBuffer::end_compute_pass(GPUComputePassEncoder* encoder)
 {
-    PLACEMENT_DELETE(VKComputePassEncoder, static_cast<VKComputePassEncoder*>(encoder));
+    VKComputePassEncoder* vk_encoder = static_cast<VKComputePassEncoder*>(encoder);
+    PLACEMENT_DELETE(VKComputePassEncoder, vk_encoder);
 }
 
 void VKCommandBuffer::begin_query(GPUQueryPool const* pool, GPUQueryInfo const& info)

@@ -43,7 +43,7 @@ void DrawRenderGraph::add_pass(const char* pass_name, RenderGraphPassSetup&& set
     {
         RenderGraphPassNode* pass_node = PLACEMENT_NEW(RenderGraphPassNode, sizeof(RenderGraphPassNode));
         DrawRenderBuilder builder(this, pass_node);
-        setup(&builder);
+        setup(builder);
 
         pass_node->m_execute = execute;
         m_pass_nodes[pass_name] = pass_node;
@@ -162,7 +162,9 @@ void DrawRenderGraph::compile()
                 uint32_t node_priority = 0;
                 for (DependencyEdge const* in_in : input_node->input_edges())
                 {
-                    RenderGraphPassNode* in_node = static_cast<RenderGraphPassNode*>(in_in->to());
+                    RenderGraphPassNode* in_node = static_cast<RenderGraphPassNode*>(in_in->from());
+                    // add dependency
+                    node->m_dependency_nodes.push_back(in_node);
                     uint32_t in_priority = priority[in_node];
                     if (in_priority > node_priority)
                     {

@@ -21,6 +21,9 @@ private:
     RenderEntity m_geometry_entity;
 
     RenderGraphPassExecute m_execute;
+
+    Vector<RenderGraphPassNode*> m_dependency_nodes;
+
     HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_input_barriers;
     HashMap<RenderGraphResourceNode const*, RenderGraphResourceBarrier> m_output_barriers;
 

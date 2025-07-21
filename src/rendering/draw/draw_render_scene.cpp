@@ -108,21 +108,48 @@ void DrawRenderScene::render()
             submit_info.signal_fence = render_driver.m_fence;
 
         Vector<RenderGraphPassNode*> const& group = render_graph->m_parallel_groups[i];
-        for (auto& pass_node : group)
+
+        for_each(group, [&](RenderGraphPassNode* pass_node)
         {
-            RenderGraphPipeline const* pipeline = pass_node->m_ref_pipeline;
-            switch (pipeline->pipeline_type)
-            {
-            case GPUPipelineType::e_graphics:
-                render_graphics(pass_node, submit_info);
-                break;
-            case GPUPipelineType::e_compute:
-                render_compute(pass_node, submit_info);
-                break;
-            default:
-                break;
-            }
-        }
+         auto ff = [&](RenderGraphPassNode* pass_node)
+         {
+             // wait all dependency nodes
+             for (auto& node : pass_node->m_dependency_nodes)
+             {
+
+             }
+
+             RenderGraphPipeline const* pipeline = pass_node->m_ref_pipeline;
+             switch (pipeline->pipeline_type)
+             {
+             case GPUPipelineType::e_graphics:
+                 render_graphics(pass_node, submit_info);
+                 break;
+             case GPUPipelineType::e_compute:
+                 render_compute(pass_node, submit_info);
+                 break;
+             default:
+                 break;
+             }
+         };
+        });
+
+
+        // for (auto& pass_node : group)
+        // {
+        //     RenderGraphPipeline const* pipeline = pass_node->m_ref_pipeline;
+        //     switch (pipeline->pipeline_type)
+        //     {
+        //     case GPUPipelineType::e_graphics:
+        //         render_graphics(pass_node, submit_info);
+        //         break;
+        //     case GPUPipelineType::e_compute:
+        //         render_compute(pass_node, submit_info);
+        //         break;
+        //     default:
+        //         break;
+        //     }
+        // }
     }
 
     if (render_graph->m_present_pass.present_entity)
@@ -216,7 +243,7 @@ void DrawRenderScene::render_graphics(RenderGraphPassNode* node, RenderCommandSu
 
     DrawRenderGraphicsView view(node, command);
 
-    node->m_execute(&view);
+    node->m_execute(view);
 
     for (auto& [set_index, descriptor_resource] : node->m_descriptor_resources)
         command.bind_descriptor_set(descriptor_resource.descriptor_set);
@@ -279,7 +306,7 @@ void DrawRenderScene::render_compute(RenderGraphPassNode* node, RenderCommandSub
 
     DrawRenderComputeView view(node, command);
 
-    node->m_execute(&view);
+    node->m_execute(view);
 
     command.end_pass();
     command.end_frame();

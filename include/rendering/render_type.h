@@ -120,8 +120,8 @@ struct RenderLightShaderDescriptor
 };
 
 
-using RenderGraphPassSetup = Functional<void(RenderBuilder*)>;
-using RenderGraphPassExecute = Functional<void(RenderView*)>;
+using RenderGraphPassSetup = Functional<void(RenderBuilder&)>;
+using RenderGraphPassExecute = Functional<void(RenderView&)>;
 
 AMAZING_NAMESPACE_END
 

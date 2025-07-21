@@ -15,7 +15,7 @@ AMAZING_NAMESPACE_BEGIN
 DrawRenderGraphicsView::DrawRenderGraphicsView(RenderGraphPassNode const* node, RenderGraphicsCommand& command)
     : m_ref_pass_node(node), m_graphics_command(command) {}
 
-void DrawRenderGraphicsView::set_uniform(String const& name, void const* data)
+RenderView& DrawRenderGraphicsView::set_uniform(String const& name, void const* data)
 {
     for (auto& [set_index, descriptor_resource] : m_ref_pass_node->m_descriptor_resources)
     {
@@ -34,26 +34,31 @@ void DrawRenderGraphicsView::set_uniform(String const& name, void const* data)
         }))
             break;
     }
+    return *this;
 }
 
-void DrawRenderGraphicsView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
+RenderView& DrawRenderGraphicsView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
 {
     m_graphics_command.m_graphics_encoder->set_viewport(x, y, width, height, min_depth, max_depth);
+    return *this;
 }
 
-void DrawRenderGraphicsView::set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+RenderView& DrawRenderGraphicsView::set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     m_graphics_command.m_graphics_encoder->set_scissor(x, y, width, height);
+    return *this;
 }
 
-void DrawRenderGraphicsView::set_push_constant(String const& name, void const* data)
+RenderView& DrawRenderGraphicsView::set_push_constant(String const& name, void const* data)
 {
     m_graphics_command.m_graphics_encoder->set_push_constant(m_graphics_command.m_ref_pipeline->root_signature, name, data);
+    return *this;
 }
 
-void DrawRenderGraphicsView::dispatch(uint32_t x, uint32_t y, uint32_t z)
+RenderView& DrawRenderGraphicsView::dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
     RENDERING_LOG_ERROR("can't invoke compute pipeline function in graphics pipeline!");
+    return *this;
 }
 
 
@@ -61,7 +66,7 @@ void DrawRenderGraphicsView::dispatch(uint32_t x, uint32_t y, uint32_t z)
 DrawRenderComputeView::DrawRenderComputeView(RenderGraphPassNode const* node, RenderComputeCommand& command)
     : m_ref_pass_node(node), m_compute_command(command) {}
 
-void DrawRenderComputeView::set_uniform(String const& name, void const* data)
+RenderView& DrawRenderComputeView::set_uniform(String const& name, void const* data)
 {
     for (auto& [set_index, descriptor_resource] : m_ref_pass_node->m_descriptor_resources)
     {
@@ -80,26 +85,31 @@ void DrawRenderComputeView::set_uniform(String const& name, void const* data)
         }))
             break;
     }
+    return *this;
 }
 
-void DrawRenderComputeView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
+RenderView& DrawRenderComputeView::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
 {
     RENDERING_LOG_ERROR("can't invoke graphics pipeline function in compute pipeline!");
+    return *this;
 }
 
-void DrawRenderComputeView::set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+RenderView& DrawRenderComputeView::set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     RENDERING_LOG_ERROR("can't invoke graphics pipeline function in compute pipeline!");
+    return *this;
 }
 
-void DrawRenderComputeView::set_push_constant(String const& name, void const* data)
+RenderView& DrawRenderComputeView::set_push_constant(String const& name, void const* data)
 {
     m_compute_command.m_compute_encoder->set_push_constant(m_compute_command.m_ref_pipeline->root_signature, name, data);
+    return *this;
 }
 
-void DrawRenderComputeView::dispatch(uint32_t x, uint32_t y, uint32_t z)
+RenderView& DrawRenderComputeView::dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
     m_compute_command.m_compute_encoder->dispatch(x, y, z);
+    return *this;
 }
 
 AMAZING_NAMESPACE_END

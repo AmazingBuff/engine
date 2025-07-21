@@ -13,11 +13,11 @@ class RenderBuilder
 public:
     virtual ~RenderBuilder() = default;
 
-    virtual void bind_scene_geometry(RenderEntity const& entity) = 0;
-    virtual void bind_pipeline(RenderEntity const& entity) = 0;
-    virtual void read(const char* name, RenderEntity const& entity) = 0;
-    virtual void write(const char* name, RenderEntity const& entity) = 0;
-    virtual void read_write(const char* name, RenderEntity const& entity) = 0;
+    virtual RenderBuilder& bind_scene_geometry(RenderEntity const& entity) = 0;
+    virtual RenderBuilder& bind_pipeline(RenderEntity const& entity) = 0;
+    virtual RenderBuilder& read(const char* name, RenderEntity const& entity) = 0;
+    virtual RenderBuilder& write(const char* name, RenderEntity const& entity) = 0;
+    virtual RenderBuilder& read_write(const char* name, RenderEntity const& entity) = 0;
 };
 
 AMAZING_NAMESPACE_END

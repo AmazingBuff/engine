@@ -530,7 +530,8 @@ GPUGraphicsPassEncoder* DX12CommandBuffer::begin_graphics_pass(GPUGraphicsPassCr
 
 void DX12CommandBuffer::end_graphics_pass(GPUGraphicsPassEncoder* encoder)
 {
-    PLACEMENT_DELETE(DX12GraphicsPassEncoder, static_cast<DX12GraphicsPassEncoder*>(encoder));
+    DX12GraphicsPassEncoder* dx12_encoder = static_cast<DX12GraphicsPassEncoder*>(encoder);
+    PLACEMENT_DELETE(DX12GraphicsPassEncoder, dx12_encoder);
     m_command_list->EndRenderPass();
 }
 
@@ -542,7 +543,8 @@ GPUComputePassEncoder* DX12CommandBuffer::begin_compute_pass(GPUComputePassCreat
 
 void DX12CommandBuffer::end_compute_pass(GPUComputePassEncoder* encoder)
 {
-    PLACEMENT_DELETE(DX12ComputePassEncoder, static_cast<DX12ComputePassEncoder*>(encoder));
+    DX12ComputePassEncoder* dx12_encoder = static_cast<DX12ComputePassEncoder*>(encoder);
+    PLACEMENT_DELETE(DX12ComputePassEncoder, dx12_encoder);
 }
 
 void DX12CommandBuffer::transfer_resource(GPUResourceTransferInfo const& info)

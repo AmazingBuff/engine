@@ -162,8 +162,10 @@ VKSwapChain::~VKSwapChain()
 
     for (auto& [texture, texture_view] : m_back_textures)
     {
-        PLACEMENT_DELETE(VKTextureView, static_cast<VKTextureView*>(texture_view));
-        PLACEMENT_DELETE(VKTexture, static_cast<VKTexture*>(texture));
+        VKTextureView* vk_texture_view = static_cast<VKTextureView*>(texture_view);
+        VKTexture* vk_texture = static_cast<VKTexture*>(texture);
+        PLACEMENT_DELETE(VKTextureView, vk_texture_view);
+        PLACEMENT_DELETE(VKTexture, vk_texture);
     }
 
     vk_device->m_device_table.vkDestroySwapchainKHR(vk_device->m_device, m_swap_chain, VK_Allocation_Callbacks_Ptr);

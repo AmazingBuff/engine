@@ -17,7 +17,8 @@ RenderSystem* RENDER_create_render_system(RenderSystemCreateInfo const& info)
 
 void RENDER_destroy_render_system(RenderSystem* render_system)
 {
-    PLACEMENT_DELETE(DrawRenderSystem, static_cast<DrawRenderSystem*>(render_system));
+    DrawRenderSystem* draw_redner_system = static_cast<DrawRenderSystem*>(render_system);
+    PLACEMENT_DELETE(DrawRenderSystem, draw_redner_system);
 }
 
 RenderScene* RENDER_create_render_scene(RenderSceneCreateInfo const& info)
@@ -26,7 +27,8 @@ RenderScene* RENDER_create_render_scene(RenderSceneCreateInfo const& info)
 }
 void RENDER_destroy_render_scene(RenderScene* render_scene)
 {
-    PLACEMENT_DELETE(DrawRenderScene, static_cast<DrawRenderScene*>(render_scene));
+    DrawRenderScene* draw_render_scene = static_cast<DrawRenderScene*>(render_scene);
+    PLACEMENT_DELETE(DrawRenderScene, draw_render_scene);
 }
 
 RenderGraph* RENDER_create_render_graph(RenderGraphCreateInfo const& info)
@@ -36,7 +38,8 @@ RenderGraph* RENDER_create_render_graph(RenderGraphCreateInfo const& info)
 
 void RENDER_destroy_render_graph(RenderGraph* render_graph)
 {
-    PLACEMENT_DELETE(DrawRenderGraph, static_cast<DrawRenderGraph*>(render_graph));
+    DrawRenderGraph* draw_render_graph = static_cast<DrawRenderGraph*>(render_graph);
+    PLACEMENT_DELETE(DrawRenderGraph, draw_render_graph);
 }
 
 
